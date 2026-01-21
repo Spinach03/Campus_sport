@@ -1,0 +1,705 @@
+/* ============================================================================
+   MODAL UTENTE - CSS Specifico
+   Campus Sports Arena - Admin Panel
+   ============================================================================ */
+
+/* ============================================================================
+   FIX CRITICI PER FUNZIONAMENTO MODAL
+   ============================================================================ */
+
+/* Override per tutti i modal della pagina gestione utenti */
+#modalDettaglioUtente,
+#modalSospensione,
+#modalBan,
+#modalPenalty {
+    z-index: 1060 !important;
+}
+
+#modalDettaglioUtente .modal-dialog,
+#modalSospensione .modal-dialog,
+#modalBan .modal-dialog,
+#modalPenalty .modal-dialog {
+    z-index: 1061 !important;
+    pointer-events: auto !important;
+}
+
+#modalDettaglioUtente .modal-content,
+#modalSospensione .modal-content,
+#modalBan .modal-content,
+#modalPenalty .modal-content {
+    pointer-events: auto !important;
+}
+
+/* Assicura che tutti gli elementi siano cliccabili */
+#modalDettaglioUtente input,
+#modalDettaglioUtente select,
+#modalDettaglioUtente textarea,
+#modalDettaglioUtente button,
+#modalDettaglioUtente label,
+#modalDettaglioUtente .nav-link,
+#modalDettaglioUtente .btn,
+#modalDettaglioUtente .btn-close,
+#modalSospensione input,
+#modalSospensione select,
+#modalSospensione textarea,
+#modalSospensione button,
+#modalBan input,
+#modalBan select,
+#modalBan textarea,
+#modalBan button,
+#modalPenalty input,
+#modalPenalty select,
+#modalPenalty textarea,
+#modalPenalty button,
+#modalPenalty label {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================================================
+   MODAL CONTENT BASE
+   ============================================================================ */
+.modal-utente-content {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 20px;
+    overflow: hidden;
+    color: #f1f5f9;
+}
+
+.modal-utente-content .modal-header {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.modal-utente-content .modal-footer {
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    background: rgba(15, 23, 42, 0.5);
+}
+
+/* ============================================================================
+   MODAL HEADER UTENTE
+   ============================================================================ */
+.modal-utente-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    padding: 24px !important;
+}
+
+.modal-user-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.modal-user-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #3B82F6, #3B82F688);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    flex-shrink: 0;
+}
+
+.modal-user-details {
+    flex: 1;
+}
+
+.modal-user-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0 0 4px;
+}
+
+.modal-user-status {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.modal-user-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* ============================================================================
+   MODAL TABS
+   ============================================================================ */
+.modal-utente-tabs {
+    background: rgba(15, 23, 42, 0.5);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1) !important;
+    padding: 0 16px;
+}
+
+.modal-utente-tabs .nav-link {
+    background: transparent !important;
+    border: none !important;
+    padding: 14px 20px;
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 3px solid transparent !important;
+    transition: all 0.2s ease;
+    border-radius: 0 !important;
+}
+
+.modal-utente-tabs .nav-link:hover {
+    color: #f1f5f9;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.modal-utente-tabs .nav-link.active {
+    color: #3B82F6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-bottom-color: #3B82F6 !important;
+}
+
+/* ============================================================================
+   MODAL BODY
+   ============================================================================ */
+.modal-utente-body {
+    padding: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 16px;
+}
+
+/* ============================================================================
+   STATS GRID
+   ============================================================================ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.stat-box {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.stat-box.stat-danger {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.stat-box-icon {
+    display: block;
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.stat-box-value {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: #3B82F6;
+}
+
+.stat-danger .stat-box-value {
+    color: #EF4444;
+}
+
+.stat-box-label {
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+/* ============================================================================
+   AFFIDABILITA CARD
+   ============================================================================ */
+.affidabilita-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.affidabilita-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #f1f5f9;
+}
+
+.affidabilita-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #10B981;
+}
+
+.affidabilita-bar-bg {
+    height: 8px;
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.affidabilita-bar {
+    height: 100%;
+    background: #10B981;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+/* ============================================================================
+   PENALTY CARD
+   ============================================================================ */
+.penalty-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #f1f5f9;
+}
+
+.penalty-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #F59E0B;
+}
+
+/* ============================================================================
+   BADGES CARD
+   ============================================================================ */
+.badges-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.badges-title {
+    display: block;
+    font-size: 14px;
+    color: #f1f5f9;
+    margin-bottom: 12px;
+}
+
+.badges-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.badge-item {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #3B82F6;
+}
+
+.no-badges {
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* ============================================================================
+   ACTIVITY LIST
+   ============================================================================ */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 10px;
+}
+
+.activity-icon {
+    font-size: 18px;
+}
+
+.activity-text {
+    flex: 1;
+    font-size: 13px;
+    color: #f1f5f9;
+}
+
+.activity-time {
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* ============================================================================
+   SEGNALAZIONI LIST
+   ============================================================================ */
+.segnalazioni-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.segnalazione-item {
+    padding: 12px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 10px;
+    font-size: 13px;
+    color: #f1f5f9;
+}
+
+.segnalazione-item small {
+    color: #64748b;
+}
+
+.no-data {
+    text-align: center;
+    padding: 24px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* ============================================================================
+   ACTION BOXES
+   ============================================================================ */
+.action-box {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.action-box h6 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 6px;
+}
+
+.action-box p {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 16px;
+}
+
+.action-box-danger {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.action-btns {
+    display: flex;
+    gap: 8px;
+}
+
+/* ============================================================================
+   ACTION BUTTONS
+   ============================================================================ */
+.btn-action-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    color: white;
+}
+
+.btn-action-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-action-warning {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: white;
+}
+
+.btn-action-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.btn-action-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+    color: white;
+}
+
+.btn-action-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.btn-action-danger-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Outfit', sans-serif;
+    background: transparent;
+    border: 2px solid #EF4444;
+    color: #EF4444;
+}
+
+.btn-action-danger-outline:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ============================================================================
+   MODAL FOOTER
+   ============================================================================ */
+.modal-utente-footer {
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-registrato {
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   SEGNALAZIONI MIGLIORATI
+   ============================================================================ */
+.segnalazione-item {
+    padding: 14px 16px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.segnalazione-motivo {
+    font-size: 14px;
+    color: #f1f5f9;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.segnalazione-meta {
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* ============================================================================
+   ACTION BOX VARIANTI
+   ============================================================================ */
+.action-box-danger {
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    background: rgba(239, 68, 68, 0.05) !important;
+}
+
+.action-box-success {
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    background: rgba(16, 185, 129, 0.05) !important;
+}
+
+.action-box-info {
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    background: rgba(59, 130, 246, 0.05) !important;
+}
+
+/* Stato Badge Large */
+.stato-badge-large {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #f1f5f9;
+    border: 2px solid;
+    margin-top: 8px;
+}
+
+.stato-badge-large .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.stato-badge-large .status-dot.green { background: #10B981; }
+.stato-badge-large .status-dot.orange { background: #F59E0B; }
+.stato-badge-large .status-dot.red { background: #EF4444; }
+
+/* ============================================================================
+   BUTTON ACTION SUCCESS (Verde)
+   ============================================================================ */
+.btn-action-success {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+}
+
+.btn-action-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* ============================================================================
+   ALERT SUCCESS STYLE
+   ============================================================================ */
+.alert-success-custom {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #6ee7b7;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+
+/* ============================================================================
+   ALERT WARNING STYLE
+   ============================================================================ */
+.alert-warning {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+    border-radius: 10px;
+    padding: 12px 16px;
+}
+
+/* ============================================================================
+   PENALTY/RESET INFO BOX
+   ============================================================================ */
+.reset-info-box,
+.penalty-info-box {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.reset-info-box p,
+.penalty-info-box p {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.reset-info-box strong,
+.penalty-info-box strong {
+    color: #f1f5f9;
+}
+
+/* ============================================================================
+   FORM CONTROLS DARK
+   ============================================================================ */
+.form-select-dark,
+.form-control-dark {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(148, 163, 184, 0.2) !important;
+    border-radius: 8px !important;
+    color: #f1f5f9 !important;
+    font-family: 'Outfit', sans-serif;
+}
+
+.form-select-dark:focus,
+.form-control-dark:focus {
+    border-color: #3B82F6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+.form-label {
+    color: #f1f5f9;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.form-check-label {
+    color: #94a3b8;
+}
+
+/* ============================================================================
+   ALERT DARK
+   ============================================================================ */
+.modal-utente-content .alert-danger {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #EF4444;
+}
+
+/* ============================================================================
+   BTN CLOSE WHITE
+   ============================================================================ */
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}

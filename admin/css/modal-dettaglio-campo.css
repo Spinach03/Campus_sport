@@ -1,0 +1,1001 @@
+/* ============================================================================
+   MODAL DETTAGLIO CAMPO - Fix e Stili
+   ============================================================================ */
+
+/* ============================================================================
+   FIX CRITICI PER FUNZIONAMENTO MODAL
+   ============================================================================ */
+
+/* Override per tutti i modal della pagina gestione campi */
+#modalDettaglioCampo,
+#modalBloccoManutenzione,
+#modalModificaCampo,
+#modalEliminaCampo,
+#modalChiudiCampo {
+    z-index: 1060 !important;
+}
+
+#modalDettaglioCampo .modal-dialog,
+#modalBloccoManutenzione .modal-dialog,
+#modalModificaCampo .modal-dialog,
+#modalEliminaCampo .modal-dialog,
+#modalChiudiCampo .modal-dialog {
+    z-index: 1061 !important;
+    pointer-events: auto !important;
+}
+
+#modalDettaglioCampo .modal-content,
+#modalBloccoManutenzione .modal-content,
+#modalModificaCampo .modal-content,
+#modalEliminaCampo .modal-content,
+#modalChiudiCampo .modal-content {
+    pointer-events: auto !important;
+}
+
+/* Assicura che tutti gli elementi siano cliccabili */
+#modalDettaglioCampo input,
+#modalDettaglioCampo select,
+#modalDettaglioCampo textarea,
+#modalDettaglioCampo button,
+#modalDettaglioCampo label,
+#modalDettaglioCampo .nav-link-custom,
+#modalDettaglioCampo .btn,
+#modalBloccoManutenzione input,
+#modalBloccoManutenzione select,
+#modalBloccoManutenzione textarea,
+#modalBloccoManutenzione button,
+#modalModificaCampo input,
+#modalModificaCampo select,
+#modalModificaCampo textarea,
+#modalModificaCampo button,
+#modalModificaCampo label,
+#modalEliminaCampo input,
+#modalEliminaCampo button,
+#modalEliminaCampo label,
+#modalChiudiCampo button {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================================================
+   MODAL-DARK - STILE BASE PER TUTTI I MODAL SCURI
+   ============================================================================ */
+.modal-content.modal-dark {
+    background: linear-gradient(180deg, #1a2332 0%, #0f172a 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.1) !important;
+    border-radius: 16px !important;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-dark .modal-header {
+    background: rgba(30, 41, 59, 0.5);
+    padding: 16px 20px;
+}
+
+.modal-dark .modal-body {
+    padding: 20px;
+    color: #cbd5e1;
+}
+
+.modal-dark .modal-footer {
+    background: rgba(15, 23, 42, 0.5);
+    padding: 16px 20px;
+}
+
+/* ============================================================================
+   MODAL DETTAGLIO - STILI BASE
+   ============================================================================ */
+
+#modalDettaglioCampo .modal-content.modal-dark {
+    background: linear-gradient(180deg, #1a2332 0%, #0f172a 100%);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Header con colore sport */
+#modalDettaglioCampo .modal-header-sport {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    padding: 24px 28px;
+}
+
+#modalDettaglioCampo .modal-icon-lg {
+    font-size: 56px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+#modalDettaglioCampo .modal-title {
+    font-weight: 700;
+    color: #f1f5f9;
+    font-size: 22px;
+}
+
+/* Status Badge */
+#modalDettaglioCampo .status-badge-modal {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+#modalDettaglioCampo .status-badge-modal.manutenzione {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+#modalDettaglioCampo .status-badge-modal.chiuso {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+#modalDettaglioCampo .status-dot-modal {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Sport Badge */
+#modalDettaglioCampo .sport-badge-modal {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Location e Tipo - FIX COLORE */
+#modalDettaglioCampo #detailLocation,
+#modalDettaglioCampo #detailTipo {
+    color: #94a3b8 !important;
+}
+
+/* Close Button */
+#modalDettaglioCampo .btn-close-modal {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(51, 65, 85, 0.8);
+    border: none;
+    border-radius: 50%;
+    color: #94a3b8;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#modalDettaglioCampo .btn-close-modal:hover {
+    background: rgba(71, 85, 105, 0.9);
+    color: #f1f5f9;
+    transform: scale(1.05);
+}
+
+/* ============================================================================
+   TABS
+   ============================================================================ */
+
+#modalDettaglioCampo .nav-tabs-custom {
+    display: flex;
+    gap: 4px;
+    padding: 0 24px;
+    background: rgba(30, 41, 59, 0.5);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+#modalDettaglioCampo .nav-link-custom {
+    padding: 14px 20px;
+    background: transparent;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+#modalDettaglioCampo .nav-link-custom:hover {
+    background: rgba(51, 65, 85, 0.5);
+    color: #f1f5f9;
+}
+
+#modalDettaglioCampo .nav-link-custom.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+/* ============================================================================
+   MODAL BODY
+   ============================================================================ */
+
+#modalDettaglioCampo .modal-body {
+    padding: 24px 28px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+/* Section Titles */
+#modalDettaglioCampo .tab-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 16px;
+}
+
+/* Info Card */
+#modalDettaglioCampo .info-card {
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+#modalDettaglioCampo .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+#modalDettaglioCampo .info-row:last-child {
+    border-bottom: none;
+}
+
+#modalDettaglioCampo .info-label {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+#modalDettaglioCampo .info-value {
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Services Display */
+#modalDettaglioCampo .services-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#modalDettaglioCampo .service-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(59, 130, 246, 0.15);
+    border-radius: 8px;
+    color: #60a5fa;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Stats Grid */
+#modalDettaglioCampo .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+#modalDettaglioCampo .stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 12px;
+    text-align: center;
+}
+
+#modalDettaglioCampo .stat-card[data-color="blue"] .stat-card-value { color: #3b82f6; }
+#modalDettaglioCampo .stat-card[data-color="purple"] .stat-card-value { color: #8b5cf6; }
+#modalDettaglioCampo .stat-card[data-color="green"] .stat-card-value { color: #10b981; }
+#modalDettaglioCampo .stat-card[data-color="orange"] .stat-card-value { color: #f59e0b; }
+
+#modalDettaglioCampo .stat-card-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+#modalDettaglioCampo .stat-card-value {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+#modalDettaglioCampo .stat-card-label {
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+/* Rating Display */
+#modalDettaglioCampo .rating-display-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 12px;
+}
+
+#modalDettaglioCampo .rating-big {
+    font-size: 48px;
+    font-weight: 800;
+    color: #f59e0b;
+}
+
+#modalDettaglioCampo .stars-display {
+    display: flex;
+    gap: 2px;
+}
+
+#modalDettaglioCampo .stars-display .star {
+    font-size: 20px;
+    color: #475569;
+}
+
+#modalDettaglioCampo .stars-display .star.filled {
+    color: #f59e0b;
+}
+
+#modalDettaglioCampo .rating-info {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+/* Empty Tab */
+#modalDettaglioCampo .empty-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+#modalDettaglioCampo .empty-tab-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+#modalDettaglioCampo .empty-tab p {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+/* ============================================================================
+   TAB CALENDARIO - PRENOTAZIONI
+   ============================================================================ */
+
+#modalDettaglioCampo .prenotazioni-section {
+    margin-bottom: 24px;
+}
+
+#modalDettaglioCampo .prenotazioni-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+#modalDettaglioCampo .prenotazioni-section-title .badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#modalDettaglioCampo .prenotazioni-section-title .badge-oggi {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+#modalDettaglioCampo .prenotazioni-section-title .badge-future {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+#modalDettaglioCampo .prenotazioni-section-title .badge-passate {
+    background: rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+}
+
+#modalDettaglioCampo .prenotazione-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid #3b82f6;
+    transition: all 0.2s ease;
+}
+
+#modalDettaglioCampo .prenotazione-card:hover {
+    background: rgba(51, 65, 85, 0.6);
+    transform: translateX(4px);
+}
+
+#modalDettaglioCampo .prenotazione-card.oggi {
+    border-left-color: #10b981;
+}
+
+#modalDettaglioCampo .prenotazione-card.passata {
+    border-left-color: #64748b;
+    opacity: 0.7;
+}
+
+#modalDettaglioCampo .prenotazione-time {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 70px;
+    padding: 8px 12px;
+    background: rgba(59, 130, 246, 0.15);
+    border-radius: 8px;
+}
+
+#modalDettaglioCampo .prenotazione-card.oggi .prenotazione-time {
+    background: rgba(16, 185, 129, 0.15);
+}
+
+#modalDettaglioCampo .prenotazione-card.passata .prenotazione-time {
+    background: rgba(148, 163, 184, 0.1);
+}
+
+#modalDettaglioCampo .prenotazione-ora {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+#modalDettaglioCampo .prenotazione-durata {
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+#modalDettaglioCampo .prenotazione-info {
+    flex: 1;
+}
+
+#modalDettaglioCampo .prenotazione-utente {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+}
+
+#modalDettaglioCampo .prenotazione-dettagli {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+#modalDettaglioCampo .prenotazione-data {
+    font-size: 12px;
+    color: #64748b;
+    text-align: right;
+}
+
+#modalDettaglioCampo .prenotazione-status {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#modalDettaglioCampo .prenotazione-status.confermata {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+#modalDettaglioCampo .prenotazione-status.completata {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+}
+
+#modalDettaglioCampo .prenotazione-status.in-corso {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+#modalDettaglioCampo .no-prenotazioni {
+    padding: 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    background: rgba(30, 41, 59, 0.4);
+    border-radius: 8px;
+}
+
+/* ============================================================================
+   TAB STATISTICHE - GRAFICO
+   ============================================================================ */
+
+#modalDettaglioCampo .stats-chart-container {
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+#modalDettaglioCampo .stats-chart-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 20px;
+}
+
+#modalDettaglioCampo .chart-wrapper {
+    height: 250px;
+    position: relative;
+}
+
+#modalDettaglioCampo .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 200px;
+    padding: 0 10px;
+    border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+}
+
+#modalDettaglioCampo .bar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    max-width: 60px;
+}
+
+#modalDettaglioCampo .bar {
+    width: 36px;
+    background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 6px 6px 0 0;
+    transition: all 0.3s ease;
+    min-height: 4px;
+}
+
+#modalDettaglioCampo .bar:hover {
+    background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+    transform: scaleY(1.05);
+}
+
+#modalDettaglioCampo .bar-label {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+#modalDettaglioCampo .bar-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 6px;
+}
+
+#modalDettaglioCampo .stats-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+}
+
+#modalDettaglioCampo .stats-summary-item {
+    text-align: center;
+    padding: 16px;
+    background: rgba(51, 65, 85, 0.4);
+    border-radius: 10px;
+}
+
+#modalDettaglioCampo .stats-summary-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+#modalDettaglioCampo .stats-summary-label {
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+/* ============================================================================
+   TAB RECENSIONI - MIGLIORATO
+   ============================================================================ */
+
+#modalDettaglioCampo .recensioni-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#modalDettaglioCampo .recensione-card {
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 12px;
+    padding: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    transition: all 0.2s ease;
+}
+
+#modalDettaglioCampo .recensione-card:hover {
+    background: rgba(51, 65, 85, 0.5);
+    border-color: rgba(148, 163, 184, 0.2);
+}
+
+#modalDettaglioCampo .recensione-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+#modalDettaglioCampo .recensione-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+}
+
+#modalDettaglioCampo .recensione-info {
+    flex: 1;
+}
+
+#modalDettaglioCampo .recensione-nome {
+    font-size: 15px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 2px;
+}
+
+#modalDettaglioCampo .recensione-data {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+#modalDettaglioCampo .recensione-rating {
+    display: flex;
+    gap: 2px;
+}
+
+#modalDettaglioCampo .recensione-rating .star {
+    font-size: 16px;
+    color: #475569;
+}
+
+#modalDettaglioCampo .recensione-rating .star.filled {
+    color: #f59e0b;
+}
+
+#modalDettaglioCampo .recensione-testo {
+    font-size: 14px;
+    color: #cbd5e1;
+    line-height: 1.6;
+    padding-left: 56px;
+}
+
+#modalDettaglioCampo .no-recensioni {
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
+}
+
+#modalDettaglioCampo .no-recensioni-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+/* ============================================================================
+   TAB MANUTENZIONE - MIGLIORATO
+   ============================================================================ */
+
+#modalDettaglioCampo .manutenzione-status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+#modalDettaglioCampo .manutenzione-status.in-manutenzione {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+#modalDettaglioCampo .manutenzione-status-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(16, 185, 129, 0.2);
+    border-radius: 12px;
+    font-size: 24px;
+}
+
+#modalDettaglioCampo .manutenzione-status.in-manutenzione .manutenzione-status-icon {
+    background: rgba(245, 158, 11, 0.2);
+}
+
+#modalDettaglioCampo .manutenzione-status-text {
+    flex: 1;
+}
+
+#modalDettaglioCampo .manutenzione-status-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #10b981;
+    margin-bottom: 4px;
+}
+
+#modalDettaglioCampo .manutenzione-status.in-manutenzione .manutenzione-status-title {
+    color: #f59e0b;
+}
+
+#modalDettaglioCampo .manutenzione-status-subtitle {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+#modalDettaglioCampo .manutenzione-lista-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 12px;
+}
+
+#modalDettaglioCampo .manutenzione-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border-left: 4px solid #f59e0b;
+}
+
+#modalDettaglioCampo .manutenzione-item-icon {
+    font-size: 20px;
+}
+
+#modalDettaglioCampo .manutenzione-item-info {
+    flex: 1;
+}
+
+#modalDettaglioCampo .manutenzione-item-tipo {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+#modalDettaglioCampo .manutenzione-item-date {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+#modalDettaglioCampo .manutenzione-item-motivo {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* Manutenzione Prevista */
+#modalDettaglioCampo .manutenzione-prevista {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+#modalDettaglioCampo .manutenzione-prevista-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+#modalDettaglioCampo .manutenzione-prevista-icon {
+    font-size: 18px;
+}
+
+#modalDettaglioCampo .manutenzione-prevista-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f59e0b;
+}
+
+#modalDettaglioCampo .manutenzione-prevista .manutenzione-item {
+    border-left-color: #f59e0b;
+    margin-bottom: 8px;
+}
+
+#modalDettaglioCampo .manutenzione-prevista .manutenzione-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Stato chiuso */
+#modalDettaglioCampo .manutenzione-status.chiuso {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+#modalDettaglioCampo .manutenzione-status.chiuso .manutenzione-status-icon {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* ============================================================================
+   MODAL FOOTER
+   ============================================================================ */
+
+#modalDettaglioCampo .modal-footer {
+    background: rgba(15, 23, 42, 0.8);
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    padding: 16px 28px;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Buttons */
+#modalDettaglioCampo .btn-danger-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: transparent;
+    border: 2px solid rgba(239, 68, 68, 0.5);
+    border-radius: 10px;
+    color: #ef4444;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#modalDettaglioCampo .btn-danger-outline:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+/* Bottone Chiudi Campo - Stile arancione */
+#modalDettaglioCampo .btn-warning-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: transparent;
+    border: 2px solid rgba(245, 158, 11, 0.5);
+    border-radius: 10px;
+    color: #f59e0b;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#modalDettaglioCampo .btn-warning-outline:hover {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b;
+}
+
+#modalDettaglioCampo .btn-secondary-custom {
+    padding: 10px 24px;
+    background: #334155;
+    border: none;
+    border-radius: 10px;
+    color: #f1f5f9;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#modalDettaglioCampo .btn-secondary-custom:hover {
+    background: #475569;
+}
+
+#modalDettaglioCampo .btn-primary-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+#modalDettaglioCampo .btn-primary-custom:hover {
+    background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+}
+
+/* ============================================================================
+   SCROLLBAR MODAL
+   ============================================================================ */
+
+#modalDettaglioCampo .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+#modalDettaglioCampo .modal-body::-webkit-scrollbar-track {
+    background: #1e293b;
+    border-radius: 3px;
+}
+
+#modalDettaglioCampo .modal-body::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 3px;
+}
+
+#modalDettaglioCampo .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    #modalDettaglioCampo .nav-tabs-custom {
+        overflow-x: auto;
+        padding: 0 16px;
+    }
+    
+    #modalDettaglioCampo .nav-link-custom {
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+    
+    #modalDettaglioCampo .modal-body {
+        padding: 16px;
+    }
+    
+    #modalDettaglioCampo .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
