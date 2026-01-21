@@ -1460,5 +1460,524 @@ class DatabaseHelper {
         return $stmt->execute();
     }
 
+    // ============================================================================
+    // ============================================================================
+    // GESTIONE SEGNALAZIONI - CRUD E STATISTICHE
+    // ============================================================================
+    // ============================================================================
+    
+    // ============================================================================
+    // SEGNALAZIONI - Statistiche contatori per badge
+    // ============================================================================
+    
+    public function getSegnalazioniStats() {
+        $query = "SELECT 
+                    COUNT(*) as totale,
+                    SUM(CASE WHEN stato = 'pending' THEN 1 ELSE 0 END) as pending,
+                    SUM(CASE WHEN stato = 'in_review' THEN 1 ELSE 0 END) as in_review,
+                    SUM(CASE WHEN stato = 'resolved' AND resolved_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as resolved_week,
+                    SUM(CASE WHEN stato = 'resolved' THEN 1 ELSE 0 END) as resolved_totali,
+                    SUM(CASE WHEN stato = 'rejected' THEN 1 ELSE 0 END) as rejected,
+                    SUM(CASE WHEN priorita = 'alta' AND stato = 'pending' THEN 1 ELSE 0 END) as alta_priorita_pending
+                  FROM segnalazioni";
+        $result = $this->db->query($query);
+        return $result->fetch_assoc();
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Lista completa con filtri
+    // ============================================================================
+    
+    public function getAllSegnalazioni($filtri = []) {
+        $query = "SELECT 
+                    s.segnalazione_id, s.tipo, s.descrizione, s.stato, s.priorita,
+                    s.created_at, s.resolved_at, s.azione_intrapresa, s.penalty_assegnati,
+                    s.note_risoluzione, s.prenotazione_id,
+                    u_segnalante.user_id as segnalante_id,
+                    CONCAT(u_segnalante.nome, ' ', u_segnalante.cognome) as segnalante_nome,
+                    u_segnalante.email as segnalante_email,
+                    u_segnalato.user_id as segnalato_id,
+                    CONCAT(u_segnalato.nome, ' ', u_segnalato.cognome) as segnalato_nome,
+                    u_segnalato.email as segnalato_email,
+                    u_segnalato.stato as segnalato_stato,
+                    us_segnalato.penalty_points as segnalato_penalty,
+                    CONCAT(u_admin.nome, ' ', u_admin.cognome) as admin_nome,
+                    DATEDIFF(NOW(), s.created_at) as giorni_attesa,
+                    (SELECT COUNT(*) FROM segnalazioni WHERE user_segnalato_id = s.user_segnalato_id) as segnalato_tot_segnalazioni
+                  FROM segnalazioni s
+                  JOIN users u_segnalante ON s.user_segnalante_id = u_segnalante.user_id
+                  JOIN users u_segnalato ON s.user_segnalato_id = u_segnalato.user_id
+                  LEFT JOIN utenti_standard us_segnalato ON s.user_segnalato_id = us_segnalato.user_id
+                  LEFT JOIN users u_admin ON s.admin_id = u_admin.user_id
+                  WHERE 1=1";
+        
+        $params = [];
+        $types = '';
+        
+        // Filtro stato
+        if (!empty($filtri['stato'])) {
+            $query .= " AND s.stato = ?";
+            $params[] = $filtri['stato'];
+            $types .= 's';
+        }
+        
+        // Filtro tipo
+        if (!empty($filtri['tipo'])) {
+            $query .= " AND s.tipo = ?";
+            $params[] = $filtri['tipo'];
+            $types .= 's';
+        }
+        
+        // Filtro priorità
+        if (!empty($filtri['priorita'])) {
+            $query .= " AND s.priorita = ?";
+            $params[] = $filtri['priorita'];
+            $types .= 's';
+        }
+        
+        // Filtro data inizio
+        if (!empty($filtri['data_da'])) {
+            $query .= " AND DATE(s.created_at) >= ?";
+            $params[] = $filtri['data_da'];
+            $types .= 's';
+        }
+        
+        // Filtro data fine
+        if (!empty($filtri['data_a'])) {
+            $query .= " AND DATE(s.created_at) <= ?";
+            $params[] = $filtri['data_a'];
+            $types .= 's';
+        }
+        
+        // Filtro ricerca (nome segnalante o segnalato)
+        if (!empty($filtri['search'])) {
+            $query .= " AND (CONCAT(u_segnalante.nome, ' ', u_segnalante.cognome) LIKE ? 
+                        OR CONCAT(u_segnalato.nome, ' ', u_segnalato.cognome) LIKE ?
+                        OR u_segnalante.email LIKE ?
+                        OR u_segnalato.email LIKE ?)";
+            $searchTerm = '%' . $filtri['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $types .= 'ssss';
+        }
+        
+        // Ordinamento
+        $orderBy = " ORDER BY ";
+        switch ($filtri['ordina'] ?? 'recenti') {
+            case 'vecchie':
+                $orderBy .= "s.created_at ASC";
+                break;
+            case 'priorita':
+                $orderBy .= "FIELD(s.priorita, 'alta', 'media', 'bassa'), s.created_at DESC";
+                break;
+            case 'tipo':
+                $orderBy .= "s.tipo ASC, s.created_at DESC";
+                break;
+            default: // recenti
+                $orderBy .= "s.created_at DESC";
+        }
+        $query .= $orderBy;
+        
+        if (!empty($params)) {
+            $stmt = $this->db->prepare($query);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+        } else {
+            $result = $this->db->query($query);
+        }
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Dettaglio singola segnalazione
+    // ============================================================================
+    
+    public function getSegnalazioneById($segnalazioneId) {
+        $query = "SELECT 
+                    s.*,
+                    u_segnalante.user_id as segnalante_id,
+                    CONCAT(u_segnalante.nome, ' ', u_segnalante.cognome) as segnalante_nome,
+                    u_segnalante.email as segnalante_email,
+                    u_segnalante.telefono as segnalante_telefono,
+                    u_segnalante.created_at as segnalante_registrato,
+                    u_segnalato.user_id as segnalato_id,
+                    CONCAT(u_segnalato.nome, ' ', u_segnalato.cognome) as segnalato_nome,
+                    u_segnalato.email as segnalato_email,
+                    u_segnalato.telefono as segnalato_telefono,
+                    u_segnalato.stato as segnalato_stato_account,
+                    u_segnalato.created_at as segnalato_registrato,
+                    us_segnalato.penalty_points as segnalato_penalty,
+                    us_segnalato.xp_points as segnalato_xp,
+                    l.nome as segnalato_livello,
+                    CONCAT(u_admin.nome, ' ', u_admin.cognome) as admin_nome
+                  FROM segnalazioni s
+                  JOIN users u_segnalante ON s.user_segnalante_id = u_segnalante.user_id
+                  JOIN users u_segnalato ON s.user_segnalato_id = u_segnalato.user_id
+                  LEFT JOIN utenti_standard us_segnalato ON s.user_segnalato_id = us_segnalato.user_id
+                  LEFT JOIN livelli l ON us_segnalato.livello_id = l.livello_id
+                  LEFT JOIN users u_admin ON s.admin_id = u_admin.user_id
+                  WHERE s.segnalazione_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $segnalazioneId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Dettaglio prenotazione collegata
+    // ============================================================================
+    
+    public function getPrenotazionePerSegnalazione($prenotazioneId) {
+        $query = "SELECT p.*, c.nome as campo_nome, sp.nome as sport_nome,
+                    CONCAT(u.nome, ' ', u.cognome) as utente_nome
+                  FROM prenotazioni p
+                  JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  JOIN sport sp ON c.sport_id = sp.sport_id
+                  JOIN users u ON p.user_id = u.user_id
+                  WHERE p.prenotazione_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $prenotazioneId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Cambia stato semplice
+    // ============================================================================
+    
+    public function updateSegnalazioneStato($segnalazioneId, $nuovoStato, $adminId) {
+        $query = "UPDATE segnalazioni SET stato = ?, admin_id = ? WHERE segnalazione_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('sii', $nuovoStato, $adminId, $segnalazioneId);
+        return $stmt->execute();
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Risolvi segnalazione (con azioni)
+    // ============================================================================
+    
+    public function resolveSegnalazione($segnalazioneId, $data, $adminId) {
+        $this->db->begin_transaction();
+        
+        try {
+            // Ottieni info segnalazione
+            $segnalazione = $this->getSegnalazioneById($segnalazioneId);
+            if (!$segnalazione) {
+                throw new Exception('Segnalazione non trovata');
+            }
+            
+            $userSegnalatoId = $segnalazione['user_segnalato_id'];
+            $userSegnalanteId = $segnalazione['user_segnalante_id'];
+            
+            // Aggiorna segnalazione
+            $query = "UPDATE segnalazioni SET 
+                        stato = 'resolved',
+                        admin_id = ?,
+                        azione_intrapresa = ?,
+                        penalty_assegnati = ?,
+                        note_risoluzione = ?,
+                        resolved_at = NOW()
+                      WHERE segnalazione_id = ?";
+            $stmt = $this->db->prepare($query);
+            $penaltyAssegnati = !empty($data['penalty_points']) ? intval($data['penalty_points']) : null;
+            $stmt->bind_param('isisi', 
+                $adminId, 
+                $data['azione'], 
+                $penaltyAssegnati,
+                $data['note'],
+                $segnalazioneId
+            );
+            $stmt->execute();
+            
+            // Esegui azione selezionata
+            switch ($data['azione']) {
+                case 'warning':
+                    // Invia notifica di warning
+                    $this->inviaNotificaSegnalazione($userSegnalatoId, 'warning', 
+                        'Hai ricevuto un avvertimento',
+                        'Hai ricevuto un avvertimento formale per: ' . $data['note']
+                    );
+                    break;
+                    
+                case 'penalty_points':
+                    if (!empty($data['penalty_points'])) {
+                        $this->addPenaltyPointsFromSegnalazione(
+                            $userSegnalatoId, 
+                            intval($data['penalty_points']), 
+                            $segnalazioneId,
+                            $adminId
+                        );
+                    }
+                    break;
+                    
+                case 'sospensione':
+                    if (!empty($data['giorni_sospensione'])) {
+                        $this->suspendUser($userSegnalatoId, intval($data['giorni_sospensione']), 
+                            'Sospensione per segnalazione: ' . $data['note'], $adminId);
+                    }
+                    break;
+                    
+                case 'ban':
+                    $this->banUser($userSegnalatoId, 'Ban per segnalazione: ' . $data['note'], $adminId);
+                    break;
+            }
+            
+            // Invia notifiche se richiesto
+            if (!empty($data['invia_notifiche'])) {
+                // Notifica al segnalante
+                $this->inviaNotificaSegnalazione($userSegnalanteId, 'segnalazione_gestita',
+                    'La tua segnalazione è stata gestita',
+                    'La segnalazione che hai inviato è stata esaminata e risolta. Azione intrapresa: ' . $this->getAzioneLabel($data['azione'])
+                );
+                
+                // Notifica al segnalato (se non è già stato notificato con warning/sospensione/ban)
+                if ($data['azione'] === 'nessuna' || $data['azione'] === 'penalty_points') {
+                    $this->inviaNotificaSegnalazione($userSegnalatoId, 'segnalazione_ricevuta',
+                        'Hai ricevuto una segnalazione',
+                        'È stata confermata una segnalazione nei tuoi confronti. ' . 
+                        ($data['azione'] === 'penalty_points' ? 'Ti sono stati assegnati ' . $data['penalty_points'] . ' penalty points.' : '')
+                    );
+                }
+            }
+            
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollback();
+            return false;
+        }
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Rigetta segnalazione
+    // ============================================================================
+    
+    public function rejectSegnalazione($segnalazioneId, $motivo, $adminId, $inviaNotifica = true) {
+        $this->db->begin_transaction();
+        
+        try {
+            // Ottieni info segnalazione
+            $segnalazione = $this->getSegnalazioneById($segnalazioneId);
+            if (!$segnalazione) {
+                throw new Exception('Segnalazione non trovata');
+            }
+            
+            // Aggiorna segnalazione
+            $query = "UPDATE segnalazioni SET 
+                        stato = 'rejected',
+                        admin_id = ?,
+                        azione_intrapresa = 'nessuna',
+                        note_risoluzione = ?,
+                        resolved_at = NOW()
+                      WHERE segnalazione_id = ?";
+            $stmt = $this->db->prepare($query);
+            $stmt->bind_param('isi', $adminId, $motivo, $segnalazioneId);
+            $stmt->execute();
+            
+            // Notifica al segnalante
+            if ($inviaNotifica) {
+                $this->inviaNotificaSegnalazione($segnalazione['user_segnalante_id'], 'segnalazione_rifiutata',
+                    'Segnalazione non accolta',
+                    'La tua segnalazione è stata esaminata ma non è stata accolta. Motivo: ' . $motivo
+                );
+            }
+            
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollback();
+            return false;
+        }
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Helper per aggiungere penalty da segnalazione
+    // ============================================================================
+    
+    private function addPenaltyPointsFromSegnalazione($userId, $punti, $segnalazioneId, $adminId) {
+        // Aggiorna punti utente
+        $query = "UPDATE utenti_standard SET penalty_points = penalty_points + ? WHERE user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $punti, $userId);
+        $stmt->execute();
+        
+        // Log (se esiste tabella penalty_log)
+        $checkTable = $this->db->query("SHOW TABLES LIKE 'penalty_log'");
+        if ($checkTable->num_rows > 0) {
+            $motivo = 'segnalazione';
+            $query2 = "INSERT INTO penalty_log (user_id, punti, motivo, segnalazione_id, admin_id, created_at) 
+                       VALUES (?, ?, ?, ?, ?, NOW())";
+            $stmt2 = $this->db->prepare($query2);
+            $stmt2->bind_param('iisii', $userId, $punti, $motivo, $segnalazioneId, $adminId);
+            $stmt2->execute();
+        }
+        
+        // Notifica
+        $this->inviaNotificaSegnalazione($userId, 'penalty_ricevuti',
+            'Penalty Points Ricevuti',
+            'Hai ricevuto ' . $punti . ' penalty points a seguito di una segnalazione confermata.'
+        );
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Helper per inviare notifica
+    // ============================================================================
+    
+    private function inviaNotificaSegnalazione($userId, $tipo, $titolo, $messaggio) {
+        $query = "INSERT INTO notifiche (user_id, tipo, titolo, messaggio, created_at) 
+                  VALUES (?, ?, ?, ?, NOW())";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('isss', $userId, $tipo, $titolo, $messaggio);
+        return $stmt->execute();
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Helper per label azione
+    // ============================================================================
+    
+    private function getAzioneLabel($azione) {
+        $labels = [
+            'nessuna' => 'Nessuna azione',
+            'warning' => 'Warning inviato',
+            'penalty_points' => 'Penalty points assegnati',
+            'sospensione' => 'Sospensione temporanea',
+            'ban' => 'Ban permanente'
+        ];
+        return $labels[$azione] ?? $azione;
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Profilo credibilità segnalante
+    // ============================================================================
+    
+    public function getProfiloSegnalante($userId) {
+        $query = "SELECT 
+                    u.user_id, u.nome, u.cognome, u.email, u.stato, u.created_at,
+                    us.penalty_points, us.xp_points,
+                    l.nome as livello_nome,
+                    (SELECT COUNT(*) FROM segnalazioni WHERE user_segnalante_id = ?) as segnalazioni_fatte,
+                    (SELECT COUNT(*) FROM segnalazioni WHERE user_segnalante_id = ? AND stato = 'resolved') as segnalazioni_validate,
+                    (SELECT COUNT(*) FROM segnalazioni WHERE user_segnalante_id = ? AND stato = 'rejected') as segnalazioni_rifiutate,
+                    (SELECT COUNT(*) FROM segnalazioni WHERE user_segnalato_id = ?) as segnalazioni_ricevute
+                  FROM users u
+                  LEFT JOIN utenti_standard us ON u.user_id = us.user_id
+                  LEFT JOIN livelli l ON us.livello_id = l.livello_id
+                  WHERE u.user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('iiiii', $userId, $userId, $userId, $userId, $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Profilo utente segnalato con statistiche complete
+    // ============================================================================
+    
+    public function getProfiloSegnalato($userId) {
+        $query = "SELECT 
+                    u.user_id, u.nome, u.cognome, u.email, u.stato, u.created_at,
+                    us.penalty_points, us.xp_points,
+                    l.nome as livello_nome,
+                    cl.nome as corso_nome,
+                    (SELECT COUNT(*) FROM segnalazioni WHERE user_segnalato_id = ?) as segnalazioni_ricevute,
+                    (SELECT COUNT(*) FROM segnalazioni WHERE user_segnalato_id = ? AND stato = 'resolved') as segnalazioni_confermate,
+                    (SELECT COUNT(*) FROM prenotazioni WHERE user_id = ? AND stato = 'no_show') as no_show_totali,
+                    (SELECT COUNT(*) FROM prenotazioni WHERE user_id = ? AND stato = 'completata') as prenotazioni_completate,
+                    (SELECT COUNT(*) FROM prenotazioni WHERE user_id = ?) as prenotazioni_totali,
+                    (SELECT COUNT(*) FROM sanzioni WHERE user_id = ?) as sanzioni_totali,
+                    (SELECT COUNT(*) FROM sanzioni WHERE user_id = ? AND attiva = 1) as sanzioni_attive
+                  FROM users u
+                  LEFT JOIN utenti_standard us ON u.user_id = us.user_id
+                  LEFT JOIN livelli l ON us.livello_id = l.livello_id
+                  LEFT JOIN corsi_laurea cl ON us.corso_laurea_id = cl.corso_id
+                  WHERE u.user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('iiiiiiii', $userId, $userId, $userId, $userId, $userId, $userId, $userId, $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Storico segnalazioni ricevute per utente
+    // ============================================================================
+    
+    public function getStoricoSegnalazioniUtente($userId, $excludeId = null, $limit = 5) {
+        $query = "SELECT 
+                    s.segnalazione_id, s.tipo, s.stato, s.created_at, s.azione_intrapresa,
+                    CONCAT(u.nome, ' ', u.cognome) as segnalante_nome
+                  FROM segnalazioni s
+                  JOIN users u ON s.user_segnalante_id = u.user_id
+                  WHERE s.user_segnalato_id = ?";
+        
+        $params = [$userId];
+        $types = 'i';
+        
+        if ($excludeId) {
+            $query .= " AND s.segnalazione_id != ?";
+            $params[] = $excludeId;
+            $types .= 'i';
+        }
+        
+        $query .= " ORDER BY s.created_at DESC LIMIT ?";
+        $params[] = $limit;
+        $types .= 'i';
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Sanzioni attive utente
+    // ============================================================================
+    
+    public function getSanzioniUtente($userId, $limit = 5) {
+        $query = "SELECT s.*, CONCAT(u.nome, ' ', u.cognome) as admin_nome
+                  FROM sanzioni s
+                  LEFT JOIN users u ON s.admin_id = u.user_id
+                  WHERE s.user_id = ?
+                  ORDER BY s.created_at DESC LIMIT ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $userId, $limit);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // ============================================================================
+    // SEGNALAZIONI - Tipi disponibili con icone
+    // ============================================================================
+    
+    public function getTipiSegnalazione() {
+        return [
+            'no_show' => ['label' => 'No Show', 'icon' => '🚫', 'color' => '#EF4444'],
+            'comportamento_scorretto' => ['label' => 'Comportamento Scorretto', 'icon' => '⚠️', 'color' => '#F59E0B'],
+            'linguaggio_offensivo' => ['label' => 'Linguaggio Offensivo', 'icon' => '🗣️', 'color' => '#F97316'],
+            'violenza' => ['label' => 'Violenza', 'icon' => '🔴', 'color' => '#DC2626'],
+            'altro' => ['label' => 'Altro', 'icon' => '📝', 'color' => '#6B7280']
+        ];
+    }
+
+    // ============================================================================
+    // SEGNALAZIONI - Calcola automaticamente la priorità in base al tipo di segnalazione
+    // ============================================================================
+    
+    public function calcolaPrioritaSegnalazione($tipo) {
+        $prioritaAlta = ['no_show', 'comportamento'];
+        $prioritaMedia = ['ritardo', 'danno_struttura'];
+        $prioritaBassa = ['altro'];
+        
+        if (in_array($tipo, $prioritaAlta)) {
+            return 'alta';
+        } elseif (in_array($tipo, $prioritaMedia)) {
+            return 'media';
+        } else {
+            return 'bassa';
+        }
+    }
 }
 ?>
