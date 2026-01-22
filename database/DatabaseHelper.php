@@ -1978,5 +1978,655 @@ class DatabaseHelper {
             return 'bassa';
         }
     }
+
+    // ============================================================================
+    // ============================================================================
+    // GESTIONE COMUNICAZIONI - BROADCAST E MESSAGGI
+    // ============================================================================
+    // ============================================================================
+    
+    // ============================================================================
+    // BROADCAST - Statistiche per KPI
+    // ============================================================================
+    
+    public function getBroadcastStats() {
+        $query = "SELECT 
+                    COUNT(*) as totale,
+                    SUM(CASE WHEN stato = 'inviato' THEN 1 ELSE 0 END) as inviati,
+                    SUM(CASE WHEN stato = 'programmato' THEN 1 ELSE 0 END) as programmati,
+                    SUM(CASE WHEN stato = 'bozza' THEN 1 ELSE 0 END) as bozze,
+                    SUM(CASE WHEN stato = 'fallito' THEN 1 ELSE 0 END) as falliti,
+                    SUM(num_destinatari) as destinatari_totali
+                  FROM broadcast_messages";
+        $result = $this->db->query($query);
+        return $result->fetch_assoc();
+    }
+    
+    // ============================================================================
+    // BROADCAST - Lista completa con filtri
+    // ============================================================================
+    
+    public function getAllBroadcasts($filtri = []) {
+        $query = "SELECT bm.*, CONCAT(u.nome, ' ', u.cognome) as admin_nome
+                  FROM broadcast_messages bm
+                  JOIN users u ON bm.admin_id = u.user_id
+                  WHERE 1=1";
+        
+        $params = [];
+        $types = '';
+        
+        if (!empty($filtri['stato'])) {
+            $query .= " AND bm.stato = ?";
+            $params[] = $filtri['stato'];
+            $types .= 's';
+        }
+        
+        if (!empty($filtri['search'])) {
+            $query .= " AND (bm.oggetto LIKE ? OR bm.messaggio LIKE ?)";
+            $searchTerm = '%' . $filtri['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $types .= 'ss';
+        }
+        
+        $query .= " ORDER BY bm.created_at DESC";
+        
+        if (!empty($params)) {
+            $stmt = $this->db->prepare($query);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+        } else {
+            $result = $this->db->query($query);
+        }
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // ============================================================================
+    // BROADCAST - Dettaglio singolo broadcast
+    // ============================================================================
+    
+    public function getBroadcastById($broadcastId) {
+        $query = "SELECT bm.*, CONCAT(u.nome, ' ', u.cognome) as admin_nome
+                  FROM broadcast_messages bm
+                  JOIN users u ON bm.admin_id = u.user_id
+                  WHERE bm.broadcast_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $broadcastId);
+        $stmt->execute();
+        $broadcast = $stmt->get_result()->fetch_assoc();
+        
+        // Se è un messaggio diretto, recupera i nomi dei destinatari
+        if ($broadcast && $broadcast['target_type'] === 'direct' && !empty($broadcast['target_filter'])) {
+            $userIds = json_decode($broadcast['target_filter'], true);
+            if (is_array($userIds) && count($userIds) > 0) {
+                $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+                $types = str_repeat('i', count($userIds));
+                $destQuery = "SELECT user_id, CONCAT(nome, ' ', cognome) as nome_completo, email 
+                              FROM users WHERE user_id IN ($placeholders)";
+                $destStmt = $this->db->prepare($destQuery);
+                $destStmt->bind_param($types, ...$userIds);
+                $destStmt->execute();
+                $broadcast['destinatari_dettaglio'] = $destStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            }
+        }
+        
+        // Aggiungi descrizione target leggibile
+        $targetDescriptions = [
+            'tutti' => 'Tutti gli utenti',
+            'attivi' => 'Utenti attivi',
+            'corso' => 'Corso di laurea',
+            'sport' => 'Sport preferito',
+            'livello' => 'Livello utente',
+            'custom' => 'Lista personalizzata',
+            'direct' => 'Messaggio diretto'
+        ];
+        $broadcast['target_description'] = $targetDescriptions[$broadcast['target_type']] ?? $broadcast['target_type'];
+        
+        return $broadcast;
+    }
+    
+    // ============================================================================
+    // BROADCAST - Salva bozza
+    // ============================================================================
+    
+    public function saveBroadcastDraft($data) {
+        $query = "INSERT INTO broadcast_messages 
+                  (admin_id, oggetto, messaggio, target_type, target_filter, canale, stato, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, 'bozza', NOW())";
+        
+        $stmt = $this->db->prepare($query);
+        $oggetto = $data['oggetto'] ?: 'Bozza senza titolo';
+        $messaggio = $data['messaggio'] ?: '';
+        $targetType = $data['target_type'] ?? 'tutti';
+        $targetFilter = $data['target_filter'] ?? null;
+        $canale = $data['canale'] ?? 'in_app';
+        
+        $stmt->bind_param('isssss', 
+            $data['admin_id'],
+            $oggetto,
+            $messaggio,
+            $targetType,
+            $targetFilter,
+            $canale
+        );
+        
+        if ($stmt->execute()) {
+            return $this->db->insert_id;
+        }
+        return false;
+    }
+    
+    // ============================================================================
+    // BROADCAST - Aggiorna bozza esistente
+    // ============================================================================
+    
+    public function updateBroadcastDraft($broadcastId, $data) {
+        // Verifica che sia una bozza
+        $check = $this->getBroadcastById($broadcastId);
+        if (!$check || $check['stato'] !== 'bozza') {
+            return false;
+        }
+        
+        $query = "UPDATE broadcast_messages 
+                  SET oggetto = ?, messaggio = ?, target_type = ?, target_filter = ?, canale = ?
+                  WHERE broadcast_id = ? AND stato = 'bozza'";
+        
+        $stmt = $this->db->prepare($query);
+        $oggetto = $data['oggetto'] ?: 'Bozza senza titolo';
+        $messaggio = $data['messaggio'] ?: '';
+        $targetType = $data['target_type'] ?? 'tutti';
+        $targetFilter = $data['target_filter'] ?? null;
+        $canale = $data['canale'] ?? 'in_app';
+        
+        $stmt->bind_param('sssssi', 
+            $oggetto,
+            $messaggio,
+            $targetType,
+            $targetFilter,
+            $canale,
+            $broadcastId
+        );
+        
+        return $stmt->execute();
+    }
+    
+    // ============================================================================
+    // BROADCAST - Invia bozza (converti in broadcast e invia)
+    // ============================================================================
+    
+    public function sendBroadcastFromDraft($broadcastId, $adminId) {
+        // Recupera la bozza
+        $draft = $this->getBroadcastById($broadcastId);
+        if (!$draft || $draft['stato'] !== 'bozza') {
+            return ['success' => false, 'message' => 'Bozza non trovata o già inviata'];
+        }
+        
+        // Prepara i dati per createBroadcast
+        $data = [
+            'admin_id' => $adminId,
+            'oggetto' => $draft['oggetto'],
+            'messaggio' => $draft['messaggio'],
+            'target_type' => $draft['target_type'],
+            'target_filter' => $draft['target_filter'],
+            'canale' => $draft['canale'],
+            'scheduled_at' => null,
+            'salva_template' => false
+        ];
+        
+        // Elimina la bozza
+        $this->deleteBroadcast($broadcastId);
+        
+        // Crea e invia il broadcast
+        return $this->createBroadcast($data);
+    }
+    
+    // ============================================================================
+    // BROADCAST - Conta destinatari in base ai filtri
+    // ============================================================================
+    
+    public function countDestinatariBroadcast($targetType, $targetFilter = null) {
+        $query = "";
+        
+        switch ($targetType) {
+            case 'tutti':
+                $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                break;
+                
+            case 'attivi':
+                // Utenti che hanno fatto almeno una prenotazione nell'ultimo mese
+                $query = "SELECT COUNT(DISTINCT u.user_id) as count 
+                          FROM users u 
+                          JOIN prenotazioni p ON u.user_id = p.user_id 
+                          WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                          AND p.created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)";
+                break;
+                
+            case 'corso':
+                if (!empty($targetFilter)) {
+                    $query = "SELECT COUNT(*) as count 
+                              FROM users u 
+                              JOIN utenti_standard us ON u.user_id = us.user_id 
+                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              AND us.corso_laurea_id = " . intval($targetFilter);
+                } else {
+                    $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                }
+                break;
+                
+            case 'sport':
+                if (!empty($targetFilter)) {
+                    $query = "SELECT COUNT(DISTINCT u.user_id) as count 
+                              FROM users u 
+                              JOIN user_sport_preferiti usp ON u.user_id = usp.user_id 
+                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              AND usp.sport_id = " . intval($targetFilter);
+                } else {
+                    $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                }
+                break;
+                
+            case 'livello':
+                if (!empty($targetFilter)) {
+                    $query = "SELECT COUNT(*) as count 
+                              FROM users u 
+                              JOIN utenti_standard us ON u.user_id = us.user_id 
+                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              AND us.livello_id = " . intval($targetFilter);
+                } else {
+                    $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                }
+                break;
+                
+            case 'custom':
+                if (!empty($targetFilter)) {
+                    // Parse email/ID list
+                    $items = array_map('trim', explode(',', $targetFilter));
+                    $emailList = [];
+                    $idList = [];
+                    
+                    foreach ($items as $item) {
+                        if (filter_var($item, FILTER_VALIDATE_EMAIL)) {
+                            $emailList[] = "'" . $this->db->real_escape_string($item) . "'";
+                        } elseif (is_numeric($item)) {
+                            $idList[] = intval($item);
+                        }
+                    }
+                    
+                    $conditions = [];
+                    if (!empty($emailList)) {
+                        $conditions[] = "u.email IN (" . implode(',', $emailList) . ")";
+                    }
+                    if (!empty($idList)) {
+                        $conditions[] = "u.user_id IN (" . implode(',', $idList) . ")";
+                    }
+                    
+                    if (!empty($conditions)) {
+                        $query = "SELECT COUNT(*) as count FROM users u WHERE u.stato = 'attivo' AND (" . implode(' OR ', $conditions) . ")";
+                    } else {
+                        return 0;
+                    }
+                } else {
+                    return 0;
+                }
+                break;
+                
+            default:
+                $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+        }
+        
+        $result = $this->db->query($query);
+        $row = $result->fetch_assoc();
+        return $row['count'] ?? 0;
+    }
+    
+    // ============================================================================
+    // BROADCAST - Ottieni lista destinatari
+    // ============================================================================
+    
+    public function getDestinatariBroadcast($targetType, $targetFilter = null) {
+        $query = "";
+        
+        switch ($targetType) {
+            case 'tutti':
+                $query = "SELECT user_id, email FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                break;
+                
+            case 'attivi':
+                $query = "SELECT DISTINCT u.user_id, u.email 
+                          FROM users u 
+                          JOIN prenotazioni p ON u.user_id = p.user_id 
+                          WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                          AND p.created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)";
+                break;
+                
+            case 'corso':
+                if (!empty($targetFilter)) {
+                    $query = "SELECT u.user_id, u.email 
+                              FROM users u 
+                              JOIN utenti_standard us ON u.user_id = us.user_id 
+                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              AND us.corso_laurea_id = " . intval($targetFilter);
+                } else {
+                    $query = "SELECT user_id, email FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                }
+                break;
+                
+            case 'sport':
+                if (!empty($targetFilter)) {
+                    $query = "SELECT DISTINCT u.user_id, u.email 
+                              FROM users u 
+                              JOIN user_sport_preferiti usp ON u.user_id = usp.user_id 
+                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              AND usp.sport_id = " . intval($targetFilter);
+                } else {
+                    $query = "SELECT user_id, email FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                }
+                break;
+                
+            case 'livello':
+                if (!empty($targetFilter)) {
+                    $query = "SELECT u.user_id, u.email 
+                              FROM users u 
+                              JOIN utenti_standard us ON u.user_id = us.user_id 
+                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              AND us.livello_id = " . intval($targetFilter);
+                } else {
+                    $query = "SELECT user_id, email FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                }
+                break;
+                
+            case 'custom':
+                if (!empty($targetFilter)) {
+                    $items = array_map('trim', explode(',', $targetFilter));
+                    $emailList = [];
+                    $idList = [];
+                    
+                    foreach ($items as $item) {
+                        if (filter_var($item, FILTER_VALIDATE_EMAIL)) {
+                            $emailList[] = "'" . $this->db->real_escape_string($item) . "'";
+                        } elseif (is_numeric($item)) {
+                            $idList[] = intval($item);
+                        }
+                    }
+                    
+                    $conditions = [];
+                    if (!empty($emailList)) {
+                        $conditions[] = "u.email IN (" . implode(',', $emailList) . ")";
+                    }
+                    if (!empty($idList)) {
+                        $conditions[] = "u.user_id IN (" . implode(',', $idList) . ")";
+                    }
+                    
+                    if (!empty($conditions)) {
+                        $query = "SELECT u.user_id, u.email FROM users u WHERE u.stato = 'attivo' AND (" . implode(' OR ', $conditions) . ")";
+                    } else {
+                        return [];
+                    }
+                } else {
+                    return [];
+                }
+                break;
+                
+            default:
+                $query = "SELECT user_id, email FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+        }
+        
+        $result = $this->db->query($query);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // ============================================================================
+    // BROADCAST - Crea e invia broadcast
+    // ============================================================================
+    
+    public function createBroadcast($data) {
+        $this->db->begin_transaction();
+        
+        try {
+            // Determina lo stato
+            $stato = !empty($data['scheduled_at']) ? 'programmato' : 'inviato';
+            
+            // Conta destinatari
+            $targetFilter = !empty($data['target_filter']) ? json_decode($data['target_filter'], true) : null;
+            if (is_string($targetFilter)) {
+                $targetFilter = $targetFilter; // Mantieni come stringa se non è JSON valido
+            }
+            $numDestinatari = $this->countDestinatariBroadcast($data['target_type'], is_array($targetFilter) ? $targetFilter[0] ?? null : $targetFilter);
+            
+            // Inserisci broadcast
+            $query = "INSERT INTO broadcast_messages 
+                      (admin_id, oggetto, messaggio, target_type, target_filter, canale, scheduled_at, num_destinatari, stato) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $this->db->prepare($query);
+            $stmt->bind_param('issssssis', 
+                $data['admin_id'],
+                $data['oggetto'],
+                $data['messaggio'],
+                $data['target_type'],
+                $data['target_filter'],
+                $data['canale'],
+                $data['scheduled_at'],
+                $numDestinatari,
+                $stato
+            );
+            $stmt->execute();
+            $broadcastId = $this->db->insert_id;
+            
+            // Se invio immediato, crea le notifiche
+            if ($stato === 'inviato') {
+                $destinatari = $this->getDestinatariBroadcast($data['target_type'], is_array($targetFilter) ? $targetFilter[0] ?? null : $targetFilter);
+                
+                // Invia notifiche in-app
+                if ($data['canale'] === 'in_app' || $data['canale'] === 'entrambi') {
+                    foreach ($destinatari as $dest) {
+                        $this->creaNotifica(
+                            $dest['user_id'],
+                            'broadcast',
+                            $data['oggetto'],
+                            $data['messaggio']
+                        );
+                    }
+                }
+                
+                // Aggiorna timestamp invio
+                $updateQuery = "UPDATE broadcast_messages SET sent_at = NOW() WHERE broadcast_id = ?";
+                $updateStmt = $this->db->prepare($updateQuery);
+                $updateStmt->bind_param('i', $broadcastId);
+                $updateStmt->execute();
+            }
+            
+            // Salva come template se richiesto
+            if (!empty($data['salva_template'])) {
+                $this->saveNotificationTemplate([
+                    'tipo' => 'broadcast_' . $broadcastId,
+                    'titolo' => $data['oggetto'],
+                    'messaggio' => $data['messaggio'],
+                    'admin_id' => $data['admin_id']
+                ]);
+            }
+            
+            $this->db->commit();
+            return [
+                'success' => true,
+                'broadcast_id' => $broadcastId,
+                'destinatari' => $numDestinatari
+            ];
+            
+        } catch (Exception $e) {
+            $this->db->rollback();
+            return [
+                'success' => false,
+                'message' => 'Errore: ' . $e->getMessage()
+            ];
+        }
+    }
+    
+    // ============================================================================
+    // BROADCAST - Elimina broadcast (solo bozze)
+    // ============================================================================
+    
+    public function deleteBroadcast($broadcastId) {
+        $query = "DELETE FROM broadcast_messages WHERE broadcast_id = ? AND stato = 'bozza'";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $broadcastId);
+        return $stmt->execute() && $stmt->affected_rows > 0;
+    }
+    
+    // ============================================================================
+    // NOTIFICHE - Crea notifica singola
+    // ============================================================================
+    
+    public function creaNotifica($userId, $tipo, $titolo, $messaggio, $link = null) {
+        $query = "INSERT INTO notifiche (user_id, tipo, titolo, messaggio, link, created_at) 
+                  VALUES (?, ?, ?, ?, ?, NOW())";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('issss', $userId, $tipo, $titolo, $messaggio, $link);
+        return $stmt->execute();
+    }
+    
+    // ============================================================================
+    // TEMPLATE NOTIFICHE - Ottieni tutti i template
+    // ============================================================================
+    
+    public function getNotificationTemplates() {
+        $query = "SELECT * FROM notification_templates WHERE attivo = 1 ORDER BY updated_at DESC";
+        $result = $this->db->query($query);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+    
+    // ============================================================================
+    // TEMPLATE NOTIFICHE - Salva template
+    // ============================================================================
+    
+    public function saveNotificationTemplate($data) {
+        $query = "INSERT INTO notification_templates (tipo, titolo_template, messaggio_template, updated_by) 
+                  VALUES (?, ?, ?, ?)
+                  ON DUPLICATE KEY UPDATE 
+                  titolo_template = VALUES(titolo_template),
+                  messaggio_template = VALUES(messaggio_template),
+                  updated_by = VALUES(updated_by),
+                  updated_at = NOW()";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('sssi', $data['tipo'], $data['titolo'], $data['messaggio'], $data['admin_id']);
+        return $stmt->execute();
+    }
+    
+    // ============================================================================
+    // TEMPLATE NOTIFICHE - Elimina template
+    // ============================================================================
+    
+    public function deleteNotificationTemplate($templateId) {
+        $query = "UPDATE notification_templates SET attivo = 0 WHERE template_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $templateId);
+        return $stmt->execute();
+    }
+    
+    // ============================================================================
+    // MESSAGGI DIRETTI - Cerca utenti
+    // ============================================================================
+    
+    public function searchUsersForMessage($searchTerm) {
+        $query = "SELECT user_id, email, nome, cognome 
+                  FROM users 
+                  WHERE stato = 'attivo' 
+                  AND (nome LIKE ? OR cognome LIKE ? OR email LIKE ? OR CONCAT(nome, ' ', cognome) LIKE ?)
+                  ORDER BY cognome, nome
+                  LIMIT 10";
+        $stmt = $this->db->prepare($query);
+        $term = '%' . $searchTerm . '%';
+        $stmt->bind_param('ssss', $term, $term, $term, $term);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // ============================================================================
+    // MESSAGGI DIRETTI - Invia messaggio a singolo utente
+    // ============================================================================
+    
+    public function sendDirectMessage($userIds, $oggetto, $messaggio, $canali, $adminId) {
+        // Accetta sia singolo ID che array di ID
+        if (!is_array($userIds)) {
+            $userIds = [$userIds];
+        }
+        
+        $this->db->begin_transaction();
+        
+        try {
+            $successCount = 0;
+            
+            foreach ($userIds as $userId) {
+                $userId = intval($userId);
+                if ($userId <= 0) continue;
+                
+                // Verifica che l'utente esista
+                $checkQuery = "SELECT user_id FROM users WHERE user_id = ?";
+                $checkStmt = $this->db->prepare($checkQuery);
+                $checkStmt->bind_param('i', $userId);
+                $checkStmt->execute();
+                if (!$checkStmt->get_result()->fetch_assoc()) {
+                    continue; // Utente non esiste, salta
+                }
+                
+                // Crea notifica in-app se richiesto
+                if (in_array('in_app', $canali)) {
+                    $query = "INSERT INTO notifiche (user_id, tipo, titolo, messaggio, link, created_at) 
+                              VALUES (?, 'admin_message', ?, ?, NULL, NOW())";
+                    $stmt = $this->db->prepare($query);
+                    $stmt->bind_param('iss', $userId, $oggetto, $messaggio);
+                    if ($stmt->execute()) {
+                        $successCount++;
+                    }
+                }
+            }
+            
+            // Salva anche come broadcast per lo storico admin (solo se almeno un invio riuscito)
+            if ($successCount > 0) {
+                // Determina il canale
+                $canale = 'in_app';
+                if (in_array('in_app', $canali) && in_array('email', $canali)) {
+                    $canale = 'entrambi';
+                } else if (in_array('email', $canali)) {
+                    $canale = 'email';
+                }
+                
+                // Salva il messaggio diretto come broadcast con target_type='direct'
+                $targetFilter = json_encode($userIds);
+                $broadcastQuery = "INSERT INTO broadcast_messages 
+                                   (admin_id, oggetto, messaggio, target_type, target_filter, canale, 
+                                    scheduled_at, sent_at, num_destinatari, stato, created_at)
+                                   VALUES (?, ?, ?, 'direct', ?, ?, NULL, NOW(), ?, 'inviato', NOW())";
+                $broadcastStmt = $this->db->prepare($broadcastQuery);
+                $broadcastStmt->bind_param('issssi', 
+                    $adminId, 
+                    $oggetto, 
+                    $messaggio, 
+                    $targetFilter,
+                    $canale,
+                    $successCount
+                );
+                $broadcastStmt->execute();
+            }
+            
+            $this->db->commit();
+            return $successCount;
+            
+        } catch (Exception $e) {
+            $this->db->rollback();
+            return 0;
+        }
+    }
+    
+    // ============================================================================
+    // LIVELLI - Ottieni tutti i livelli
+    // ============================================================================
+    
+    public function getAllLivelli() {
+        $query = "SELECT livello_id, nome, xp_minimo, xp_massimo FROM livelli ORDER BY xp_minimo ASC";
+        $result = $this->db->query($query);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
 }
 ?>

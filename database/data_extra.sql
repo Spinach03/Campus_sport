@@ -178,7 +178,7 @@ ALTER TABLE `recensioni`
 -- SEGNALAZIONI (15 segnalazioni)
 -- -----------------------------------------------------
 INSERT INTO `segnalazioni` (`segnalazione_id`, `user_segnalante_id`, `user_segnalato_id`, `tipo`, `descrizione`, `prenotazione_id`, `stato`, `priorita`, `admin_id`, `azione_intrapresa`, `penalty_assegnati`, `note_risoluzione`, `created_at`, `resolved_at`) VALUES
--- Segnalazioni PENDING (10 - incluse le ex in_review)
+-- Segnalazioni PENDING (10)
 (1, 4, 6, 'no_show', 'L''utente non si è presentato alla partita di calcetto, eravamo rimasti in 9.', 41, 'pending', 'media', NULL, NULL, NULL, NULL, '2025-01-10 13:00:00', NULL),
 (2, 10, 17, 'no_show', 'Assente senza preavviso, abbiamo dovuto annullare la partita.', 43, 'pending', 'alta', NULL, NULL, NULL, NULL, '2025-01-20 12:00:00', NULL),
 (3, 12, 26, 'comportamento_scorretto', 'Ha lasciato il campo in disordine e non ha raccolto le bottiglie.', 19, 'pending', 'bassa', NULL, NULL, NULL, NULL, '2025-01-17 16:00:00', NULL),
@@ -350,3 +350,115 @@ INSERT INTO `sanzioni` (`sanzione_id`, `user_id`, `tipo`, `motivo`, `data_inizio
 
 ALTER TABLE `sanzioni`
   MODIFY `sanzione_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+-- =====================================================
+-- SEZIONE COMUNICAZIONI
+-- notification_templates, broadcast_messages
+-- =====================================================
+
+-- -----------------------------------------------------
+-- NOTIFICATION TEMPLATES
+-- Template predefiniti per le comunicazioni
+-- -----------------------------------------------------
+INSERT INTO `notification_templates` (`template_id`, `tipo`, `titolo_template`, `messaggio_template`, `canale`, `attivo`, `updated_at`, `updated_by`) VALUES
+(1, 'benvenuto', 'Benvenuto su Campus Sports Arena! 🏟️', 'Ciao {nome}!\n\nSiamo felici di averti con noi! Con Campus Sports Arena puoi prenotare campi sportivi in modo semplice e veloce.\n\n🏃 Inizia subito a prenotare\n🏆 Accumula XP e sali di livello\n🎖️ Sblocca badge esclusivi\n\nBuono sport!', 'entrambi', 1, '2025-01-10 09:00:00', 1),
+(2, 'prenotazione_confermata', 'Prenotazione Confermata ✅', 'La tua prenotazione per {campo} il giorno {data} alle ore {ora} è stata confermata!\n\nRicordati di presentarti 10 minuti prima dell\'orario previsto.\n\nBuon divertimento! 🎉', 'entrambi', 1, '2025-01-10 09:00:00', 1),
+(3, 'prenotazione_cancellata', 'Prenotazione Cancellata', 'La tua prenotazione per {campo} il giorno {data} alle ore {ora} è stata cancellata.\n\nSe non sei stato tu a cancellarla, contatta l\'amministrazione.', 'entrambi', 1, '2025-01-10 09:00:00', 1),
+(4, 'promemoria_prenotazione', 'Promemoria: Prenotazione domani! 📅', 'Ti ricordiamo che domani hai una prenotazione:\n\n📍 Campo: {campo}\n🕐 Orario: {ora}\n\nNon dimenticare l\'attrezzatura necessaria!', 'entrambi', 1, '2025-01-10 09:00:00', 1),
+(5, 'livello_up', 'Congratulazioni! Sei salito di livello! 🎉', 'Fantastico {nome}!\n\nHai raggiunto il livello {livello}!\n\nNuovi vantaggi sbloccati:\n• Più prenotazioni simultanee\n• Più ore settimanali disponibili\n• Prenotazioni con più anticipo\n\nContinua così!', 'in_app', 1, '2025-01-10 09:00:00', 1),
+(6, 'badge_sbloccato', 'Nuovo Badge Sbloccato! 🏅', 'Complimenti {nome}!\n\nHai sbloccato il badge "{badge}"!\n\n{descrizione_badge}\n\n+{xp} XP guadagnati!', 'in_app', 1, '2025-01-10 09:00:00', 1),
+(7, 'segnalazione_ricevuta', 'Hai ricevuto una segnalazione', 'Ciao {nome},\n\nAbbiamo ricevuto una segnalazione che ti riguarda relativamente alla prenotazione del {data}.\n\nTipo: {tipo_segnalazione}\n\nL\'amministrazione sta verificando l\'accaduto.', 'entrambi', 1, '2025-01-10 09:00:00', 2),
+(8, 'segnalazione_risolta', 'Aggiornamento sulla tua segnalazione', 'Ciao {nome},\n\nLa segnalazione che hai inviato il {data} è stata esaminata dal nostro team.\n\nEsito: {esito}\n\nGrazie per aver contribuito a mantenere un ambiente sportivo sano e rispettoso.', 'entrambi', 1, '2025-01-10 09:00:00', 2),
+(9, 'manutenzione_campo', 'Avviso: Campo in Manutenzione', 'Ti informiamo che il campo {campo} sarà in manutenzione dal {data_inizio} al {data_fine}.\n\nCi scusiamo per il disagio.', 'entrambi', 1, '2025-01-10 09:00:00', 1),
+(10, 'nuovo_campo', 'Nuovo campo disponibile! 🆕', 'Grande novità!\n\nÈ ora disponibile un nuovo campo: {campo}!\n\n{descrizione}\n\nPrenota subito e sii tra i primi a provarlo!', 'entrambi', 1, '2025-01-10 09:00:00', 1),
+(11, 'promozione_evento', 'Evento Speciale in Arrivo! 🎊', 'Non perdere il prossimo evento:\n\n{titolo_evento}\n\n📅 Data: {data}\n📍 Dove: {luogo}\n\nIscriviti subito!', 'entrambi', 1, '2025-01-15 10:00:00', 3),
+(12, 'chiusura_festivita', 'Chiusura per Festività', 'Ti informiamo che i nostri impianti saranno chiusi dal {data_inizio} al {data_fine} per le festività.\n\nBuone feste dallo staff di Campus Sports Arena! 🎄', 'entrambi', 1, '2025-01-15 10:00:00', 1);
+
+ALTER TABLE `notification_templates` AUTO_INCREMENT = 13;
+
+
+-- -----------------------------------------------------
+-- BROADCAST MESSAGES - INVIATI (passato)
+-- -----------------------------------------------------
+INSERT INTO `broadcast_messages` (`broadcast_id`, `admin_id`, `oggetto`, `messaggio`, `target_type`, `target_filter`, `canale`, `scheduled_at`, `sent_at`, `num_destinatari`, `stato`, `created_at`) VALUES
+(1, 1, 'Buon Anno da Campus Sports Arena! 🎉', 'Caro studente,\n\nTutto il team di Campus Sports Arena ti augura un fantastico 2025!\n\nQuest anno abbiamo in serbo tante novità:\n- Nuovi campi da padel\n- Tornei mensili con premi\n- Sistema di livelli e badge rinnovato\n\nContinua a praticare sport e a divertirti con noi!\n\nLo Staff', 'tutti', NULL, 'entrambi', NULL, '2025-01-02 10:00:00', 35, 'inviato', '2025-01-02 09:30:00'),
+(2, 2, 'Manutenzione Completata - Campi Calcetto', 'Ciao!\n\nSiamo lieti di comunicarti che i lavori di manutenzione sui campi da calcetto sono stati completati.\n\nI campi Campo A e Campo B sono ora disponibili con:\n- Nuovo manto in erba sintetica\n- Illuminazione LED potenziata\n- Porte e reti nuove\n\nPrenota subito la tua partita!', 'tutti', NULL, 'in_app', NULL, '2025-01-08 14:00:00', 35, 'inviato', '2025-01-08 13:45:00'),
+(3, 1, 'Grazie per la tua fedeltà! 🙏', 'Ciao campione!\n\nAbbiamo notato che sei uno dei nostri utenti più attivi e volevamo ringraziarti.\n\nCome premio, hai diritto a:\n- 1 ora gratuita di prenotazione\n- 50 XP bonus\n\nIl codice promozionale ti verrà inviato via email.\n\nContinua così!', 'attivi', NULL, 'entrambi', NULL, '2025-01-10 11:00:00', 28, 'inviato', '2025-01-10 10:30:00'),
+(4, 3, 'Convenzione Scienze Motorie - Nuovi Vantaggi', 'Gentile studente di Scienze Motorie,\n\nIn collaborazione con il Dipartimento, abbiamo attivato una nuova convenzione per te:\n\n- 20% di sconto su tutte le prenotazioni\n- Accesso prioritario ai nuovi campi\n- Possibilità di tirocinio presso i nostri impianti\n\nPer attivare i vantaggi, presenta il tuo badge universitario alla reception.', 'corso', '5', 'entrambi', NULL, '2025-01-12 09:00:00', 8, 'inviato', '2025-01-12 08:45:00'),
+(5, 2, 'Torneo di Tennis Universitario 2025 🎾', 'Sei appassionato di tennis? Questa è la tua occasione!\n\n🏆 TORNEO DI TENNIS UNIVERSITARIO 2025\n\n📅 Data: 15-16 Febbraio 2025\n📍 Campi Tennis Campus\n👥 Max 32 partecipanti\n🏅 Premi per i primi 3 classificati\n\nCategorie: Singolare M/F, Doppio\n\nIscrizioni aperte fino al 10 Febbraio!', 'sport', '5', 'entrambi', NULL, '2025-01-14 16:00:00', 12, 'inviato', '2025-01-14 15:30:00'),
+(6, 1, 'Accesso Esclusivo VIP 👑', 'Caro membro Gold/Platinum,\n\nCome utente premium, hai accesso esclusivo alle nostre nuove funzionalità:\n\n- Prenotazione campi premium senza attesa\n- Accesso spogliatoi VIP\n- Inviti a eventi esclusivi\n- Supporto prioritario\n\nGrazie per far parte della nostra community!', 'livello', '3', 'in_app', NULL, '2025-01-15 10:00:00', 5, 'inviato', '2025-01-15 09:45:00'),
+(7, 2, 'Nuovo Aggiornamento Disponibile 📱', 'Ciao!\n\nAbbiamo rilasciato un importante aggiornamento:\n\n✨ Novità versione 2.5:\n- Interfaccia completamente rinnovata\n- Calendario prenotazioni migliorato\n- Notifiche push più precise\n- Correzione bug segnalati\n\nAggiorna l app per godere di tutte le novità!', 'tutti', NULL, 'in_app', NULL, '2025-01-16 12:00:00', 35, 'inviato', '2025-01-16 11:45:00'),
+(8, 1, 'Chiusura Temporanea - Allerta Meteo ⚠️', 'ATTENZIONE\n\nA causa dell allerta meteo arancione emessa dalla Protezione Civile, i campi all aperto saranno chiusi oggi 18 Gennaio.\n\nI campi indoor rimangono aperti con orario regolare.\n\nTutte le prenotazioni per i campi esterni sono state automaticamente cancellate.\n\nCi scusiamo per il disagio.', 'tutti', NULL, 'entrambi', NULL, '2025-01-18 07:30:00', 35, 'inviato', '2025-01-18 07:00:00'),
+(9, 3, 'Inaugurazione Nuovi Campi Padel! 🎾', 'Grande notizia per gli amanti del Padel!\n\nSono finalmente pronti i 2 nuovi campi da Padel coperti!\n\n📍 Ubicazione: Ala Est del Campus\n- Superficie in erba sintetica professionale\n- Pareti in vetro temperato\n- Illuminazione LED regolabile\n\n🎁 PROMO INAUGURAZIONE: Prima prenotazione GRATUITA!', 'sport', '6', 'entrambi', NULL, '2025-01-19 09:00:00', 15, 'inviato', '2025-01-19 08:30:00'),
+(10, 1, 'Ci manchi! Torna a giocare 💪', 'Ciao!\n\nÈ passato un po di tempo dalla tua ultima visita e volevamo sapere se va tutto bene.\n\nLo sport è importante per il benessere fisico e mentale!\n\nTi aspettiamo sui nostri campi.\n\n🎁 Usa il codice RITORNO10 per uno sconto del 10% sulla prossima prenotazione.', 'custom', '["mario.verdi@studio.unibo.it", "giulia.neri@studio.unibo.it"]', 'email', NULL, '2025-01-20 15:00:00', 2, 'inviato', '2025-01-20 14:30:00'),
+(11, 2, 'La tua opinione conta! 📋', 'Ciao!\n\nVorremmo conoscere la tua esperienza con Campus Sports Arena.\n\nCompila il nostro breve sondaggio (2 minuti) e aiutaci a migliorare!\n\nTra tutti i partecipanti estrarremo 5 abbonamenti mensili gratuiti!\n\nGrazie per il tuo tempo.', 'attivi', NULL, 'entrambi', NULL, '2025-01-21 11:00:00', 28, 'inviato', '2025-01-21 10:30:00');
+
+-- -----------------------------------------------------
+-- BROADCAST MESSAGES - PROGRAMMATI (futuro)
+-- -----------------------------------------------------
+INSERT INTO `broadcast_messages` (`broadcast_id`, `admin_id`, `oggetto`, `messaggio`, `target_type`, `target_filter`, `canale`, `scheduled_at`, `sent_at`, `num_destinatari`, `stato`, `created_at`) VALUES
+(12, 2, 'San Valentino Sportivo 💕', 'Festeggia San Valentino in modo diverso!\n\n💑 PROMO COPPIA 14 FEBBRAIO\n\nPrenota un campo in due e ottieni:\n- 30% di sconto\n- 2 bevande gratuite\n- Foto ricordo\n\nValido solo il 14 Febbraio.', 'tutti', NULL, 'entrambi', '2025-02-12 10:00:00', NULL, 35, 'programmato', '2025-01-22 09:00:00'),
+(13, 1, 'Torneo Calcetto Interfacoltà ⚽', 'Sei pronto per la sfida?\n\n⚽ TORNEO INTERFACOLTÀ DI CALCETTO\n\n📅 1-2 Marzo 2025\n👥 Squadre da 5+2 riserve\n🏆 Montepremi: 500€ + Trofeo\n\nOgni facoltà può iscrivere max 2 squadre.\nIscrizioni entro il 20 Febbraio.', 'sport', '1', 'entrambi', '2025-02-01 09:00:00', NULL, 18, 'programmato', '2025-01-22 10:00:00'),
+(14, 3, 'Offerta Sessione Esami 📚', 'Sessione esami stressante?\n\nLo sport aiuta a concentrarsi meglio!\n\n🎓 PROMO STUDENTI SESSIONE INVERNALE\n\nDal 1 al 28 Febbraio:\n- 15% su tutte le prenotazioni\n- Orari estesi fino alle 23:00\n- Area studio disponibile gratis\n\nStacca dai libri, muoviti, studia meglio!', 'tutti', NULL, 'entrambi', '2025-01-31 08:00:00', NULL, 35, 'programmato', '2025-01-22 11:00:00'),
+(15, 1, 'Bentornata Primavera! 🌸', 'La bella stagione sta arrivando!\n\nDal 21 Marzo riaprono i campi all aperto:\n\n☀️ Tennis\n☀️ Beach Volley\n☀️ Calcetto outdoor\n☀️ Pista atletica\n\nPrenota già da ora i tuoi slot preferiti per la primavera!', 'tutti', NULL, 'in_app', '2025-03-15 09:00:00', NULL, 35, 'programmato', '2025-01-22 12:00:00');
+
+-- -----------------------------------------------------
+-- BROADCAST MESSAGES - BOZZE
+-- -----------------------------------------------------
+INSERT INTO `broadcast_messages` (`broadcast_id`, `admin_id`, `oggetto`, `messaggio`, `target_type`, `target_filter`, `canale`, `scheduled_at`, `sent_at`, `num_destinatari`, `stato`, `created_at`) VALUES
+(16, 2, 'Evento Speciale - DA COMPLETARE', 'Bozza per evento...\n\nTODO:\n- Definire data\n- Confermare location\n- Stabilire premi', 'tutti', NULL, 'entrambi', NULL, NULL, 0, 'bozza', '2025-01-22 14:00:00'),
+(17, 1, 'Newsletter Mensile Febbraio', 'Gentili utenti,\n\nEcco le novità di Febbraio:\n\n[DA COMPLETARE]\n\n1. Nuovi campi\n2. Eventi\n3. Promozioni\n\nA presto!', 'tutti', NULL, 'email', NULL, NULL, 0, 'bozza', '2025-01-22 15:00:00');
+
+ALTER TABLE `broadcast_messages` AUTO_INCREMENT = 18;
+
+
+-- -----------------------------------------------------
+-- NOTIFICHE BROADCAST (collegate ai broadcast inviati)
+-- Aggiunte alle notifiche esistenti (da ID 41 in poi)
+-- -----------------------------------------------------
+INSERT INTO `notifiche` (`notifica_id`, `user_id`, `tipo`, `titolo`, `messaggio`, `letta`, `link`, `created_at`, `read_at`) VALUES
+-- Broadcast 1: Buon Anno
+(41, 4, 'broadcast', 'Buon Anno da Campus Sports Arena! 🎉', 'Caro studente, tutto il team di Campus Sports Arena ti augura un fantastico 2025!', 1, NULL, '2025-01-02 10:00:00', '2025-01-02 12:30:00'),
+(42, 5, 'broadcast', 'Buon Anno da Campus Sports Arena! 🎉', 'Caro studente, tutto il team di Campus Sports Arena ti augura un fantastico 2025!', 1, NULL, '2025-01-02 10:00:00', '2025-01-02 14:15:00'),
+(43, 6, 'broadcast', 'Buon Anno da Campus Sports Arena! 🎉', 'Caro studente, tutto il team di Campus Sports Arena ti augura un fantastico 2025!', 0, NULL, '2025-01-02 10:00:00', NULL),
+(44, 7, 'broadcast', 'Buon Anno da Campus Sports Arena! 🎉', 'Caro studente, tutto il team di Campus Sports Arena ti augura un fantastico 2025!', 1, NULL, '2025-01-02 10:00:00', '2025-01-03 09:00:00'),
+(45, 8, 'broadcast', 'Buon Anno da Campus Sports Arena! 🎉', 'Caro studente, tutto il team di Campus Sports Arena ti augura un fantastico 2025!', 1, NULL, '2025-01-02 10:00:00', '2025-01-02 18:00:00'),
+-- Broadcast 2: Manutenzione
+(46, 4, 'broadcast', 'Manutenzione Completata - Campi Calcetto', 'Siamo lieti di comunicarti che i lavori di manutenzione sui campi da calcetto sono stati completati.', 1, NULL, '2025-01-08 14:00:00', '2025-01-08 16:20:00'),
+(47, 5, 'broadcast', 'Manutenzione Completata - Campi Calcetto', 'Siamo lieti di comunicarti che i lavori di manutenzione sui campi da calcetto sono stati completati.', 1, NULL, '2025-01-08 14:00:00', '2025-01-08 18:45:00'),
+(48, 8, 'broadcast', 'Manutenzione Completata - Campi Calcetto', 'Siamo lieti di comunicarti che i lavori di manutenzione sui campi da calcetto sono stati completati.', 0, NULL, '2025-01-08 14:00:00', NULL),
+(49, 10, 'broadcast', 'Manutenzione Completata - Campi Calcetto', 'Siamo lieti di comunicarti che i lavori di manutenzione sui campi da calcetto sono stati completati.', 1, NULL, '2025-01-08 14:00:00', '2025-01-08 19:00:00'),
+-- Broadcast 7: Aggiornamento App
+(50, 4, 'broadcast', 'Nuovo Aggiornamento Disponibile 📱', 'Abbiamo rilasciato un importante aggiornamento con interfaccia rinnovata.', 1, NULL, '2025-01-16 12:00:00', '2025-01-16 13:00:00'),
+(51, 5, 'broadcast', 'Nuovo Aggiornamento Disponibile 📱', 'Abbiamo rilasciato un importante aggiornamento con interfaccia rinnovata.', 0, NULL, '2025-01-16 12:00:00', NULL),
+(52, 6, 'broadcast', 'Nuovo Aggiornamento Disponibile 📱', 'Abbiamo rilasciato un importante aggiornamento con interfaccia rinnovata.', 0, NULL, '2025-01-16 12:00:00', NULL),
+(53, 7, 'broadcast', 'Nuovo Aggiornamento Disponibile 📱', 'Abbiamo rilasciato un importante aggiornamento con interfaccia rinnovata.', 1, NULL, '2025-01-16 12:00:00', '2025-01-16 19:30:00'),
+-- Broadcast 8: Allerta Meteo
+(54, 4, 'broadcast', 'Chiusura Temporanea - Allerta Meteo ⚠️', 'A causa dell allerta meteo arancione i campi all aperto saranno chiusi.', 1, NULL, '2025-01-18 07:30:00', '2025-01-18 07:45:00'),
+(55, 5, 'broadcast', 'Chiusura Temporanea - Allerta Meteo ⚠️', 'A causa dell allerta meteo arancione i campi all aperto saranno chiusi.', 1, NULL, '2025-01-18 07:30:00', '2025-01-18 08:00:00'),
+(56, 6, 'broadcast', 'Chiusura Temporanea - Allerta Meteo ⚠️', 'A causa dell allerta meteo arancione i campi all aperto saranno chiusi.', 1, NULL, '2025-01-18 07:30:00', '2025-01-18 08:10:00'),
+(57, 7, 'broadcast', 'Chiusura Temporanea - Allerta Meteo ⚠️', 'A causa dell allerta meteo arancione i campi all aperto saranno chiusi.', 1, NULL, '2025-01-18 07:30:00', '2025-01-18 08:30:00'),
+-- Broadcast 11: Sondaggio
+(58, 4, 'broadcast', 'La tua opinione conta! 📋', 'Vorremmo conoscere la tua esperienza con Campus Sports Arena. Compila il sondaggio!', 0, NULL, '2025-01-21 11:00:00', NULL),
+(59, 5, 'broadcast', 'La tua opinione conta! 📋', 'Vorremmo conoscere la tua esperienza con Campus Sports Arena. Compila il sondaggio!', 0, NULL, '2025-01-21 11:00:00', NULL),
+(60, 7, 'broadcast', 'La tua opinione conta! 📋', 'Vorremmo conoscere la tua esperienza con Campus Sports Arena. Compila il sondaggio!', 1, NULL, '2025-01-21 11:00:00', '2025-01-21 14:00:00');
+
+
+-- -----------------------------------------------------
+-- NOTIFICHE MESSAGGI DIRETTI DA ADMIN
+-- -----------------------------------------------------
+INSERT INTO `notifiche` (`notifica_id`, `user_id`, `tipo`, `titolo`, `messaggio`, `letta`, `link`, `created_at`, `read_at`) VALUES
+(61, 4, 'admin_message', 'Chiarimenti su prenotazione', 'Gentile Mario, abbiamo notato che la tua prenotazione del 15 Gennaio non è stata utilizzata. Ti ricordiamo che i no-show comportano penalità.', 1, NULL, '2025-01-16 10:00:00', '2025-01-16 11:30:00'),
+(62, 5, 'admin_message', 'Aggiornamento sulla tua segnalazione', 'Gentile Giulia, la segnalazione che hai inviato è stata esaminata. Abbiamo preso provvedimenti nei confronti dell utente segnalato.', 1, NULL, '2025-01-17 14:00:00', '2025-01-17 16:45:00'),
+(63, 6, 'admin_message', 'Avviso: Comportamento segnalato', 'Gentile Luca, abbiamo ricevuto una segnalazione che ti riguarda. Ti invitiamo a mantenere sempre un comportamento rispettoso.', 0, NULL, '2025-01-18 09:00:00', NULL),
+(64, 7, 'admin_message', 'Complimenti per il tuo impegno! 🏆', 'Ciao Sara! Sei una delle utenti più attive del mese! Come ringraziamento ti regaliamo 100 XP bonus.', 1, NULL, '2025-01-19 11:00:00', '2025-01-19 12:00:00'),
+(65, 8, 'admin_message', 'Richiesta informazioni', 'Gentile Andrea, abbiamo bisogno di verificare alcune informazioni sul tuo profilo per completare l iscrizione al torneo.', 0, NULL, '2025-01-20 15:30:00', NULL),
+(66, 10, 'admin_message', 'Iscrizione Torneo Confermata ✅', 'Ciao! La tua iscrizione al Torneo di Tennis Universitario 2025 è stata confermata! Date: 15-16 Febbraio.', 1, NULL, '2025-01-21 10:00:00', '2025-01-21 12:00:00'),
+(67, 12, 'admin_message', 'Promemoria: Rinnovo Certificato Medico', 'Ti ricordiamo che il tuo certificato medico sportivo scadrà tra 30 giorni. Rinnova per continuare a prenotare.', 0, NULL, '2025-01-22 09:00:00', NULL);
+
+
+-- Aggiorna AUTO_INCREMENT per notifiche
+ALTER TABLE `notifiche`
+  MODIFY `notifica_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+
+-- Fine sezione comunicazioni
