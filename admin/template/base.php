@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $templateParams["titolo"]; ?></title>
+    <?php
+    // Conteggio segnalazioni pending per badge sidebar
+    global $dbh;
+    $segnalazioniPendingCount = isset($dbh) ? $dbh->getSegnalazioniPending() : 0;
+    ?>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons (per freccia toggle) -->
@@ -68,7 +73,9 @@
                         <a href="segnalazioni.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'segnalazioni.php') echo 'active'; ?>">
                             <span class="nav-icon">🚨</span>
                             <span class="nav-text">Segnalazioni</span>
-                            <span class="nav-badge">7</span>
+                            <?php if($segnalazioniPendingCount > 0): ?>
+                            <span class="nav-badge"><?php echo $segnalazioniPendingCount; ?></span>
+                            <?php endif; ?>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -81,7 +88,6 @@
                         <a href="comunicazioni.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'comunicazioni.php') echo 'active'; ?>">
                             <span class="nav-icon">💬</span>
                             <span class="nav-text">Comunicazioni</span>
-                            <span class="nav-badge">3</span>
                         </a>
                     </li>
                     <li class="nav-item">

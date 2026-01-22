@@ -482,7 +482,7 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`segnalazioni` (
   `tipo` ENUM('no_show', 'comportamento_scorretto', 'linguaggio_offensivo', 'violenza', 'altro') NOT NULL,
   `descrizione` TEXT NOT NULL,
   `prenotazione_id` INT NULL,
-  `stato` ENUM('pending', 'in_review', 'resolved', 'rejected') NOT NULL DEFAULT 'pending',
+  `stato` ENUM('pending', 'resolved', 'rejected') NOT NULL DEFAULT 'pending',
   `priorita` ENUM('bassa', 'media', 'alta') NOT NULL DEFAULT 'media',
   `admin_id` INT NULL,
   `azione_intrapresa` ENUM('nessuna', 'warning', 'penalty_points', 'sospensione', 'ban') NULL,

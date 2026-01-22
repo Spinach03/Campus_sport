@@ -768,7 +768,7 @@ function populateUserModal(data) {
             <div class="activity-item">
                 <span class="activity-icon">${a.icona || '📋'}</span>
                 <span class="activity-text">${a.descrizione}</span>
-                <span class="activity-time">${a.created_at}</span>
+                <span class="activity-time">${formatDataItaliana(a.created_at)}</span>
             </div>
         `).join('');
     } else {
@@ -780,7 +780,7 @@ function populateUserModal(data) {
     document.getElementById('modalSegnalazioniRicevute').innerHTML = segnRicevute.length > 0 ?
         segnRicevute.map(s => `
             <div class="segnalazione-item">
-                <div class="segnalazione-motivo">${s.motivo || 'Nessun motivo specificato'}</div>
+                <div class="segnalazione-motivo">${getTipoSegnalazioneLabel(s.tipo)}</div>
                 <div class="segnalazione-meta">Da: ${s.segnalante_nome || '-'} • ${formatDataItaliana(s.created_at)}</div>
             </div>
         `).join('') :
@@ -791,7 +791,7 @@ function populateUserModal(data) {
     document.getElementById('modalSegnalazioniFatte').innerHTML = segnFatte.length > 0 ?
         segnFatte.map(s => `
             <div class="segnalazione-item">
-                <div class="segnalazione-motivo">${s.motivo || 'Nessun motivo specificato'}</div>
+                <div class="segnalazione-motivo">${getTipoSegnalazioneLabel(s.tipo)}</div>
                 <div class="segnalazione-meta">Verso: ${s.segnalato_nome || '-'} • ${formatDataItaliana(s.created_at)}</div>
             </div>
         `).join('') :
@@ -861,6 +861,18 @@ function populateUserModal(data) {
     statoInfoDesc.textContent = statoInfo.desc;
     statoInfoBadge.innerHTML = statoInfo.badge;
     statoInfoBadge.style.borderColor = statoInfo.color;
+}
+
+// Helper per label tipo segnalazione con emoji
+function getTipoSegnalazioneLabel(tipo) {
+    const tipi = {
+        'no_show': '🚫 No Show',
+        'comportamento_scorretto': '⚠️ Comportamento Scorretto',
+        'linguaggio_offensivo': '🗣️ Linguaggio Offensivo',
+        'violenza': '👊 Violenza',
+        'altro': '📝 Altro'
+    };
+    return tipi[tipo] || tipo || 'Non specificato';
 }
 
 // Formatta data in formato italiano gg/mm/aaaa

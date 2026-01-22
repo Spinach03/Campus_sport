@@ -76,87 +76,99 @@ INSERT INTO `prenotazioni` (`prenotazione_id`, `user_id`, `campo_id`, `data_pren
 (40, 13, 8, '2025-01-29', '18:00:00', '19:00:00', 4, 'completata', 1, '2025-01-29 17:55:00', 'Padel', '2025-01-28 10:00:00'),
 
 -- Prenotazioni NO_SHOW (10)
-(41, 6, 1, '2025-01-10', '11:00:00', '12:00:00', 10, 'no_show', 0, NULL, NULL, '2025-01-08 09:00:00'),
-(42, 6, 4, '2025-01-15', '16:00:00', '17:00:00', 8, 'no_show', 0, NULL, NULL, '2025-01-13 14:00:00'),
-(43, 17, 2, '2025-01-20', '10:00:00', '11:00:00', 10, 'no_show', 0, NULL, NULL, '2025-01-18 11:00:00'),
-(44, 20, 8, '2025-01-22', '19:00:00', '20:00:00', 4, 'no_show', 0, NULL, NULL, '2025-01-20 15:00:00'),
-(45, 26, 5, '2025-01-25', '17:00:00', '18:00:00', 12, 'no_show', 0, NULL, NULL, '2025-01-23 10:00:00'),
-(46, 31, 6, '2025-01-27', '11:00:00', '12:00:00', 2, 'no_show', 0, NULL, NULL, '2025-01-25 08:00:00'),
-(47, 19, 9, '2025-01-28', '16:00:00', '17:00:00', 4, 'no_show', 0, NULL, NULL, '2025-01-26 12:00:00'),
-(48, 15, 1, '2025-01-29', '10:00:00', '11:00:00', 10, 'no_show', 0, NULL, NULL, '2025-01-27 09:00:00'),
-(49, 22, 10, '2025-01-30', '14:00:00', '15:00:00', 4, 'no_show', 0, NULL, NULL, '2025-01-28 16:00:00'),
-(50, 28, 3, '2025-01-30', '15:00:00', '16:00:00', 14, 'no_show', 0, NULL, NULL, '2025-01-28 18:00:00'),
+(41, 6, 1, '2025-01-10', '09:00:00', '10:00:00', 10, 'no_show', 0, NULL, NULL, '2025-01-08 10:00:00'),
+(42, 6, 4, '2025-01-15', '16:00:00', '17:00:00', 8, 'no_show', 0, NULL, 'Basket', '2025-01-13 14:00:00'),
+(43, 17, 1, '2025-01-20', '10:00:00', '11:00:00', 10, 'no_show', 0, NULL, NULL, '2025-01-18 09:00:00'),
+(44, 20, 8, '2025-01-22', '19:00:00', '20:00:00', 4, 'no_show', 0, NULL, 'Padel', '2025-01-20 15:00:00'),
+(45, 26, 5, '2025-01-25', '17:00:00', '18:00:00', 12, 'no_show', 0, NULL, NULL, '2025-01-23 11:00:00'),
+(46, 31, 6, '2025-01-27', '11:00:00', '12:00:00', 2, 'no_show', 0, NULL, 'Tennis', '2025-01-25 16:00:00'),
+(47, 19, 9, '2025-01-28', '16:00:00', '17:00:00', 4, 'no_show', 0, NULL, NULL, '2025-01-26 10:00:00'),
+(48, 15, 2, '2025-01-29', '10:00:00', '11:00:00', 10, 'no_show', 0, NULL, 'Calcetto', '2025-01-27 08:00:00'),
+(49, 22, 10, '2025-01-30', '14:00:00', '15:00:00', 4, 'no_show', 0, NULL, NULL, '2025-01-28 12:00:00'),
+(50, 28, 3, '2025-01-30', '15:00:00', '16:00:00', 14, 'no_show', 0, NULL, 'Calcio 7', '2025-01-28 14:00:00'),
 
--- Prenotazioni CANCELLATE (5)
-(51, 4, 8, '2025-01-15', '20:00:00', '21:00:00', 4, 'cancellata', 0, NULL, 'Impegno improvviso', '2025-01-13 10:00:00'),
-(52, 12, 5, '2025-01-18', '18:00:00', '19:00:00', 12, 'cancellata', 0, NULL, 'Maltempo', '2025-01-16 09:00:00'),
-(53, 24, 1, '2025-01-22', '17:00:00', '18:00:00', 10, 'cancellata', 0, NULL, NULL, '2025-01-20 14:00:00'),
-(54, 30, 4, '2025-01-25', '19:00:00', '20:00:00', 10, 'cancellata', 0, NULL, 'Problemi personali', '2025-01-23 11:00:00'),
-(55, 33, 6, '2025-01-28', '10:00:00', '11:00:00', 4, 'cancellata', 0, NULL, NULL, '2025-01-26 08:00:00'),
+-- Prenotazioni FUTURE confermata (10)
+(51, 4, 1, '2025-02-03', '10:00:00', '11:00:00', 10, 'confermata', 0, NULL, 'Calcetto lunedì', '2025-01-17 09:00:00'),
+(52, 5, 8, '2025-02-03', '15:00:00', '16:00:00', 4, 'confermata', 0, NULL, 'Padel', '2025-01-17 14:00:00'),
+(53, 7, 4, '2025-02-03', '18:00:00', '19:00:00', 10, 'confermata', 0, NULL, 'Basket', '2025-01-17 16:00:00'),
+(54, 10, 5, '2025-02-04', '14:00:00', '15:00:00', 12, 'confermata', 0, NULL, 'Pallavolo', '2025-01-18 08:00:00'),
+(55, 12, 9, '2025-02-04', '17:00:00', '18:00:00', 4, 'confermata', 0, NULL, NULL, '2025-01-18 10:00:00'),
+(56, 14, 2, '2025-02-05', '16:00:00', '17:00:00', 10, 'confermata', 0, NULL, 'Calcetto', '2025-01-18 15:00:00'),
+(57, 16, 10, '2025-02-05', '13:00:00', '14:00:00', 4, 'confermata', 0, NULL, 'Ping pong', '2025-01-18 18:00:00'),
+(58, 18, 1, '2025-02-06', '11:00:00', '12:00:00', 10, 'confermata', 0, NULL, NULL, '2025-01-19 09:00:00'),
+(59, 21, 6, '2025-02-06', '10:00:00', '11:00:00', 4, 'confermata', 0, NULL, 'Tennis doppio', '2025-01-19 11:00:00'),
+(60, 23, 8, '2025-02-07', '19:00:00', '20:00:00', 4, 'confermata', 0, NULL, 'Padel serale', '2025-01-19 14:00:00'),
 
--- Prenotazioni CONFERMATE FUTURE (15 - da oggi in poi)
-(56, 4, 1, '2025-01-19', '10:00:00', '11:00:00', 10, 'confermata', 0, NULL, 'Partita domenicale', '2025-01-17 09:00:00'),
-(57, 5, 8, '2025-01-19', '15:00:00', '16:00:00', 4, 'confermata', 0, NULL, NULL, '2025-01-17 14:00:00'),
-(58, 7, 4, '2025-01-19', '18:00:00', '19:00:00', 10, 'confermata', 0, NULL, 'Basket', '2025-01-17 16:00:00'),
-(59, 10, 5, '2025-01-20', '16:00:00', '17:00:00', 12, 'confermata', 0, NULL, NULL, '2025-01-18 08:00:00'),
-(60, 12, 9, '2025-01-20', '17:00:00', '18:00:00', 4, 'confermata', 0, NULL, 'Padel', '2025-01-18 10:00:00'),
-(61, 14, 2, '2025-01-21', '18:00:00', '19:00:00', 10, 'confermata', 0, NULL, NULL, '2025-01-18 15:00:00'),
-(62, 16, 10, '2025-01-21', '13:00:00', '14:00:00', 4, 'confermata', 0, NULL, 'Ping pong', '2025-01-18 18:00:00'),
-(63, 18, 1, '2025-01-22', '11:00:00', '12:00:00', 10, 'confermata', 0, NULL, NULL, '2025-01-19 09:00:00'),
-(64, 21, 6, '2025-01-22', '10:00:00', '11:00:00', 2, 'confermata', 0, NULL, 'Tennis', '2025-01-19 11:00:00'),
-(65, 23, 8, '2025-01-23', '19:00:00', '20:00:00', 4, 'confermata', 0, NULL, NULL, '2025-01-19 14:00:00'),
-(66, 25, 3, '2025-01-24', '15:00:00', '16:00:00', 14, 'confermata', 0, NULL, 'Calcio 7', '2025-01-19 16:00:00'),
-(67, 27, 5, '2025-01-25', '16:00:00', '17:00:00', 12, 'confermata', 0, NULL, NULL, '2025-01-20 08:00:00'),
-(68, 8, 4, '2025-01-25', '20:00:00', '21:00:00', 10, 'confermata', 0, NULL, 'Basket serale', '2025-01-20 10:00:00'),
-(69, 11, 9, '2025-01-26', '11:00:00', '12:00:00', 4, 'confermata', 0, NULL, NULL, '2025-01-20 12:00:00'),
-(70, 13, 1, '2025-01-26', '17:00:00', '18:00:00', 10, 'confermata', 0, NULL, 'Calcetto', '2025-01-20 15:00:00');
+-- Prenotazioni FUTURE in attesa (10)
+(61, 25, 3, '2025-02-08', '15:00:00', '16:00:00', 14, 'in_attesa', 0, NULL, 'Calcio 7', '2025-01-19 16:00:00'),
+(62, 27, 5, '2025-02-09', '16:00:00', '17:00:00', 12, 'in_attesa', 0, NULL, NULL, '2025-01-20 08:00:00'),
+(63, 8, 4, '2025-02-09', '20:00:00', '21:00:00', 10, 'in_attesa', 0, NULL, 'Basket domenica', '2025-01-20 10:00:00'),
+(64, 11, 9, '2025-02-10', '11:00:00', '12:00:00', 4, 'in_attesa', 0, NULL, 'Padel', '2025-01-20 12:00:00'),
+(65, 13, 1, '2025-02-10', '17:00:00', '18:00:00', 10, 'in_attesa', 0, NULL, NULL, '2025-01-20 15:00:00'),
+(66, 15, 6, '2025-02-11', '09:00:00', '10:00:00', 2, 'in_attesa', 0, NULL, 'Tennis singolo', '2025-01-20 17:00:00'),
+(67, 17, 10, '2025-02-11', '15:00:00', '16:00:00', 4, 'in_attesa', 0, NULL, NULL, '2025-01-20 19:00:00'),
+(68, 19, 2, '2025-02-12', '18:00:00', '19:00:00', 10, 'in_attesa', 0, NULL, 'Calcetto serale', '2025-01-21 08:00:00'),
+(69, 24, 8, '2025-02-13', '20:00:00', '21:00:00', 4, 'in_attesa', 0, NULL, 'Padel', '2025-01-21 10:00:00'),
+(70, 30, 3, '2025-02-14', '10:00:00', '11:00:00', 14, 'in_attesa', 0, NULL, 'Calcio 7 San Valentino', '2025-01-21 12:00:00');
 
 ALTER TABLE `prenotazioni`
   MODIFY `prenotazione_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
 
 
 -- -----------------------------------------------------
--- RECENSIONI (35 recensioni sulle prenotazioni completate)
+-- RECENSIONI (35 recensioni)
 -- -----------------------------------------------------
-INSERT INTO `recensioni` (`recensione_id`, `user_id`, `campo_id`, `prenotazione_id`, `rating_generale`, `rating_condizioni`, `rating_pulizia`, `rating_illuminazione`, `commento`, `voti_utili`, `created_at`) VALUES
-(1, 4, 1, 1, 5, 5, 5, 4, 'Campo eccellente! Erba sintetica in ottime condizioni. Consigliato!', 8, '2025-01-06 12:00:00'),
-(2, 5, 4, 2, 5, 5, 5, 5, 'Palestra fantastica, parquet perfetto per giocare a basket.', 12, '2025-01-06 16:00:00'),
-(3, 7, 8, 3, 4, 4, 5, 4, 'Ottimo campo da padel, un po'' affollato nel weekend.', 5, '2025-01-07 20:00:00'),
-(4, 10, 2, 4, 4, 4, 4, 5, 'Buon campo, illuminazione eccellente per partite serali.', 3, '2025-01-08 18:00:00'),
-(5, 12, 6, 5, 5, 5, 4, NULL, 'Terra battuta perfetta, mi sono sentito un professionista!', 7, '2025-01-08 11:00:00'),
-(6, 14, 1, 6, 4, 4, 4, 4, 'Sempre affidabile questo campo, ottimo per calcetto.', 4, '2025-01-09 20:00:00'),
-(7, 6, 3, 7, 3, 3, 4, NULL, 'Campo grande ma erba naturale un po'' irregolare in alcuni punti.', 2, '2025-01-10 17:00:00'),
-(8, 8, 5, 8, 5, 5, 5, 5, 'Campo da pallavolo perfetto, rete nuova e ottima illuminazione.', 9, '2025-01-10 19:00:00'),
-(9, 11, 10, 9, 4, 4, 3, 4, 'Tavoli buoni ma spogliatoi assenti. Portate il cambio!', 6, '2025-01-11 16:00:00'),
-(10, 13, 9, 10, 5, 5, 5, 5, 'Padel outdoor fantastico, vista panoramica e campo perfetto.', 11, '2025-01-11 12:00:00'),
+INSERT INTO `recensioni` (`recensione_id`, `prenotazione_id`, `user_id`, `campo_id`, `voto`, `titolo`, `commento`, `created_at`) VALUES
+-- Recensioni Campo Calcetto A (campo_id=1)
+(1, 1, 4, 1, 5, 'Ottimo campo!', 'Campo in ottime condizioni, erba sintetica perfetta. Ci tornerò sicuramente!', '2025-01-06 12:00:00'),
+(2, 6, 14, 1, 4, 'Buono ma migliorabile', 'Campo buono, illuminazione un po'' scarsa la sera.', '2025-01-09 20:00:00'),
+(3, 21, 7, 1, 5, 'Perfetto per calcetto', 'Dimensioni giuste, fondo regolare. Consigliatissimo.', '2025-01-18 13:00:00'),
+(4, 28, 12, 1, 4, 'Soddisfatto', 'Buon rapporto qualità prezzo.', '2025-01-22 11:00:00'),
+(5, 35, 25, 1, 5, 'Top!', 'Il migliore campo di calcetto della zona.', '2025-01-27 19:00:00'),
 
-(11, 15, 8, 11, 4, 4, 5, 4, 'Campo coperto, ideale anche con brutto tempo.', 4, '2025-01-13 21:00:00'),
-(12, 17, 4, 12, 5, 5, 5, 5, 'Miglior campo da basket della zona, niente da dire!', 15, '2025-01-13 22:00:00'),
-(13, 4, 6, 13, 4, 4, 4, NULL, 'Tennis sempre al top, terra battuta ben mantenuta.', 3, '2025-01-14 13:00:00'),
-(14, 19, 1, 14, 5, 5, 4, 5, 'Calcetto perfetto, ci torniamo sicuramente.', 6, '2025-01-14 19:00:00'),
-(15, 20, 5, 15, 4, 4, 4, 5, 'Pallavolo divertente, campo ben illuminato.', 2, '2025-01-15 20:00:00'),
-(16, 22, 2, 16, 4, 4, 5, 4, 'Buona esperienza, spogliatoi pulitissimi.', 5, '2025-01-15 17:00:00'),
-(17, 24, 9, 17, 5, 5, 5, 5, 'Padel esterno eccezionale, erba sintetica nuova.', 8, '2025-01-16 18:00:00'),
-(18, 5, 3, 18, 3, 3, 3, NULL, 'Campo da calcio 7 discreto, erba da sistemare.', 1, '2025-01-16 12:00:00'),
-(19, 26, 10, 19, 4, 4, 4, 4, 'Ping pong divertente, tavoli in buone condizioni.', 3, '2025-01-17 15:00:00'),
-(20, 28, 4, 20, 5, 5, 5, 5, 'Basket serale fantastico, atmosfera perfetta!', 10, '2025-01-17 21:00:00'),
+-- Recensioni Campo Calcetto B (campo_id=2)
+(6, 4, 10, 2, 4, 'Buon campo', 'Leggermente più piccolo del campo A ma comunque valido.', '2025-01-08 18:00:00'),
+(7, 16, 22, 2, 3, 'Nella media', 'Campo discreto, qualche buca sul fondo.', '2025-01-15 17:00:00'),
+(8, 25, 33, 2, 4, 'Consigliato', 'Bel campo, spogliatoi puliti.', '2025-01-21 18:00:00'),
+(9, 33, 21, 2, 5, 'Eccellente', 'Tutto perfetto, personale gentilissimo.', '2025-01-25 12:00:00'),
 
-(21, 7, 1, 21, 5, 5, 5, 4, 'Sempre il miglior campo per calcetto, top!', 7, '2025-01-18 13:00:00'),
-(22, 30, 8, 22, 4, 4, 4, 5, 'Padel coperto ottimo, un po'' caldo d''estate.', 2, '2025-01-18 19:00:00'),
-(23, 31, 5, 23, 5, 5, 5, 5, 'Pallavolo eccellente, squadra fantastica!', 4, '2025-01-20 16:00:00'),
-(24, 32, 6, 24, 4, 4, 4, NULL, 'Tennis buono, campo in cemento veloce.', 1, '2025-01-20 12:00:00'),
-(25, 33, 2, 25, 4, 4, 5, 5, 'Calcetto sempre una garanzia qui.', 5, '2025-01-21 18:00:00'),
-(26, 4, 9, 26, 5, 5, 5, 5, 'Padel esterno bellissimo, torneremo!', 9, '2025-01-21 20:00:00'),
-(27, 10, 4, 27, 5, 5, 5, 5, 'Basket notturno incredibile, luci perfette.', 6, '2025-01-22 22:00:00'),
-(28, 12, 1, 28, 4, 4, 4, 4, 'Calcetto mattutino, poca gente e campo libero.', 2, '2025-01-22 11:00:00'),
-(29, 14, 10, 29, 4, 4, 4, 4, 'Ping pong rilassante, ottimo per pause studio.', 3, '2025-01-23 17:00:00'),
-(30, 16, 3, 30, 3, 3, 4, NULL, 'Campo grande ma servirebbe manutenzione.', 0, '2025-01-23 13:00:00'),
+-- Recensioni Campo Calcio 7 (campo_id=3)
+(10, 7, 6, 3, 4, 'Grande campo', 'Perfetto per partite 7vs7, erba ben mantenuta.', '2025-01-10 17:00:00'),
+(11, 18, 5, 3, 5, 'Il migliore!', 'Campo fantastico, ci giochiamo ogni settimana.', '2025-01-16 12:00:00'),
+(12, 30, 16, 3, 4, 'Molto bello', 'Ampio e ben curato.', '2025-01-23 13:00:00'),
+(13, 39, 11, 3, 5, 'Stupendo', 'Nulla da dire, perfetto in tutto.', '2025-01-29 17:00:00'),
 
-(31, 18, 8, 31, 5, 5, 5, 5, 'Padel serale fantastico, campo illuminato benissimo!', 8, '2025-01-24 21:00:00'),
-(32, 5, 5, 32, 5, 5, 5, 5, 'Pallavolo top, pavimento perfetto.', 11, '2025-01-24 18:00:00'),
-(33, 21, 2, 33, 4, 4, 4, 4, 'Calcetto del sabato mattina, classico!', 4, '2025-01-25 12:00:00'),
-(34, 23, 6, 34, 5, 5, 5, NULL, 'Tennis doppio divertentissimo, campo eccellente.', 6, '2025-01-25 16:00:00'),
-(35, 25, 1, 35, 5, 5, 5, 5, 'Campo preferito per calcetto, sempre perfetto!', 13, '2025-01-27 19:00:00');
+-- Recensioni Palestra Basket (campo_id=4)
+(14, 2, 5, 4, 5, 'Palestra top', 'Pavimento perfetto, canestri regolamentari. Ottima!', '2025-01-06 16:00:00'),
+(15, 12, 17, 4, 4, 'Bella palestra', 'Buona illuminazione e spazio.', '2025-01-13 22:00:00'),
+(16, 20, 28, 4, 4, 'Consiglio', 'Buona palestra per basket, un po'' calda d''estate.', '2025-01-17 21:00:00'),
+(17, 27, 10, 4, 5, 'Perfetta', 'La migliore palestra per basket in zona.', '2025-01-22 22:00:00'),
+(18, 36, 27, 4, 4, 'Molto bene', 'Spogliatoi ampi, campo regolamentare.', '2025-01-27 20:00:00'),
+
+-- Recensioni Campo Pallavolo (campo_id=5)
+(19, 8, 8, 5, 5, 'Ottimo per volley', 'Rete a norma, pavimento antiscivolo. Top!', '2025-01-10 19:00:00'),
+(20, 15, 20, 5, 4, 'Buon campo', 'Campo valido, a volte un po'' affollato.', '2025-01-15 20:00:00'),
+(21, 23, 31, 5, 4, 'Consigliato', 'Bel campo di pallavolo.', '2025-01-20 16:00:00'),
+(22, 32, 5, 5, 5, 'Il top per il volley', 'Struttura eccellente.', '2025-01-24 18:00:00'),
+
+-- Recensioni Campo Tennis 1 (campo_id=6)
+(23, 5, 12, 6, 5, 'Campo eccellente', 'Superficie perfetta, rete nuova. Bellissimo giocare qui.', '2025-01-08 11:00:00'),
+(24, 13, 4, 6, 4, 'Buon tennis', 'Campo in buone condizioni generali.', '2025-01-14 13:00:00'),
+(25, 24, 32, 6, 5, 'Fantastico', 'Il mio campo preferito per il tennis.', '2025-01-20 12:00:00'),
+(26, 34, 23, 6, 4, 'Molto bene', 'Campo ben mantenuto.', '2025-01-25 16:00:00'),
+
+-- Recensioni Campo Padel 1 (campo_id=8)
+(27, 3, 7, 8, 5, 'Padel perfetto', 'Campo di padel fantastico, vetri puliti, erba sintetica nuova.', '2025-01-07 20:00:00'),
+(28, 11, 15, 8, 4, 'Bello', 'Buon campo, illuminazione ok.', '2025-01-13 21:00:00'),
+(29, 22, 30, 8, 4, 'Per principianti ok', 'Campo adatto anche ai principianti.', '2025-01-18 19:00:00'),
+(30, 31, 18, 8, 5, 'Super!', 'Il migliore campo di padel!', '2025-01-24 21:00:00'),
+(31, 40, 13, 8, 4, 'Consigliato', 'Bel campo, tornerò.', '2025-01-29 20:00:00'),
+
+-- Recensioni Campo Padel 2 (campo_id=9)
+(32, 10, 13, 9, 4, 'Buon padel', 'Campo valido, leggermente più piccolo del campo 1.', '2025-01-11 12:00:00'),
+(33, 17, 24, 9, 5, 'Ottimo', 'Perfetto per giocare in tranquillità.', '2025-01-16 18:00:00'),
+(34, 26, 4, 9, 4, 'Bene', 'Campo ok, nulla di eccezionale ma funzionale.', '2025-01-21 20:00:00'),
+(35, 37, 7, 9, 5, 'Padel top', 'Ci gioco spesso, sempre soddisfatto.', '2025-01-28 22:00:00');
 
 ALTER TABLE `recensioni`
   MODIFY `recensione_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
@@ -166,7 +178,7 @@ ALTER TABLE `recensioni`
 -- SEGNALAZIONI (15 segnalazioni)
 -- -----------------------------------------------------
 INSERT INTO `segnalazioni` (`segnalazione_id`, `user_segnalante_id`, `user_segnalato_id`, `tipo`, `descrizione`, `prenotazione_id`, `stato`, `priorita`, `admin_id`, `azione_intrapresa`, `penalty_assegnati`, `note_risoluzione`, `created_at`, `resolved_at`) VALUES
--- Segnalazioni PENDING (7)
+-- Segnalazioni PENDING (10 - incluse le ex in_review)
 (1, 4, 6, 'no_show', 'L''utente non si è presentato alla partita di calcetto, eravamo rimasti in 9.', 41, 'pending', 'media', NULL, NULL, NULL, NULL, '2025-01-10 13:00:00', NULL),
 (2, 10, 17, 'no_show', 'Assente senza preavviso, abbiamo dovuto annullare la partita.', 43, 'pending', 'alta', NULL, NULL, NULL, NULL, '2025-01-20 12:00:00', NULL),
 (3, 12, 26, 'comportamento_scorretto', 'Ha lasciato il campo in disordine e non ha raccolto le bottiglie.', 19, 'pending', 'bassa', NULL, NULL, NULL, NULL, '2025-01-17 16:00:00', NULL),
@@ -174,11 +186,9 @@ INSERT INTO `segnalazioni` (`segnalazione_id`, `user_segnalante_id`, `user_segna
 (5, 5, 31, 'linguaggio_offensivo', 'Ha usato linguaggio inappropriato durante la partita.', 23, 'pending', 'alta', NULL, NULL, NULL, NULL, '2025-01-20 17:00:00', NULL),
 (6, 7, 15, 'no_show', 'Assente alla prenotazione di calcetto.', 48, 'pending', 'media', NULL, NULL, NULL, NULL, '2025-01-29 11:00:00', NULL),
 (7, 8, 22, 'comportamento_scorretto', 'Ha occupato il campo oltre l''orario prenotato.', 49, 'pending', 'bassa', NULL, NULL, NULL, NULL, '2025-01-30 15:00:00', NULL),
-
--- Segnalazioni IN_REVIEW (3)
-(8, 11, 6, 'no_show', 'Secondo no-show consecutivo, molto scorretto.', 42, 'in_review', 'alta', 1, NULL, NULL, NULL, '2025-01-15 17:00:00', NULL),
-(9, 13, 19, 'comportamento_scorretto', 'Ha discusso animatamente con altri giocatori.', 47, 'in_review', 'media', 2, NULL, NULL, NULL, '2025-01-28 17:00:00', NULL),
-(10, 16, 28, 'no_show', 'Non si è presentato alla partita di calcio 7.', 50, 'in_review', 'alta', 1, NULL, NULL, NULL, '2025-01-30 16:00:00', NULL),
+(8, 11, 6, 'no_show', 'Secondo no-show consecutivo, molto scorretto.', 42, 'pending', 'alta', NULL, NULL, NULL, NULL, '2025-01-15 17:00:00', NULL),
+(9, 13, 19, 'comportamento_scorretto', 'Ha discusso animatamente con altri giocatori.', 47, 'pending', 'media', NULL, NULL, NULL, NULL, '2025-01-28 17:00:00', NULL),
+(10, 16, 28, 'no_show', 'Non si è presentato alla partita di calcio 7.', 50, 'pending', 'alta', NULL, NULL, NULL, NULL, '2025-01-30 16:00:00', NULL),
 
 -- Segnalazioni RESOLVED (4)
 (11, 4, 6, 'comportamento_scorretto', 'Arrivato in ritardo di 30 minuti senza avvisare.', 7, 'resolved', 'media', 1, 'penalty_points', 2, 'Assegnati 2 punti penalità per ritardo grave.', '2025-01-10 18:00:00', '2025-01-11 10:00:00'),
@@ -220,73 +230,51 @@ INSERT INTO `user_badges` (`id`, `user_id`, `badge_id`, `sbloccato_at`) VALUES
 (20, 24, 1, '2025-01-14 14:05:00'),
 (21, 25, 1, '2025-01-19 16:05:00'),
 (22, 26, 1, '2025-01-15 18:05:00'),
-(23, 27, 1, '2025-01-26 09:05:00'),
+(23, 27, 1, '2025-01-20 08:05:00'),
 (24, 28, 1, '2025-01-16 10:05:00'),
 (25, 30, 1, '2025-01-17 09:05:00'),
 (26, 31, 1, '2025-01-18 11:05:00'),
 (27, 32, 1, '2025-01-19 08:05:00'),
 (28, 33, 1, '2025-01-19 14:05:00'),
 
--- Badge "Recensore" (badge_id=5) - chi ha scritto almeno 1 recensione
-(29, 4, 5, '2025-01-06 12:05:00'),
-(30, 5, 5, '2025-01-06 16:05:00'),
-(31, 7, 5, '2025-01-07 20:05:00'),
-(32, 10, 5, '2025-01-08 18:05:00'),
-(33, 12, 5, '2025-01-08 11:05:00'),
-(34, 14, 5, '2025-01-09 20:05:00'),
-(35, 8, 5, '2025-01-10 19:05:00'),
-(36, 11, 5, '2025-01-11 16:05:00'),
-(37, 13, 5, '2025-01-11 12:05:00'),
-(38, 15, 5, '2025-01-13 21:05:00'),
-(39, 17, 5, '2025-01-13 22:05:00'),
-(40, 19, 5, '2025-01-14 19:05:00'),
-(41, 20, 5, '2025-01-15 20:05:00'),
-(42, 22, 5, '2025-01-15 17:05:00'),
-(43, 24, 5, '2025-01-16 18:05:00'),
-(44, 26, 5, '2025-01-17 15:05:00'),
-(45, 28, 5, '2025-01-17 21:05:00'),
-(46, 30, 5, '2025-01-18 19:05:00'),
-(47, 31, 5, '2025-01-20 16:05:00'),
-(48, 32, 5, '2025-01-20 12:05:00'),
-(49, 33, 5, '2025-01-21 18:05:00'),
-(50, 21, 5, '2025-01-25 12:05:00'),
-(51, 23, 5, '2025-01-25 16:05:00'),
-(52, 25, 5, '2025-01-27 19:05:00'),
-(53, 18, 5, '2025-01-24 21:05:00'),
-(54, 6, 5, '2025-01-10 17:05:00'),
-(55, 16, 5, '2025-01-23 13:05:00'),
+-- Badge "Recensore" (badge_id=2) - chi ha fatto almeno 1 recensione
+(29, 4, 2, '2025-01-06 12:05:00'),
+(30, 5, 2, '2025-01-06 16:05:00'),
+(31, 6, 2, '2025-01-10 17:05:00'),
+(32, 7, 2, '2025-01-07 20:05:00'),
+(33, 8, 2, '2025-01-10 19:05:00'),
+(34, 10, 2, '2025-01-08 18:05:00'),
+(35, 12, 2, '2025-01-08 11:05:00'),
+(36, 13, 2, '2025-01-11 12:05:00'),
 
--- Badge "Sportivo Attivo" (badge_id=2) - utenti con 10+ prenotazioni
-(56, 4, 2, '2025-01-21 17:55:00'),
-(57, 5, 2, '2025-01-24 15:50:00'),
-(58, 7, 2, '2025-01-28 19:58:00'),
+-- Badge "Sportivo Attivo" (badge_id=3) - chi ha 5+ prenotazioni
+(37, 4, 3, '2025-01-21 17:55:00'),
+(38, 5, 3, '2025-01-24 15:55:00'),
+(39, 7, 3, '2025-01-28 19:58:00'),
 
--- Badge "Puntuale" (badge_id=7) - utenti con 10+ check-in puntuali
-(59, 4, 7, '2025-01-21 17:55:00'),
-(60, 5, 7, '2025-01-24 15:50:00'),
+-- Badge "Multisport" (badge_id=4) - chi ha provato 3+ sport diversi
+(40, 5, 4, '2025-01-24 15:55:00'),
 
--- Badge "Multisport" (badge_id=9) - utenti che hanno provato 5+ sport diversi
-(61, 5, 9, '2025-01-24 15:55:00'),
-
--- Badge "Campione" (badge_id=10) - utente livello Platinum
-(62, 7, 10, '2025-01-05 16:10:00');
+-- Badge "Campione" (badge_id=5) - livello alto
+(41, 7, 5, '2025-01-05 16:10:00');
 
 ALTER TABLE `user_badges`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 
 -- -----------------------------------------------------
 -- NOTIFICHE (40 notifiche)
 -- -----------------------------------------------------
-INSERT INTO `notifiche` (`notifica_id`, `user_id`, `tipo`, `titolo`, `messaggio`, `letta`, `link`, `created_at`, `read_at`) VALUES
--- Notifiche LETTE
-(1, 4, 'prenotazione_confermata', 'Prenotazione Confermata', 'La tua prenotazione per Campo Calcetto A del 06/01/2025 alle 10:00 è stata confermata.', 1, 'le-mie-prenotazioni.php', '2025-01-04 14:30:00', '2025-01-04 14:35:00'),
-(2, 4, 'badge_sbloccato', 'Nuovo Badge Sbloccato!', 'Hai sbloccato il badge Prima Prenotazione!', 1, 'profilo.php', '2025-01-04 14:35:00', '2025-01-04 14:40:00'),
-(3, 5, 'prenotazione_confermata', 'Prenotazione Confermata', 'La tua prenotazione per Palestra Basket del 06/01/2025 alle 14:00 è stata confermata.', 1, 'le-mie-prenotazioni.php', '2025-01-05 09:00:00', '2025-01-05 09:10:00'),
-(4, 5, 'badge_sbloccato', 'Nuovo Badge Sbloccato!', 'Hai sbloccato il badge Prima Prenotazione!', 1, 'profilo.php', '2025-01-05 09:05:00', '2025-01-05 09:15:00'),
-(5, 7, 'prenotazione_confermata', 'Prenotazione Confermata', 'La tua prenotazione per Campo Padel 1 del 07/01/2025 alle 18:00 è stata confermata.', 1, 'le-mie-prenotazioni.php', '2025-01-05 16:00:00', '2025-01-05 16:05:00'),
-(6, 4, 'promemoria_prenotazione', 'Promemoria Prenotazione', 'Ricorda: hai una prenotazione domani per Campo Calcetto A alle 10:00.', 1, 'le-mie-prenotazioni.php', '2025-01-05 18:00:00', '2025-01-05 18:30:00'),
-(7, 5, 'promemoria_prenotazione', 'Promemoria Prenotazione', 'Ricorda: hai una prenotazione domani per Palestra Basket alle 14:00.', 1, 'le-mie-prenotazioni.php', '2025-01-05 18:00:00', '2025-01-05 19:00:00'),
+INSERT INTO `notifiche` (`notifica_id`, `user_id`, `tipo`, `titolo`, `messaggio`, `letta`, `link`, `created_at`, `letta_at`) VALUES
+-- Notifiche LETTE (vecchie)
+(1, 4, 'prenotazione_confermata', 'Prenotazione Confermata', 'La tua prenotazione per Campo Calcetto A del 06/01/2025 alle 10:00 è stata confermata.', 1, 'le-mie-prenotazioni.php', '2025-01-04 14:35:00', '2025-01-04 15:00:00'),
+(2, 5, 'prenotazione_confermata', 'Prenotazione Confermata', 'La tua prenotazione per Palestra Basket del 06/01/2025 alle 14:00 è stata confermata.', 1, 'le-mie-prenotazioni.php', '2025-01-05 09:05:00', '2025-01-05 10:00:00'),
+(3, 7, 'prenotazione_confermata', 'Prenotazione Confermata', 'La tua prenotazione per Campo Padel 1 del 07/01/2025 alle 18:00 è stata confermata.', 1, 'le-mie-prenotazioni.php', '2025-01-05 16:05:00', '2025-01-05 17:00:00'),
+(4, 4, 'promemoria_prenotazione', 'Promemoria Prenotazione', 'Ricorda: hai una prenotazione domani per Campo Calcetto A alle 10:00.', 1, 'le-mie-prenotazioni.php', '2025-01-05 18:00:00', '2025-01-05 20:00:00'),
+(5, 5, 'promemoria_prenotazione', 'Promemoria Prenotazione', 'Ricorda: hai una prenotazione domani per Palestra Basket alle 14:00.', 1, 'le-mie-prenotazioni.php', '2025-01-05 18:00:00', '2025-01-05 19:00:00'),
+
+(6, 6, 'prenotazione_confermata', 'Prenotazione Confermata', 'La tua prenotazione per Campo Calcetto A del 10/01/2025 alle 09:00 è stata confermata.', 1, 'le-mie-prenotazioni.php', '2025-01-08 10:05:00', '2025-01-08 11:00:00'),
+(7, 6, 'no_show_warning', 'Mancata Presentazione', 'Non ti sei presentato alla prenotazione del 10/01/2025. Hai ricevuto 5 punti penalità.', 1, 'profilo.php', '2025-01-10 11:00:00', '2025-01-10 12:00:00'),
 (8, 6, 'penalty_ricevuti', 'Punti Penalità Ricevuti', 'Hai ricevuto 5 punti penalità per no-show alla prenotazione del 10/01/2025.', 1, 'profilo.php', '2025-01-10 12:00:00', '2025-01-10 14:00:00'),
 (9, 4, 'badge_sbloccato', 'Nuovo Badge Sbloccato!', 'Hai sbloccato il badge Recensore!', 1, 'profilo.php', '2025-01-06 12:05:00', '2025-01-06 12:10:00'),
 (10, 5, 'badge_sbloccato', 'Nuovo Badge Sbloccato!', 'Hai sbloccato il badge Recensore!', 1, 'profilo.php', '2025-01-06 16:05:00', '2025-01-06 16:10:00'),

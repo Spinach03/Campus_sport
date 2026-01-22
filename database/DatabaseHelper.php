@@ -1471,17 +1471,16 @@ class DatabaseHelper {
     // ============================================================================
     
     public function getSegnalazioniStats() {
-        $query = "SELECT 
-                    COUNT(*) as totale,
-                    SUM(CASE WHEN stato = 'pending' THEN 1 ELSE 0 END) as pending,
-                    SUM(CASE WHEN stato = 'in_review' THEN 1 ELSE 0 END) as in_review,
-                    SUM(CASE WHEN stato = 'resolved' AND resolved_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as resolved_week,
-                    SUM(CASE WHEN stato = 'resolved' THEN 1 ELSE 0 END) as resolved_totali,
-                    SUM(CASE WHEN stato = 'rejected' THEN 1 ELSE 0 END) as rejected,
-                    SUM(CASE WHEN priorita = 'alta' AND stato = 'pending' THEN 1 ELSE 0 END) as alta_priorita_pending
-                  FROM segnalazioni";
-        $result = $this->db->query($query);
-        return $result->fetch_assoc();
+    $query = "SELECT 
+                COUNT(*) as totale,
+                SUM(CASE WHEN stato = 'pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN stato = 'resolved' AND resolved_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) as resolved_week,
+                SUM(CASE WHEN stato = 'resolved' THEN 1 ELSE 0 END) as resolved,
+                SUM(CASE WHEN stato = 'rejected' THEN 1 ELSE 0 END) as rejected,
+                SUM(CASE WHEN priorita = 'alta' AND stato = 'pending' THEN 1 ELSE 0 END) as alta_priorita_pending
+              FROM segnalazioni";
+    $result = $this->db->query($query);
+    return $result->fetch_assoc();
     }
     
     // ============================================================================

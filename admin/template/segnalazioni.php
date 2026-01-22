@@ -1,4 +1,5 @@
 <link rel="stylesheet" href="css/segnalazioni.css">
+<link rel="stylesheet" href="css/modal-segnalazione.css">
 
 <?php
 // Helper per iniziali
@@ -143,7 +144,7 @@ function getInitials($nome) {
         
         <!-- Header Card -->
         <div class="segnalazione-card-header">
-            <div class="tipo-badge" style="background: <?= $tipoInfo['color'] ?>;">
+            <div class="tipo-badge" style="--tipo-color: <?= $tipoInfo['color'] ?>; border-color: <?= $tipoInfo['color'] ?>; color: <?= $tipoInfo['color'] ?>;">
                 <?= $tipoInfo['icon'] ?> <?= $tipoInfo['label'] ?>
             </div>
             <div class="badges-right">
@@ -205,14 +206,14 @@ function getInitials($nome) {
 <!-- ============================================================================
      MODAL: DETTAGLIO SEGNALAZIONE
      ============================================================================ -->
-<div class="modal fade" id="modalDettaglio" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content segnalazione-modal">
+<div class="modal fade" id="modalDettaglio" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="z-index: 1061;">
+        <div class="modal-content modal-segnalazione-content" style="pointer-events: auto;">
             <div class="modal-header">
                 <h5 class="modal-title">
                     🚨 Dettaglio Segnalazione #<span id="modalSegnalazioneId"></span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
             <div class="modal-body">
                 <div id="modalContent">
@@ -229,12 +230,12 @@ function getInitials($nome) {
 <!-- ============================================================================
      MODAL: RISOLUZIONE
      ============================================================================ -->
-<div class="modal fade" id="modalRisoluzione" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content segnalazione-modal">
+<div class="modal fade" id="modalRisoluzione" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1061;">
+        <div class="modal-content modal-segnalazione-content" style="pointer-events: auto;">
             <div class="modal-header resolve-header">
                 <h5 class="modal-title">✅ Risolvi Segnalazione</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
             <div class="modal-body">
                 <form id="formRisoluzione">
@@ -294,12 +295,12 @@ function getInitials($nome) {
 <!-- ============================================================================
      MODAL: RIFIUTO
      ============================================================================ -->
-<div class="modal fade" id="modalRifiuto" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content segnalazione-modal">
+<div class="modal fade" id="modalRifiuto" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered" style="z-index: 1061;">
+        <div class="modal-content modal-segnalazione-content" style="pointer-events: auto;">
             <div class="modal-header reject-header">
                 <h5 class="modal-title">❌ Rifiuta Segnalazione</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
             <div class="modal-body">
                 <form id="formRifiuto">
@@ -340,12 +341,19 @@ function getInitials($nome) {
 
 <script>
 const tipiSegnalazione = <?= json_encode($templateParams['tipi_segnalazione']) ?>;
-let modalDettaglio, modalRisoluzione, modalRifiuto;
+let currentSegnalazioneId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    modalDettaglio = new bootstrap.Modal(document.getElementById('modalDettaglio'));
-    modalRisoluzione = new bootstrap.Modal(document.getElementById('modalRisoluzione'));
-    modalRifiuto = new bootstrap.Modal(document.getElementById('modalRifiuto'));
+    // =========================================================================
+    // FIX MODAL - Sposta i modal nel body per evitare stacking context issues
+    // DEVE essere la PRIMA cosa eseguita!
+    // =========================================================================
+    ['modalDettaglio', 'modalRisoluzione', 'modalRifiuto'].forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal && modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+    });
     
     // Click su KPI cards per filtrare
     document.querySelectorAll('.kpi-card[data-stato]').forEach(card => {
@@ -401,10 +409,22 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Helper per pulire backdrop residui
+function cleanupBackdrops() {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+}
+
+// Apri modal dettaglio
 function apriDettaglio(id) {
+    currentSegnalazioneId = id;
     document.getElementById('modalSegnalazioneId').textContent = id;
     document.getElementById('modalContent').innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Caricamento...</p></div>';
-    modalDettaglio.show();
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalDettaglio'));
+    modal.show();
     
     fetch(`segnalazioni.php?ajax=1&action=get_segnalazione&id=${id}`)
         .then(r => r.json())
@@ -432,13 +452,13 @@ function renderDettaglio(s) {
     let html = `
         <div class="dettaglio-container">
             <div class="dettaglio-header">
-                <div class="tipo-grande" style="background: ${tipoInfo.color};">${tipoInfo.icon} ${tipoInfo.label}</div>
+                <div class="tipo-grande" style="--tipo-color: ${tipoInfo.color}; border-color: ${tipoInfo.color}; color: ${tipoInfo.color};">${tipoInfo.icon} ${tipoInfo.label}</div>
                 <span class="stato-badge stato-${statoCss}">${getStatoLabel(s.stato)}</span>
                 <span class="priorita-badge priorita-${s.priorita}">${getPrioritaIcon(s.priorita)} ${s.priorita}</span>
                 <span class="data-badge">📅 ${formatDate(s.created_at)}</span>
             </div>
             <div class="dettaglio-section"><h6>📝 Descrizione</h6><div class="descrizione-box">${escapeHtml(s.descrizione)}</div></div>
-            ${s.contesto_prenotazione ? `<div class="dettaglio-section contesto-section"><h6>📍 Prenotazione Collegata</h6><div class="contesto-grid"><span><strong>Campo:</strong> ${escapeHtml(s.contesto_prenotazione.campo_nome)}</span><span><strong>Sport:</strong> ${escapeHtml(s.contesto_prenotazione.sport_nome)}</span><span><strong>Data:</strong> ${s.contesto_prenotazione.data_prenotazione}</span><span><strong>Orario:</strong> ${s.contesto_prenotazione.ora_inizio} - ${s.contesto_prenotazione.ora_fine}</span></div></div>` : ''}
+            ${s.contesto_prenotazione ? `<div class="dettaglio-section contesto-section"><h6>📍 Prenotazione Collegata</h6><div class="contesto-grid"><span><strong>Campo:</strong> ${escapeHtml(s.contesto_prenotazione.campo_nome)}</span><span><strong>Sport:</strong> ${escapeHtml(s.contesto_prenotazione.sport_nome)}</span><span><strong>Data:</strong> ${formatDataSola(s.contesto_prenotazione.data_prenotazione)}</span><span><strong>Orario:</strong> ${formatOrario(s.contesto_prenotazione.ora_inizio)} - ${formatOrario(s.contesto_prenotazione.ora_fine)}</span></div></div>` : ''}
             <div class="row g-3 mb-3">
                 <div class="col-md-6"><div class="profilo-box segnalante"><h6>👤 Segnalante</h6><div class="profilo-nome">${escapeHtml(profSegnalante.nome || '')} ${escapeHtml(profSegnalante.cognome || '')}</div><div class="profilo-email">${escapeHtml(profSegnalante.email || '')}</div><div class="profilo-stats"><div><span>Segnalazioni fatte:</span> <strong>${totSegnFatte}</strong></div><div><span>Validate:</span> <strong class="text-success">${segnValidate}</strong></div><div><span>Rifiutate:</span> <strong class="text-danger">${profSegnalante.segnalazioni_rifiutate || 0}</strong></div><div><span>Credibilità:</span> <strong class="${credibilita >= 70 ? 'text-success' : 'text-warning'}">${credibilita}%</strong></div></div></div></div>
                 <div class="col-md-6"><div class="profilo-box segnalato"><h6>⚠️ Segnalato</h6><div class="profilo-nome">${escapeHtml(profSegnalato.nome || '')} ${escapeHtml(profSegnalato.cognome || '')}</div><div class="profilo-email">${escapeHtml(profSegnalato.email || '')}</div><div class="profilo-stats"><div><span>Penalty Points:</span> <strong class="text-warning">${profSegnalato.penalty_points || 0}</strong></div><div><span>Segnalazioni ricevute:</span> <strong>${profSegnalato.segnalazioni_ricevute || 0}</strong></div><div><span>No-Show:</span> <strong class="text-danger">${profSegnalato.no_show_totali || 0}</strong></div><div><span>Affidabilità:</span> <strong class="${affidabilita >= 70 ? 'text-success' : 'text-warning'}">${affidabilita}%</strong></div></div></div></div>
@@ -459,34 +479,72 @@ function apriRisoluzione(id) {
     document.getElementById('resolveNote').value = '';
     document.getElementById('penaltyGroup').style.display = 'none';
     document.getElementById('sospensioneGroup').style.display = 'none';
-    modalDettaglio.hide(); setTimeout(() => modalRisoluzione.show(), 300);
+    
+    // Chiudi modal dettaglio
+    bootstrap.Modal.getInstance(document.getElementById('modalDettaglio')).hide();
+    
+    // Aspetta, pulisci backdrop e apri nuovo modal
+    setTimeout(() => {
+        cleanupBackdrops();
+        new bootstrap.Modal(document.getElementById('modalRisoluzione')).show();
+    }, 350);
 }
 
 function submitRisoluzione() {
     const form = document.getElementById('formRisoluzione');
     if (!form.checkValidity()) { form.reportValidity(); return; }
-    const formData = new FormData(form); formData.append('ajax', '1'); formData.append('action', 'resolve');
-    fetch('segnalazioni.php', { method: 'POST', body: formData }).then(r => r.json()).then(data => { showToast(data.message, data.success ? 'success' : 'error'); if (data.success) { modalRisoluzione.hide(); setTimeout(() => location.reload(), 1000); } });
+    const formData = new FormData(form); 
+    formData.append('ajax', '1'); 
+    formData.append('action', 'resolve');
+    fetch('segnalazioni.php', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => { 
+            showToast(data.message, data.success ? 'success' : 'error'); 
+            if (data.success) { 
+                bootstrap.Modal.getInstance(document.getElementById('modalRisoluzione')).hide(); 
+                setTimeout(() => location.reload(), 1000); 
+            } 
+        });
 }
 
 function apriRifiuto(id) {
     document.getElementById('rejectId').value = id;
     document.getElementById('rejectMotivo').value = '';
-    modalDettaglio.hide(); setTimeout(() => modalRifiuto.show(), 300);
+    
+    // Chiudi modal dettaglio
+    bootstrap.Modal.getInstance(document.getElementById('modalDettaglio')).hide();
+    
+    // Aspetta, pulisci backdrop e apri nuovo modal
+    setTimeout(() => {
+        cleanupBackdrops();
+        new bootstrap.Modal(document.getElementById('modalRifiuto')).show();
+    }, 350);
 }
 
 function submitRifiuto() {
     const form = document.getElementById('formRifiuto');
     if (!form.checkValidity()) { form.reportValidity(); return; }
-    const formData = new FormData(form); formData.append('ajax', '1'); formData.append('action', 'reject');
-    fetch('segnalazioni.php', { method: 'POST', body: formData }).then(r => r.json()).then(data => { showToast(data.message, data.success ? 'success' : 'error'); if (data.success) { modalRifiuto.hide(); setTimeout(() => location.reload(), 1000); } });
+    const formData = new FormData(form); 
+    formData.append('ajax', '1'); 
+    formData.append('action', 'reject');
+    fetch('segnalazioni.php', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => { 
+            showToast(data.message, data.success ? 'success' : 'error'); 
+            if (data.success) { 
+                bootstrap.Modal.getInstance(document.getElementById('modalRifiuto')).hide(); 
+                setTimeout(() => location.reload(), 1000); 
+            } 
+        });
 }
 
-// in_review viene mostrato come RISOLTA
-function getStatoLabel(stato) { return {pending: 'IN ATTESA', in_review: 'RISOLTA', resolved: 'RISOLTA', rejected: 'RIFIUTATA'}[stato] || stato; }
+// in_review rimosso - ora solo 3 stati
+function getStatoLabel(stato) { return {pending: 'IN ATTESA', resolved: 'RISOLTA', rejected: 'RIFIUTATA'}[stato] || stato; }
 function getPrioritaIcon(p) { return {alta: '🔴', media: '🟡', bassa: '🟢'}[p] || '⚪'; }
 function getAzioneLabel(a) { return {nessuna: 'Nessuna', warning: 'Warning', penalty_points: 'Penalty', sospensione: 'Sospensione', ban: 'Ban'}[a] || a; }
 function formatDate(d) { if (!d) return 'N/A'; return new Date(d).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}); }
+function formatDataSola(d) { if (!d) return 'N/A'; const parts = d.split('-'); return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : d; }
+function formatOrario(o) { if (!o) return ''; return o.substring(0, 5); }
 function escapeHtml(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 function showToast(msg, type) { const t = document.createElement('div'); t.className = `toast-notification toast-${type}`; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.classList.add('show'), 10); setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3000); }
 </script>

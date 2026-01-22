@@ -467,16 +467,22 @@
     background: var(--bg-card);
     backdrop-filter: blur(20px);
     border-radius: 16px;
-    padding: 16px 20px;
+    padding: 20px 24px;
     border: 1px solid var(--border-color);
     margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 }
 
-.filters-row {
+.filter-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     flex-wrap: wrap;
+    padding: 10px 0;
+}
+
+.filter-row:not(:last-child) {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .filter-group {
@@ -487,14 +493,14 @@
 
 .filter-label {
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-muted);
-    margin-right: 4px;
+    min-width: 60px;
 }
 
 .filter-chips {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
@@ -502,24 +508,23 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
-    background: transparent;
-    border: 1px solid var(--border-color);
-    border-radius: 9999px;
-    color: var(--text-muted);
+    padding: 8px 16px !important;
+    background: transparent !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    color: var(--text-secondary);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.2s ease;
     font-family: 'Outfit', sans-serif;
     white-space: nowrap;
 }
 
 .filter-chip:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--border-hover);
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
     color: var(--text-primary);
-    transform: scale(1.02);
 }
 
 .filter-chip:active {
@@ -527,9 +532,9 @@
 }
 
 .filter-chip.active {
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark));
-    border-color: transparent;
-    color: white;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)) !important;
+    border-color: transparent !important;
+    color: white !important;
     box-shadow: 0 2px 8px var(--accent-blue-glow);
 }
 
@@ -538,8 +543,8 @@
 }
 
 .filter-chip .status-dot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
 }
 
@@ -1720,7 +1725,7 @@
         grid-template-columns: repeat(2, 1fr);
     }
     
-    .filters-row {
+    .filter-row {
         flex-direction: column;
         align-items: flex-start;
     }

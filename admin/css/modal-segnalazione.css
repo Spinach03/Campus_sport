@@ -1,0 +1,420 @@
+/* ============================================================================
+   MODAL SEGNALAZIONE - CSS Specifico
+   Campus Sports Arena - Admin Panel
+   ============================================================================ */
+
+/* ============================================================================
+   FIX CRITICI PER FUNZIONAMENTO MODAL
+   ============================================================================ */
+
+/* BACKDROP - overlay scuro dietro il modal */
+.modal-backdrop.show {
+    z-index: 1055 !important;
+    opacity: 0.7 !important;
+}
+
+/* Override per tutti i modal della pagina segnalazioni */
+#modalDettaglio,
+#modalRisoluzione,
+#modalRifiuto {
+    z-index: 1060 !important;
+}
+
+#modalDettaglio .modal-dialog,
+#modalRisoluzione .modal-dialog,
+#modalRifiuto .modal-dialog {
+    z-index: 1061 !important;
+    pointer-events: auto !important;
+}
+
+#modalDettaglio .modal-content,
+#modalRisoluzione .modal-content,
+#modalRifiuto .modal-content {
+    pointer-events: auto !important;
+}
+
+/* Assicura che tutti gli elementi siano cliccabili */
+#modalDettaglio input,
+#modalDettaglio select,
+#modalDettaglio textarea,
+#modalDettaglio button,
+#modalDettaglio label,
+#modalDettaglio .btn,
+#modalDettaglio .btn-close,
+#modalRisoluzione input,
+#modalRisoluzione select,
+#modalRisoluzione textarea,
+#modalRisoluzione button,
+#modalRisoluzione label,
+#modalRisoluzione .btn,
+#modalRifiuto input,
+#modalRifiuto select,
+#modalRifiuto textarea,
+#modalRifiuto button,
+#modalRifiuto label,
+#modalRifiuto .btn {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================================================
+   MODAL CONTENT BASE
+   ============================================================================ */
+.modal-segnalazione-content {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 20px;
+    overflow: hidden;
+    color: #f1f5f9;
+}
+
+.modal-segnalazione-content .modal-header {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.1));
+    padding: 20px 24px;
+}
+
+.modal-segnalazione-content .modal-header.resolve-header {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+}
+
+.modal-segnalazione-content .modal-header.reject-header {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+}
+
+.modal-segnalazione-content .modal-title {
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.modal-segnalazione-content .modal-body {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.modal-segnalazione-content .modal-footer {
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    background: rgba(15, 23, 42, 0.5);
+    padding: 16px 24px;
+}
+
+/* ============================================================================
+   BTN CLOSE WHITE
+   ============================================================================ */
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+}
+
+.btn-close-white:hover {
+    opacity: 1;
+}
+
+/* ============================================================================
+   DETTAGLIO CONTAINER
+   ============================================================================ */
+.dettaglio-container {
+    color: #f1f5f9;
+}
+
+.dettaglio-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.tipo-grande {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    background: transparent;
+    border: 2px solid var(--tipo-color, #6B7280);
+    color: var(--tipo-color, #6B7280);
+}
+
+.data-badge {
+    background: rgba(148, 163, 184, 0.15);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* ============================================================================
+   DETTAGLIO SECTION
+   ============================================================================ */
+.dettaglio-section {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.dettaglio-section h6 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 12px;
+}
+
+.descrizione-box {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #cbd5e1;
+}
+
+/* ============================================================================
+   CONTESTO PRENOTAZIONE
+   ============================================================================ */
+.contesto-section {
+    border-left: 3px solid #3B82F6;
+}
+
+.contesto-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.contesto-grid span {
+    font-size: 13px;
+    color: #cbd5e1;
+}
+
+.contesto-grid strong {
+    color: #f1f5f9;
+}
+
+/* ============================================================================
+   PROFILO BOX
+   ============================================================================ */
+.profilo-box {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    height: 100%;
+}
+
+.profilo-box.segnalante {
+    border-top: 3px solid #3B82F6;
+}
+
+.profilo-box.segnalato {
+    border-top: 3px solid #EF4444;
+}
+
+.profilo-box h6 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+.profilo-nome {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+}
+
+.profilo-email {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+
+.profilo-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.profilo-stats > div {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+.profilo-stats strong {
+    color: #f1f5f9;
+}
+
+/* ============================================================================
+   STORICO LIST
+   ============================================================================ */
+.storico-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.storico-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+/* ============================================================================
+   RESOLVED / REJECTED SECTIONS
+   ============================================================================ */
+.resolved-section {
+    border-left: 3px solid #10B981;
+    background: rgba(16, 185, 129, 0.05) !important;
+}
+
+.rejected-section {
+    border-left: 3px solid #EF4444;
+    background: rgba(239, 68, 68, 0.05) !important;
+}
+
+.resolved-section p,
+.rejected-section p {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: #cbd5e1;
+}
+
+.resolved-section strong,
+.rejected-section strong {
+    color: #f1f5f9;
+}
+
+/* ============================================================================
+   DETTAGLIO ACTIONS
+   ============================================================================ */
+.dettaglio-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.dettaglio-actions .btn {
+    flex: 1;
+    padding: 12px 20px;
+    font-weight: 600;
+    border-radius: 10px;
+}
+
+/* ============================================================================
+   FORM CONTROLS DARK
+   ============================================================================ */
+.modal-segnalazione-content .form-control,
+.modal-segnalazione-content .form-select {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    color: #f1f5f9;
+    font-family: 'Outfit', sans-serif;
+}
+
+.modal-segnalazione-content .form-control:focus,
+.modal-segnalazione-content .form-select:focus {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    background: rgba(15, 23, 42, 0.8);
+    color: #f1f5f9;
+}
+
+.modal-segnalazione-content .form-label {
+    color: #f1f5f9;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.modal-segnalazione-content .form-check-label {
+    color: #94a3b8;
+}
+
+.modal-segnalazione-content .form-check-input {
+    background-color: rgba(15, 23, 42, 0.6);
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.modal-segnalazione-content .form-check-input:checked {
+    background-color: #3B82F6;
+    border-color: #3B82F6;
+}
+
+/* ============================================================================
+   LOADING SPINNER
+   ============================================================================ */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+}
+
+.loading-spinner .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(59, 130, 246, 0.2);
+    border-top-color: #3B82F6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   ERROR MESSAGE
+   ============================================================================ */
+.error-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #EF4444;
+    font-size: 15px;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .dettaglio-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .contesto-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .dettaglio-actions {
+        flex-direction: column;
+    }
+    
+    .storico-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}

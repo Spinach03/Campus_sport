@@ -51,7 +51,7 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
             $id = intval($_POST['id'] ?? 0);
             $stato = $_POST['stato'] ?? '';
             
-            if (!in_array($stato, ['pending', 'in_review'])) {
+            if (!in_array($stato, ['pending'])) {
                 echo json_encode(['success' => false, 'message' => 'Stato non valido']);
                 exit;
             }
