@@ -119,7 +119,7 @@ UPDATE `campi_sportivi` c SET
 WHERE c.`campo_id` IN (1, 2, 3, 4, 5, 7);
 
 -- =====================================================
--- RIEPILOGO RECENSIONI AGGIUNTE:
+-- RECENSIONI AGGIUNTE:
 -- =====================================================
 -- 1 STELLA: 6 recensioni (ID 36-41)
 -- 2 STELLE: 8 recensioni (ID 42-49)

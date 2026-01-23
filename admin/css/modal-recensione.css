@@ -440,7 +440,35 @@
 }
 
 .modal-recensione-content .form-text {
-    color: #64748b;
+    color: #94a3b8;
+}
+
+/* Placeholder textarea e input - colore chiaro visibile su sfondo scuro */
+.modal-recensione-content textarea::placeholder,
+.modal-recensione-content input::placeholder,
+.modal-recensione-content .form-control::placeholder {
+    color: #64748b !important;
+    opacity: 1;
+}
+
+/* Testo descrittivo nelle modali */
+.modal-recensione-content p {
+    color: #94a3b8;
+}
+
+/* Testo warning/descrittivo nella modal elimina */
+.modal-recensione-content .delete-warning,
+.modal-recensione-content .modal-body p {
+    color: #94a3b8;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Override Bootstrap text-muted per tema scuro */
+.modal-recensione-content .text-muted,
+.modal-recensione-content .text-muted small,
+.modal-recensione-content small {
+    color: #f87171 !important;
 }
 
 /* Risposta Context */

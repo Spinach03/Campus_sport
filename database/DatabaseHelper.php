@@ -2847,5 +2847,277 @@ class DatabaseHelper {
         $stmt->bind_param('i', $rispostaId);
         return $stmt->execute();
     }
+
+    
+    // ============================================================================
+    // ============================================================================
+    // ANALYTICS - Metodi per sezione Analytics
+    // ============================================================================
+    // ============================================================================
+    
+    // ============================================================================
+    // ANALYTICS - KPI principali con confronto periodo precedente
+    // ============================================================================
+    
+    public function getAnalyticsKPI($dataInizio, $dataFine, $dataInizioPrec, $dataFinePrec) {
+        // Periodo corrente
+        $queryCorrente = "SELECT 
+            COUNT(*) as prenotazioni_totali,
+            COUNT(CASE WHEN stato = 'completata' THEN 1 END) as completate,
+            COUNT(CASE WHEN stato = 'cancellata' THEN 1 END) as cancellate,
+            COUNT(CASE WHEN stato = 'no_show' THEN 1 END) as noshow,
+            COUNT(DISTINCT user_id) as utenti_attivi,
+            SUM(TIMESTAMPDIFF(HOUR, ora_inizio, ora_fine)) as ore_prenotate
+        FROM prenotazioni 
+        WHERE data_prenotazione BETWEEN ? AND ?";
+        
+        $stmt = $this->db->prepare($queryCorrente);
+        $stmt->bind_param('ss', $dataInizio, $dataFine);
+        $stmt->execute();
+        $corrente = $stmt->get_result()->fetch_assoc();
+        
+        // Periodo precedente
+        $stmt = $this->db->prepare($queryCorrente);
+        $stmt->bind_param('ss', $dataInizioPrec, $dataFinePrec);
+        $stmt->execute();
+        $precedente = $stmt->get_result()->fetch_assoc();
+        
+        // Rating medio
+        $queryRating = "SELECT ROUND(AVG(rating_generale), 1) as rating 
+                        FROM recensioni WHERE created_at BETWEEN ? AND ?";
+        $stmt = $this->db->prepare($queryRating);
+        $stmt->bind_param('ss', $dataInizio, $dataFine);
+        $stmt->execute();
+        $ratingCorrente = $stmt->get_result()->fetch_assoc()['rating'] ?? 0;
+        
+        $stmt = $this->db->prepare($queryRating);
+        $stmt->bind_param('ss', $dataInizioPrec, $dataFinePrec);
+        $stmt->execute();
+        $ratingPrec = $stmt->get_result()->fetch_assoc()['rating'] ?? 0;
+        
+        // Calcoli
+        $prenotazioniTotali = intval($corrente['prenotazioni_totali'] ?? 0);
+        $completate = intval($corrente['completate'] ?? 0);
+        $noshow = intval($corrente['noshow'] ?? 0);
+        $orePrenotate = intval($corrente['ore_prenotate'] ?? 0);
+        $utentiAttivi = intval($corrente['utenti_attivi'] ?? 0);
+        
+        $tassoCompletamento = $prenotazioniTotali > 0 ? round(($completate / $prenotazioniTotali) * 100) : 0;
+        $noshowRate = $prenotazioniTotali > 0 ? round(($noshow / $prenotazioniTotali) * 100) : 0;
+        
+        // Variazioni percentuali
+        $precTotali = intval($precedente['prenotazioni_totali'] ?? 0);
+        $precCompletate = intval($precedente['completate'] ?? 0);
+        $precNoshow = intval($precedente['noshow'] ?? 0);
+        $precOre = intval($precedente['ore_prenotate'] ?? 0);
+        $precUtenti = intval($precedente['utenti_attivi'] ?? 0);
+        
+        $precTassoCompletamento = $precTotali > 0 ? round(($precCompletate / $precTotali) * 100) : 0;
+        $precNoshowRate = $precTotali > 0 ? round(($precNoshow / $precTotali) * 100) : 0;
+        
+        return [
+            'prenotazioni_totali' => $prenotazioniTotali,
+            'prenotazioni_var' => $this->calcolaVariazione($prenotazioniTotali, $precTotali),
+            'tasso_completamento' => $tassoCompletamento,
+            'completamento_var' => $tassoCompletamento - $precTassoCompletamento,
+            'utenti_attivi' => $utentiAttivi,
+            'utenti_var' => $this->calcolaVariazione($utentiAttivi, $precUtenti),
+            'noshow_rate' => $noshowRate,
+            'noshow_var' => $noshowRate - $precNoshowRate,
+            'ore_prenotate' => $orePrenotate,
+            'ore_var' => $this->calcolaVariazione($orePrenotate, $precOre),
+            'rating_medio' => $ratingCorrente ?: 0,
+            'rating_var' => $this->calcolaVariazione($ratingCorrente, $ratingPrec)
+        ];
+    }
+    
+    // ============================================================================
+    // ANALYTICS - Calcola variazione percentuale
+    // ============================================================================
+    
+    private function calcolaVariazione($corrente, $precedente) {
+        if ($precedente == 0) {
+            return $corrente > 0 ? 100 : 0;
+        }
+        return round((($corrente - $precedente) / $precedente) * 100);
+    }
+    
+    // ============================================================================
+    // ANALYTICS - Trend prenotazioni giornaliero
+    // ============================================================================
+    
+    public function getAnalyticsTrend($dataInizio, $dataFine) {
+        $query = "SELECT 
+            DATE(data_prenotazione) as data,
+            COUNT(CASE WHEN stato = 'completata' THEN 1 END) as completate,
+            COUNT(CASE WHEN stato = 'cancellata' THEN 1 END) as cancellate,
+            COUNT(CASE WHEN stato = 'no_show' THEN 1 END) as noshow
+        FROM prenotazioni 
+        WHERE data_prenotazione BETWEEN ? AND ?
+        GROUP BY DATE(data_prenotazione)
+        ORDER BY data ASC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ss', $dataInizio, $dataFine);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Formatta per Chart.js
+        $labels = [];
+        $completate = [];
+        $cancellate = [];
+        $noshow = [];
+        
+        foreach ($result as $row) {
+            $labels[] = date('d/m', strtotime($row['data']));
+            $completate[] = intval($row['completate']);
+            $cancellate[] = intval($row['cancellate']);
+            $noshow[] = intval($row['noshow']);
+        }
+        
+        return [
+            'labels' => $labels,
+            'completate' => $completate,
+            'cancellate' => $cancellate,
+            'noshow' => $noshow
+        ];
+    }
+    
+    // ============================================================================
+    // ANALYTICS - Heatmap giorno×ora
+    // ============================================================================
+    
+    public function getAnalyticsHeatmap($dataInizio, $dataFine) {
+        $query = "SELECT 
+            DAYOFWEEK(data_prenotazione) as giorno_settimana,
+            HOUR(ora_inizio) as ora,
+            COUNT(*) as count
+        FROM prenotazioni 
+        WHERE data_prenotazione BETWEEN ? AND ?
+            AND stato IN ('confermata', 'completata')
+        GROUP BY DAYOFWEEK(data_prenotazione), HOUR(ora_inizio)
+        ORDER BY giorno_settimana, ora";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ss', $dataInizio, $dataFine);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Converti DAYOFWEEK (1=domenica) a 1=lunedì
+        $heatmap = [];
+        foreach ($result as $row) {
+            $giorno = $row['giorno_settimana'];
+            // MySQL: 1=domenica, 2=lunedì, ... 7=sabato
+            // Convertiamo a: 1=lunedì, ... 7=domenica
+            $giornoConvertito = $giorno == 1 ? 7 : $giorno - 1;
+            
+            $heatmap[] = [
+                'giorno' => $giornoConvertito,
+                'ora' => str_pad($row['ora'], 2, '0', STR_PAD_LEFT),
+                'count' => intval($row['count'])
+            ];
+        }
+        
+        return $heatmap;
+    }
+    
+    // ============================================================================
+    // ANALYTICS - Utilizzo campi (percentuale relativa)
+    // ============================================================================
+    
+    public function getAnalyticsUtilizzoCampi($dataInizio, $dataFine) {
+        $query = "SELECT 
+            c.campo_id,
+            c.nome,
+            s.nome as sport,
+            COUNT(p.prenotazione_id) as prenotazioni,
+            COALESCE(SUM(TIMESTAMPDIFF(HOUR, p.ora_inizio, p.ora_fine)), 0) as ore_utilizzate
+        FROM campi_sportivi c
+        JOIN sport s ON c.sport_id = s.sport_id
+        LEFT JOIN prenotazioni p ON c.campo_id = p.campo_id 
+            AND p.data_prenotazione BETWEEN ? AND ?
+            AND p.stato IN ('confermata', 'completata')
+        WHERE c.stato != 'chiuso'
+        GROUP BY c.campo_id, c.nome, s.nome
+        ORDER BY prenotazioni DESC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ss', $dataInizio, $dataFine);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Trova il massimo per calcolare percentuale relativa
+        $maxPrenotazioni = 0;
+        foreach ($result as $row) {
+            if (intval($row['prenotazioni']) > $maxPrenotazioni) {
+                $maxPrenotazioni = intval($row['prenotazioni']);
+            }
+        }
+        
+        // Calcola percentuali relative (campo più usato = 100%)
+        foreach ($result as &$row) {
+            $prenotazioni = intval($row['prenotazioni']);
+            $row['percentuale'] = $maxPrenotazioni > 0 
+                ? round(($prenotazioni / $maxPrenotazioni) * 100, 1) 
+                : 0;
+        }
+        
+        return $result;
+    }
+    
+    // ============================================================================
+    // ANALYTICS - Distribuzione prenotazioni per sport
+    // ============================================================================
+    
+    public function getAnalyticsDistribuzioneSport($dataInizio, $dataFine) {
+        $query = "SELECT 
+            s.nome as sport,
+            s.icona,
+            COUNT(p.prenotazione_id) as prenotazioni
+        FROM sport s
+        LEFT JOIN campi_sportivi c ON s.sport_id = c.sport_id
+        LEFT JOIN prenotazioni p ON c.campo_id = p.campo_id 
+            AND p.data_prenotazione BETWEEN ? AND ?
+            AND p.stato IN ('confermata', 'completata')
+        GROUP BY s.sport_id, s.nome, s.icona
+        HAVING prenotazioni > 0
+        ORDER BY prenotazioni DESC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ss', $dataInizio, $dataFine);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // ============================================================================
+    // ANALYTICS - Export prenotazioni CSV
+    // ============================================================================
+    
+    public function getPrenotazioniExport($dataInizio, $dataFine) {
+        $query = "SELECT 
+            p.prenotazione_id,
+            p.data_prenotazione,
+            p.ora_inizio,
+            p.ora_fine,
+            c.nome as campo_nome,
+            s.nome as sport_nome,
+            CONCAT(u.nome, ' ', u.cognome) as utente_nome,
+            u.email,
+            p.stato,
+            p.check_in_effettuato
+        FROM prenotazioni p
+        JOIN campi_sportivi c ON p.campo_id = c.campo_id
+        JOIN sport s ON c.sport_id = s.sport_id
+        JOIN users u ON p.user_id = u.user_id
+        WHERE p.data_prenotazione BETWEEN ? AND ?
+        ORDER BY p.data_prenotazione DESC, p.ora_inizio ASC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ss', $dataInizio, $dataFine);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+
 }
 ?>
