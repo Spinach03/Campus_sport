@@ -21,8 +21,8 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
             $recensione = $dbh->getRecensioneById($id);
             
             if ($recensione) {
-                // Aggiungi risposte
-                $recensione['risposte'] = $dbh->getRecensioneRisposte($id);
+                // Aggiungi la risposta (singola, se esiste)
+                $recensione['risposta'] = $dbh->getRecensioneRisposta($id);
                 
                 // Stats campo
                 $recensione['stats_campo'] = $dbh->getRecensioniStatsCampo($recensione['campo_id']);
@@ -33,7 +33,7 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
             }
             exit;
             
-        // Aggiungi risposta
+        // Aggiungi risposta (solo se non esiste già)
         case 'add_risposta':
             $id = intval($_POST['id'] ?? 0);
             $testo = trim($_POST['testo'] ?? '');
@@ -48,10 +48,38 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
                 exit;
             }
             
+            // Verifica che non esista già una risposta
+            if ($dbh->hasRecensioneRisposta($id)) {
+                echo json_encode(['success' => false, 'message' => 'Questa recensione ha già una risposta. Usa la funzione Modifica.']);
+                exit;
+            }
+            
             if ($dbh->addRecensioneRisposta($id, $adminId, $testo)) {
                 echo json_encode(['success' => true, 'message' => 'Risposta aggiunta con successo']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Errore nell\'aggiunta della risposta']);
+            }
+            exit;
+        
+        // Modifica risposta esistente
+        case 'update_risposta':
+            $rispostaId = intval($_POST['risposta_id'] ?? 0);
+            $testo = trim($_POST['testo'] ?? '');
+            
+            if (empty($testo)) {
+                echo json_encode(['success' => false, 'message' => 'Il testo della risposta è obbligatorio']);
+                exit;
+            }
+            
+            if (strlen($testo) < 10) {
+                echo json_encode(['success' => false, 'message' => 'La risposta deve essere di almeno 10 caratteri']);
+                exit;
+            }
+            
+            if ($dbh->updateRecensioneRisposta($rispostaId, $testo, $adminId)) {
+                echo json_encode(['success' => true, 'message' => 'Risposta modificata con successo']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Errore nella modifica della risposta']);
             }
             exit;
             
@@ -60,7 +88,7 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
             $id = intval($_POST['id'] ?? 0);
             
             if ($dbh->deleteRecensioneRisposta($id)) {
-                echo json_encode(['success' => true, 'message' => 'Risposta eliminata']);
+                echo json_encode(['success' => true, 'message' => 'Risposta eliminata. Ora puoi aggiungere una nuova risposta.']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Errore nell\'eliminazione']);
             }

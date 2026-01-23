@@ -249,7 +249,7 @@ function renderStars($rating) {
 </div>
 
 <!-- ============================================================================
-     MODAL: RISPONDI
+     MODAL: RISPONDI (nuova risposta)
      ============================================================================ -->
 <div class="modal fade" id="modalRisposta" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1061;">
@@ -286,6 +286,44 @@ function renderStars($rating) {
 </div>
 
 <!-- ============================================================================
+     MODAL: MODIFICA RISPOSTA
+     ============================================================================ -->
+<div class="modal fade" id="modalModificaRisposta" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1061;">
+        <div class="modal-content modal-recensione-content" style="pointer-events: auto;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <h5 class="modal-title">✏️ Modifica Risposta</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formModificaRisposta">
+                    <input type="hidden" id="modificaRispostaId" name="risposta_id">
+                    <input type="hidden" id="modificaRecensioneId">
+                    
+                    <div class="risposta-context mb-3">
+                        <div class="context-label">Stai modificando la risposta per:</div>
+                        <div id="modificaContext" class="context-content"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Testo risposta <span class="text-danger">*</span></label>
+                        <textarea id="modificaRispostaTesto" name="testo" class="form-control" rows="5" required minlength="10"
+                                  placeholder="Modifica la risposta..."></textarea>
+                        <div class="form-text">Minimo 10 caratteri. La risposta modificata sarà visibile pubblicamente.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-warning" onclick="submitModificaRisposta()">
+                    ✏️ Salva Modifiche
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================
      MODAL: CONFERMA ELIMINAZIONE RECENSIONE
      ============================================================================ -->
 <div class="modal fade" id="modalElimina" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
@@ -297,7 +335,7 @@ function renderStars($rating) {
             </div>
             <div class="modal-body">
                 <p>Sei sicuro di voler eliminare questa recensione?</p>
-                <p class="text-warning"><strong>⚠️ Attenzione:</strong> Questa azione è irreversibile e rimuoverà anche tutte le risposte associate.</p>
+                <p class="text-warning"><strong>⚠️ Attenzione:</strong> Questa azione è irreversibile e rimuoverà anche la risposta associata.</p>
                 <input type="hidden" id="eliminaRecensioneId">
             </div>
             <div class="modal-footer">
@@ -322,7 +360,7 @@ function renderStars($rating) {
             </div>
             <div class="modal-body">
                 <p>Sei sicuro di voler eliminare questa risposta?</p>
-                <p class="text-muted"><small>Questa azione è irreversibile.</small></p>
+                <p class="text-muted"><small>Dopo l'eliminazione potrai aggiungere una nuova risposta a questa recensione.</small></p>
                 <input type="hidden" id="eliminaRispostaId">
             </div>
             <div class="modal-footer">
@@ -347,14 +385,24 @@ function renderStars($rating) {
 
 <script>
 let currentRecensioneId = null;
+let currentRecensioneData = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // FIX MODAL - Sposta i modal nel body
-    ['modalDettaglio', 'modalRisposta', 'modalElimina', 'modalEliminaRisposta'].forEach(modalId => {
+    // FIX MODAL - Sposta i modal nel body e aggiungi cleanup
+    ['modalDettaglio', 'modalRisposta', 'modalModificaRisposta', 'modalElimina', 'modalEliminaRisposta'].forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (modal && modal.parentElement !== document.body) {
             document.body.appendChild(modal);
         }
+        
+        // Pulisci backdrop quando si chiude qualsiasi modal
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Se non ci sono altri modal aperti, pulisci tutto
+            const openModals = document.querySelectorAll('.modal.show');
+            if (openModals.length === 0) {
+                cleanupBackdrops();
+            }
+        });
     });
     
     // Click su KPI cards per filtrare
@@ -442,8 +490,12 @@ function apriDettaglio(id) {
     fetch(`recensioni.php?ajax=1&action=get_recensione&id=${id}`)
         .then(r => r.json())
         .then(data => {
-            if (data.success) renderDettaglio(data.recensione);
-            else document.getElementById('modalContent').innerHTML = `<div class="error-message">❌ ${data.message}</div>`;
+            if (data.success) {
+                currentRecensioneData = data.recensione;
+                renderDettaglio(data.recensione);
+            } else {
+                document.getElementById('modalContent').innerHTML = `<div class="error-message">❌ ${data.message}</div>`;
+            }
         })
         .catch(() => document.getElementById('modalContent').innerHTML = '<div class="error-message">❌ Errore di connessione</div>');
 }
@@ -452,20 +504,30 @@ function renderDettaglio(r) {
     const ratingClass = r.rating_generale >= 4 ? 'positive' : (r.rating_generale <= 2 ? 'negative' : 'neutral');
     const stars = '⭐'.repeat(r.rating_generale) + '<span class="star-empty">' + '☆'.repeat(5 - r.rating_generale) + '</span>';
     
-    let risposteHtml = '';
-    if (r.risposte && r.risposte.length > 0) {
-        risposteHtml = r.risposte.map(risp => `
+    // Gestione singola risposta
+    let rispostaHtml = '';
+    const hasRisposta = r.risposta && r.risposta.risposta_id;
+    
+    if (hasRisposta) {
+        rispostaHtml = `
             <div class="risposta-item">
                 <div class="risposta-header">
-                    <span class="risposta-admin">👤 ${escapeHtml(risp.admin_nome)}</span>
-                    <span class="risposta-data">${formatDate(risp.created_at)}</span>
-                    <button class="btn btn-sm btn-outline-danger btn-elimina-risposta" onclick="eliminaRisposta(${risp.risposta_id})" title="Elimina risposta">🗑️</button>
+                    <span class="risposta-admin">👤 ${escapeHtml(r.risposta.admin_nome)}</span>
+                    <span class="risposta-data">${formatDate(r.risposta.created_at)}</span>
                 </div>
-                <div class="risposta-testo">${escapeHtml(risp.testo)}</div>
+                <div class="risposta-testo">${escapeHtml(r.risposta.testo)}</div>
+                <div class="risposta-actions mt-2">
+                    <button class="btn btn-sm btn-outline-warning" onclick="apriModificaRisposta(${r.risposta.risposta_id}, '${escapeHtml(r.risposta.testo).replace(/'/g, "\\'")}')">
+                        ✏️ Modifica
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="eliminaRisposta(${r.risposta.risposta_id})">
+                        🗑️ Elimina
+                    </button>
+                </div>
             </div>
-        `).join('');
+        `;
     } else {
-        risposteHtml = '<div class="no-risposte">Nessuna risposta ancora. Clicca su "Rispondi" per aggiungerne una.</div>';
+        rispostaHtml = '<div class="no-risposte">Nessuna risposta ancora. Clicca su "Rispondi" per aggiungerne una.</div>';
     }
     
     let html = `
@@ -553,19 +615,25 @@ function renderDettaglio(r) {
                 </div>
             </div>
             
-            <!-- Risposte Admin -->
+            <!-- Risposta Admin (singola) -->
             <div class="dettaglio-section risposte-section">
-                <h6>💬 Risposte Admin (${r.risposte ? r.risposte.length : 0})</h6>
+                <h6>💬 Risposta Admin ${hasRisposta ? '✅' : '❌'}</h6>
                 <div class="risposte-list">
-                    ${risposteHtml}
+                    ${rispostaHtml}
                 </div>
             </div>
             
             <!-- Azioni -->
             <div class="dettaglio-actions">
+                ${!hasRisposta ? `
                 <button class="btn btn-primary" onclick="apriRisposta(${r.recensione_id}, '${escapeHtml(r.utente_nome)}', ${r.rating_generale})">
                     💬 Rispondi
                 </button>
+                ` : `
+                <button class="btn btn-warning" onclick="apriModificaRisposta(${r.risposta.risposta_id}, '${escapeHtml(r.risposta.testo).replace(/'/g, "\\'")}')">
+                    ✏️ Modifica Risposta
+                </button>
+                `}
                 <button class="btn btn-danger" onclick="apriElimina(${r.recensione_id})">
                     🗑️ Elimina Recensione
                 </button>
@@ -575,6 +643,7 @@ function renderDettaglio(r) {
     document.getElementById('modalContent').innerHTML = html;
 }
 
+// Apri modal per nuova risposta
 function apriRisposta(id, utente, rating) {
     document.getElementById('rispostaRecensioneId').value = id;
     document.getElementById('rispostaTesto').value = '';
@@ -590,6 +659,27 @@ function apriRisposta(id, utente, rating) {
     }, 350);
 }
 
+// Apri modal per modificare risposta
+function apriModificaRisposta(rispostaId, testoAttuale) {
+    document.getElementById('modificaRispostaId').value = rispostaId;
+    document.getElementById('modificaRecensioneId').value = currentRecensioneId;
+    document.getElementById('modificaRispostaTesto').value = testoAttuale;
+    
+    if (currentRecensioneData) {
+        document.getElementById('modificaContext').innerHTML = `
+            <strong>${escapeHtml(currentRecensioneData.utente_nome)}</strong> - Rating: ${'⭐'.repeat(currentRecensioneData.rating_generale)}
+        `;
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('modalDettaglio')).hide();
+    
+    setTimeout(() => {
+        cleanupBackdrops();
+        new bootstrap.Modal(document.getElementById('modalModificaRisposta')).show();
+    }, 350);
+}
+
+// Submit nuova risposta
 function submitRisposta() {
     const form = document.getElementById('formRisposta');
     if (!form.checkValidity()) { form.reportValidity(); return; }
@@ -604,6 +694,26 @@ function submitRisposta() {
             showToast(data.message, data.success ? 'success' : 'error');
             if (data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('modalRisposta')).hide();
+                setTimeout(() => location.reload(), 1000);
+            }
+        });
+}
+
+// Submit modifica risposta
+function submitModificaRisposta() {
+    const form = document.getElementById('formModificaRisposta');
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+    
+    const formData = new FormData(form);
+    formData.append('ajax', '1');
+    formData.append('action', 'update_risposta');
+    
+    fetch('recensioni.php', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            showToast(data.message, data.success ? 'success' : 'error');
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('modalModificaRisposta')).hide();
                 setTimeout(() => location.reload(), 1000);
             }
         });
@@ -641,7 +751,14 @@ function confermaElimina() {
 
 function eliminaRisposta(id) {
     document.getElementById('eliminaRispostaId').value = id;
-    new bootstrap.Modal(document.getElementById('modalEliminaRisposta')).show();
+    
+    // Usa opzione backdrop: false per evitare backdrop multipli
+    const modalEl = document.getElementById('modalEliminaRisposta');
+    let modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if (!modalInstance) {
+        modalInstance = new bootstrap.Modal(modalEl, { backdrop: false });
+    }
+    modalInstance.show();
 }
 
 function confermaEliminaRisposta() {
@@ -657,10 +774,31 @@ function confermaEliminaRisposta() {
         .then(data => {
             showToast(data.message, data.success ? 'success' : 'error');
             if (data.success) {
-                bootstrap.Modal.getInstance(document.getElementById('modalEliminaRisposta')).hide();
-                // Ricarica il dettaglio
+                // Chiudi modal elimina risposta
+                const modalEliminaRisposta = bootstrap.Modal.getInstance(document.getElementById('modalEliminaRisposta'));
+                if (modalEliminaRisposta) {
+                    modalEliminaRisposta.hide();
+                }
+                
+                // Pulisci backdrop extra e ricarica dettaglio
                 setTimeout(() => {
-                    apriDettaglio(currentRecensioneId);
+                    // Rimuovi tutti i backdrop tranne uno (quello del modal dettaglio)
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    if (backdrops.length > 1) {
+                        for (let i = 1; i < backdrops.length; i++) {
+                            backdrops[i].remove();
+                        }
+                    }
+                    
+                    // Ricarica contenuto dettaglio senza chiudere il modal
+                    fetch(`recensioni.php?ajax=1&action=get_recensione&id=${currentRecensioneId}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                currentRecensioneData = data.recensione;
+                                renderDettaglio(data.recensione);
+                            }
+                        });
                 }, 300);
             }
         });

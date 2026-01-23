@@ -840,13 +840,60 @@ class DatabaseHelper {
     }
     
     // ============================================================================
-    // RECENSIONI - Aggiungi risposta admin
+    // RECENSIONI - Verifica se esiste già una risposta per la recensione
+    // ============================================================================
+    
+    public function hasRecensioneRisposta($recensioneId) {
+        $query = "SELECT COUNT(*) as count FROM recensione_risposte WHERE recensione_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $recensioneId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        return ($row['count'] > 0);
+    }
+    
+    // ============================================================================
+    // RECENSIONI - Ottieni la risposta singola di una recensione (max 1)
+    // ============================================================================
+    
+    public function getRecensioneRisposta($recensioneId) {
+        $query = "SELECT rr.*, CONCAT(u.nome, ' ', u.cognome) as admin_nome
+                  FROM recensione_risposte rr
+                  JOIN users u ON rr.admin_id = u.user_id
+                  WHERE rr.recensione_id = ?
+                  LIMIT 1";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $recensioneId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc(); // Restituisce null se non esiste
+    }
+    
+    // ============================================================================
+    // RECENSIONI - Aggiungi risposta admin (solo se non esiste già)
     // ============================================================================
     
     public function addRecensioneRisposta($recensioneId, $adminId, $testo) {
+        // Verifica che non esista già una risposta
+        if ($this->hasRecensioneRisposta($recensioneId)) {
+            return false;
+        }
+        
         $query = "INSERT INTO recensione_risposte (recensione_id, admin_id, testo) VALUES (?, ?, ?)";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param('iis', $recensioneId, $adminId, $testo);
+        return $stmt->execute();
+    }
+    
+    // ============================================================================
+    // RECENSIONI - Modifica risposta esistente
+    // ============================================================================
+    
+    public function updateRecensioneRisposta($rispostaId, $testo, $adminId) {
+        $query = "UPDATE recensione_risposte SET testo = ?, admin_id = ?, created_at = NOW() WHERE risposta_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('sii', $testo, $adminId, $rispostaId);
         return $stmt->execute();
     }
     
@@ -862,7 +909,7 @@ class DatabaseHelper {
     }
     
     // ============================================================================
-    // RECENSIONI - Risposte admin di una recensione
+    // RECENSIONI - Risposte admin di una recensione (per compatibilità, max 1)
     // ============================================================================
     
     public function getRecensioneRisposte($recensioneId) {
@@ -870,7 +917,7 @@ class DatabaseHelper {
                   FROM recensione_risposte rr
                   JOIN users u ON rr.admin_id = u.user_id
                   WHERE rr.recensione_id = ?
-                  ORDER BY rr.created_at ASC";
+                  LIMIT 1";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param('i', $recensioneId);
         $stmt->execute();
