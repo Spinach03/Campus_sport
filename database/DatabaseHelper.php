@@ -3119,5 +3119,385 @@ class DatabaseHelper {
     }
 
 
+    // ============================================================================
+    // ADMIN - GESTIONE PRENOTAZIONI
+    // ============================================================================
+    
+    /**
+     * Ottieni statistiche prenotazioni per admin dashboard
+     */
+    public function getPrenotazioniStatsAdmin() {
+        $query = "SELECT 
+            COUNT(*) as totale,
+            SUM(CASE WHEN stato = 'confermata' THEN 1 ELSE 0 END) as confermate,
+            SUM(CASE WHEN stato = 'completata' THEN 1 ELSE 0 END) as completate,
+            SUM(CASE WHEN stato = 'cancellata' THEN 1 ELSE 0 END) as cancellate,
+            SUM(CASE WHEN stato = 'no_show' THEN 1 ELSE 0 END) as no_show,
+            SUM(CASE WHEN data_prenotazione = CURDATE() AND stato IN ('confermata', 'completata') THEN 1 ELSE 0 END) as oggi
+        FROM prenotazioni";
+        
+        $result = $this->db->query($query);
+        return $result->fetch_assoc();
+    }
+    
+    /**
+     * Ottieni tutte le prenotazioni con filtri per admin
+     */
+    public function getAllPrenotazioniAdmin($filtri = []) {
+        $query = "SELECT 
+            p.prenotazione_id,
+            p.user_id,
+            p.campo_id,
+            p.data_prenotazione,
+            p.ora_inizio,
+            p.ora_fine,
+            p.num_partecipanti,
+            p.stato,
+            p.check_in_effettuato,
+            p.note,
+            p.created_at,
+            c.nome as campo_nome,
+            c.tipo_campo as campo_tipo,
+            s.nome as sport_nome,
+            s.icona as sport_icona,
+            u.nome as user_nome,
+            u.cognome as user_cognome,
+            u.email as user_email
+        FROM prenotazioni p
+        JOIN campi_sportivi c ON p.campo_id = c.campo_id
+        JOIN sport s ON c.sport_id = s.sport_id
+        JOIN users u ON p.user_id = u.user_id
+        WHERE 1=1";
+        
+        $params = [];
+        $types = '';
+        
+        // Filtro stato
+        if (!empty($filtri['stato'])) {
+            if ($filtri['stato'] === 'future') {
+                // Filtra prenotazioni future (data > oggi OR (data = oggi AND ora > ora attuale))
+                $query .= " AND p.stato = 'confermata' AND (p.data_prenotazione > CURDATE() OR (p.data_prenotazione = CURDATE() AND p.ora_inizio > CURTIME()))";
+            } else {
+                $query .= " AND p.stato = ?";
+                $params[] = $filtri['stato'];
+                $types .= 's';
+            }
+        }
+        
+        // Filtro campo
+        if (!empty($filtri['campo'])) {
+            $query .= " AND p.campo_id = ?";
+            $params[] = intval($filtri['campo']);
+            $types .= 'i';
+        }
+        
+        // Filtro sport
+        if (!empty($filtri['sport'])) {
+            $query .= " AND c.sport_id = ?";
+            $params[] = intval($filtri['sport']);
+            $types .= 'i';
+        }
+        
+        // Filtro data (singola)
+        if (!empty($filtri['data'])) {
+            $query .= " AND p.data_prenotazione = ?";
+            $params[] = $filtri['data'];
+            $types .= 's';
+        }
+        
+        // Filtro ricerca (nome/cognome utente)
+        if (!empty($filtri['search'])) {
+            $search = '%' . $filtri['search'] . '%';
+            $query .= " AND (u.nome LIKE ? OR u.cognome LIKE ? OR CONCAT(u.nome, ' ', u.cognome) LIKE ?)";
+            $params[] = $search;
+            $params[] = $search;
+            $params[] = $search;
+            $types .= 'sss';
+        }
+        
+        // Ordinamento
+        switch ($filtri['ordina'] ?? 'recenti') {
+            case 'data_asc':
+                $query .= " ORDER BY p.data_prenotazione ASC, p.ora_inizio ASC";
+                break;
+            case 'data_desc':
+                $query .= " ORDER BY p.data_prenotazione DESC, p.ora_inizio DESC";
+                break;
+            case 'recenti':
+            default:
+                $query .= " ORDER BY p.created_at DESC";
+                break;
+        }
+        
+        $query .= " LIMIT 200";
+        
+        $stmt = $this->db->prepare($query);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Ottieni dettaglio prenotazione completo
+     */
+    public function getPrenotazioneDettaglio($prenotazioneId) {
+        $query = "SELECT 
+            p.*,
+            c.nome as campo_nome,
+            c.tipo_campo as campo_tipo,
+            s.nome as sport_nome,
+            s.icona as sport_icona,
+            u.nome as user_nome,
+            u.cognome as user_cognome,
+            u.email as user_email
+        FROM prenotazioni p
+        JOIN campi_sportivi c ON p.campo_id = c.campo_id
+        JOIN sport s ON c.sport_id = s.sport_id
+        JOIN users u ON p.user_id = u.user_id
+        WHERE p.prenotazione_id = ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $prenotazioneId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    /**
+     * Ottieni info utente per prenotazione
+     */
+    public function getUserInfoForPrenotazione($userId) {
+        $query = "SELECT 
+            u.user_id,
+            u.nome,
+            u.cognome,
+            u.email,
+            us.penalty_points,
+            (SELECT COUNT(*) FROM prenotazioni WHERE user_id = u.user_id) as totale_prenotazioni,
+            (SELECT COUNT(*) FROM prenotazioni WHERE user_id = u.user_id AND stato = 'no_show') as no_show,
+            (SELECT COUNT(*) FROM prenotazioni WHERE user_id = u.user_id AND stato = 'completata') as completate
+        FROM users u
+        LEFT JOIN utenti_standard us ON u.user_id = us.user_id
+        WHERE u.user_id = ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    /**
+     * Ottieni invitati di una prenotazione
+     */
+    public function getInvitatiPrenotazione($prenotazioneId) {
+        $query = "SELECT 
+            pi.invito_id,
+            pi.stato,
+            u.nome,
+            u.cognome,
+            u.email
+        FROM prenotazione_inviti pi
+        JOIN users u ON pi.user_id = u.user_id
+        WHERE pi.prenotazione_id = ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $prenotazioneId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Cerca utenti per nuova prenotazione (solo utenti standard, non admin)
+     */
+    public function searchUsersForPrenotazione($search) {
+        $search = '%' . $search . '%';
+        $query = "SELECT 
+            u.user_id,
+            u.nome,
+            u.cognome,
+            u.email,
+            u.stato
+        FROM users u
+        JOIN utenti_standard us ON u.user_id = us.user_id
+        WHERE u.ruolo = 'user' 
+          AND u.stato = 'attivo'
+          AND (u.nome LIKE ? OR u.cognome LIKE ? OR u.email LIKE ? OR CONCAT(u.nome, ' ', u.cognome) LIKE ?)
+        ORDER BY u.nome, u.cognome
+        LIMIT 10";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ssss', $search, $search, $search, $search);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Ottieni campi disponibili per uno sport
+     */
+    public function getCampiDisponibiliPerPrenotazione($sportId = null) {
+        $query = "SELECT c.campo_id, c.nome, c.tipo_campo as tipo, s.nome as sport_nome, s.icona
+                  FROM campi_sportivi c
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  WHERE c.stato = 'disponibile'";
+        
+        $params = [];
+        $types = '';
+        
+        if ($sportId) {
+            $query .= " AND c.sport_id = ?";
+            $params[] = $sportId;
+            $types .= 'i';
+        }
+        
+        $query .= " ORDER BY c.nome";
+        
+        $stmt = $this->db->prepare($query);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Ottieni slot disponibili per un campo in una data
+     */
+    public function getSlotDisponibili($campoId, $data) {
+        // Ottieni orari di apertura (assumo 08:00-22:00 come default)
+        $oraApertura = '08:00:00';
+        $oraChiusura = '22:00:00';
+        $durataSlot = 60; // minuti
+        
+        // Ottieni prenotazioni esistenti per quella data
+        $query = "SELECT ora_inizio, ora_fine 
+                  FROM prenotazioni 
+                  WHERE campo_id = ? AND data_prenotazione = ? AND stato IN ('confermata', 'completata')
+                  ORDER BY ora_inizio";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('is', $campoId, $data);
+        $stmt->execute();
+        $prenotazioni = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Genera tutti gli slot possibili
+        $slots = [];
+        $current = strtotime($oraApertura);
+        $end = strtotime($oraChiusura);
+        
+        // Se la data è oggi, parti dall'ora attuale + 1 ora
+        if ($data === date('Y-m-d')) {
+            $minStart = strtotime('+1 hour');
+            // Arrotonda all'ora successiva
+            $minStart = ceil($minStart / 3600) * 3600;
+            if ($minStart > $current) {
+                $current = $minStart;
+            }
+        }
+        
+        while ($current < $end) {
+            $slotInizio = date('H:i:s', $current);
+            $slotFine = date('H:i:s', $current + ($durataSlot * 60));
+            
+            // Verifica che lo slot non sia già prenotato
+            $disponibile = true;
+            foreach ($prenotazioni as $pren) {
+                $prenInizio = strtotime($pren['ora_inizio']);
+                $prenFine = strtotime($pren['ora_fine']);
+                $slotInizioTs = strtotime($slotInizio);
+                $slotFineTs = strtotime($slotFine);
+                
+                // Se c'è sovrapposizione, lo slot non è disponibile
+                if ($slotInizioTs < $prenFine && $slotFineTs > $prenInizio) {
+                    $disponibile = false;
+                    break;
+                }
+            }
+            
+            if ($disponibile) {
+                $slots[] = [
+                    'ora_inizio' => $slotInizio,
+                    'ora_fine' => $slotFine
+                ];
+            }
+            
+            $current += $durataSlot * 60;
+        }
+        
+        return $slots;
+    }
+    
+    /**
+     * Verifica se uno slot è disponibile
+     */
+    public function isSlotDisponibile($campoId, $data, $oraInizio, $oraFine) {
+        $query = "SELECT COUNT(*) as count 
+                  FROM prenotazioni 
+                  WHERE campo_id = ? 
+                    AND data_prenotazione = ? 
+                    AND stato IN ('confermata', 'completata')
+                    AND (
+                        (ora_inizio < ? AND ora_fine > ?) OR
+                        (ora_inizio >= ? AND ora_inizio < ?)
+                    )";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('isssss', $campoId, $data, $oraFine, $oraInizio, $oraInizio, $oraFine);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        
+        return $result['count'] == 0;
+    }
+    
+    /**
+     * Crea prenotazione da admin
+     */
+    public function createPrenotazioneAdmin($data) {
+        $query = "INSERT INTO prenotazioni (user_id, campo_id, data_prenotazione, ora_inizio, ora_fine, num_partecipanti, stato, note, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, 'confermata', ?, NOW())";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('iisssis', 
+            $data['user_id'],
+            $data['campo_id'],
+            $data['data_prenotazione'],
+            $data['ora_inizio'],
+            $data['ora_fine'],
+            $data['num_partecipanti'],
+            $data['note']
+        );
+        
+        if ($stmt->execute()) {
+            return $this->db->insert_id;
+        }
+        return false;
+    }
+    
+    /**
+     * Cancella prenotazione da admin
+     */
+    public function cancellaPrenotazioneAdmin($prenotazioneId, $motivo, $adminId) {
+        $query = "UPDATE prenotazioni 
+                  SET stato = 'cancellata', 
+                      motivo_cancellazione = ?,
+                      cancelled_at = NOW()
+                  WHERE prenotazione_id = ? AND stato = 'confermata'";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('si', $motivo, $prenotazioneId);
+        
+        return $stmt->execute() && $stmt->affected_rows > 0;
+    }
+    
+    /**
+     * Ottieni tutti i campi per select
+     */
+    public function getAllCampiSelect() {
+        $query = "SELECT campo_id, nome, tipo_campo as tipo FROM campi_sportivi WHERE stato != 'chiuso' ORDER BY nome";
+        $result = $this->db->query($query);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+
 }
 ?>

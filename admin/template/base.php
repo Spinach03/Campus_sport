@@ -70,6 +70,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="gestione-prenotazioni.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'gestione-prenotazioni.php') echo 'active'; ?>">
+                            <span class="nav-icon">📋</span>
+                            <span class="nav-text">Prenotazioni</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="comunicazioni.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'comunicazioni.php') echo 'active'; ?>">
                             <span class="nav-icon">💬</span>
                             <span class="nav-text">Comunicazioni</span>
