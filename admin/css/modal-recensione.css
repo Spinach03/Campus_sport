@@ -1,0 +1,525 @@
+/* ============================================================================
+   MODAL RECENSIONE - CSS Specifico
+   ============================================================================ */
+
+/* ============================================================================
+   FIX CRITICI PER FUNZIONAMENTO MODAL
+   ============================================================================ */
+.modal-backdrop.show {
+    z-index: 1055 !important;
+    opacity: 0.7 !important;
+}
+
+#modalDettaglio,
+#modalRisposta,
+#modalElimina {
+    z-index: 1060 !important;
+}
+
+#modalDettaglio .modal-dialog,
+#modalRisposta .modal-dialog,
+#modalElimina .modal-dialog {
+    z-index: 1061 !important;
+    pointer-events: auto !important;
+}
+
+#modalDettaglio .modal-content,
+#modalRisposta .modal-content,
+#modalElimina .modal-content {
+    pointer-events: auto !important;
+}
+
+/* Modal Elimina Risposta - z-index più alto per sovrapporsi al dettaglio */
+#modalEliminaRisposta {
+    z-index: 1070 !important;
+}
+
+#modalEliminaRisposta .modal-dialog {
+    z-index: 1071 !important;
+    pointer-events: auto !important;
+}
+
+#modalEliminaRisposta .modal-content {
+    pointer-events: auto !important;
+}
+
+#modalEliminaRisposta button {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
+}
+
+#modalDettaglio input,
+#modalDettaglio select,
+#modalDettaglio textarea,
+#modalDettaglio button,
+#modalDettaglio label,
+#modalDettaglio .btn,
+#modalDettaglio .btn-close,
+#modalRisposta input,
+#modalRisposta select,
+#modalRisposta textarea,
+#modalRisposta button,
+#modalRisposta label,
+#modalRisposta .btn,
+#modalElimina input,
+#modalElimina button,
+#modalElimina .btn {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================================================
+   MODAL CONTENT BASE
+   ============================================================================ */
+.modal-recensione-content {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 20px;
+    overflow: hidden;
+    color: #f1f5f9;
+}
+
+.modal-recensione-content .modal-header {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(139, 92, 246, 0.1));
+    padding: 20px 24px;
+}
+
+.modal-recensione-content .modal-header.risposta-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+}
+
+.modal-recensione-content .modal-header.delete-header {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+}
+
+.modal-recensione-content .modal-title {
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.modal-recensione-content .modal-body {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.modal-recensione-content .modal-footer {
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    background: rgba(15, 23, 42, 0.5);
+    padding: 16px 24px;
+}
+
+/* ============================================================================
+   BTN CLOSE WHITE
+   ============================================================================ */
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+}
+
+.btn-close-white:hover {
+    opacity: 1;
+}
+
+/* ============================================================================
+   DETTAGLIO CONTAINER
+   ============================================================================ */
+.dettaglio-container {
+    color: #f1f5f9;
+}
+
+/* Header Top - Campo e Rating */
+.dettaglio-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    margin-bottom: 20px;
+}
+
+.campo-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.sport-icon-big {
+    font-size: 48px;
+}
+
+.campo-nome-big {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.campo-location {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.sport-nome-small {
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+.rating-box {
+    text-align: center;
+    padding: 16px 24px;
+    border-radius: 16px;
+    background: rgba(30, 41, 59, 0.5);
+}
+
+.rating-box.rating-positive { border: 2px solid #10B981; }
+.rating-box.rating-neutral { border: 2px solid #F59E0B; }
+.rating-box.rating-negative { border: 2px solid #EF4444; }
+
+.rating-big {
+    font-size: 36px;
+    font-weight: 800;
+}
+
+.rating-box.rating-positive .rating-big { color: #10B981; }
+.rating-box.rating-neutral .rating-big { color: #F59E0B; }
+.rating-box.rating-negative .rating-big { color: #EF4444; }
+
+.rating-stars-big {
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+.star-empty {
+    opacity: 0.3;
+}
+
+/* ============================================================================
+   DETTAGLIO SECTION
+   ============================================================================ */
+.dettaglio-section {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.dettaglio-section h6 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 12px;
+}
+
+/* Utente Box */
+.utente-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.utente-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+}
+
+.utente-info {
+    flex: 1;
+}
+
+.utente-nome {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.utente-email {
+    font-size: 13px;
+    color: #64748b;
+}
+
+.utente-stats {
+    display: flex;
+    gap: 24px;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+.utente-stats div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.utente-stats strong {
+    color: #f1f5f9;
+    font-size: 16px;
+}
+
+/* Ratings Grid */
+.ratings-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rating-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rating-label {
+    width: 100px;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+.rating-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.rating-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #F59E0B, #10B981);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.rating-value {
+    width: 40px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+/* Commento Box */
+.commento-box {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #cbd5e1;
+    font-style: italic;
+}
+
+.commento-meta {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* Risposte Section */
+.risposte-section {
+    border-left: 3px solid #3B82F6;
+}
+
+.risposte-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.risposta-item {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 10px;
+    padding: 14px;
+    border-left: 3px solid #10B981;
+}
+
+.risposta-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.risposta-admin {
+    font-size: 13px;
+    font-weight: 600;
+    color: #10B981;
+}
+
+.risposta-data {
+    font-size: 12px;
+    color: #64748b;
+    flex: 1;
+}
+
+.risposta-testo {
+    font-size: 14px;
+    color: #cbd5e1;
+    line-height: 1.5;
+}
+
+.no-risposte {
+    text-align: center;
+    padding: 20px;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* Bottone Elimina Risposta */
+.btn-elimina-risposta {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #EF4444;
+    transition: all 0.2s ease;
+}
+
+.btn-elimina-risposta:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #EF4444;
+    color: #EF4444;
+}
+
+/* ============================================================================
+   DETTAGLIO ACTIONS
+   ============================================================================ */
+.dettaglio-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.dettaglio-actions .btn {
+    flex: 1;
+    padding: 12px 20px;
+    font-weight: 600;
+    border-radius: 10px;
+}
+
+/* ============================================================================
+   FORM CONTROLS DARK
+   ============================================================================ */
+.modal-recensione-content .form-control,
+.modal-recensione-content .form-select {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    color: #f1f5f9;
+    font-family: 'Outfit', sans-serif;
+}
+
+.modal-recensione-content .form-control:focus,
+.modal-recensione-content .form-select:focus {
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    background: rgba(15, 23, 42, 0.8);
+    color: #f1f5f9;
+}
+
+.modal-recensione-content .form-label {
+    color: #f1f5f9;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.modal-recensione-content .form-text {
+    color: #64748b;
+}
+
+/* Risposta Context */
+.risposta-context {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.context-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.context-content {
+    font-size: 14px;
+    color: #f1f5f9;
+}
+
+/* ============================================================================
+   LOADING SPINNER
+   ============================================================================ */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+}
+
+.loading-spinner .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(59, 130, 246, 0.2);
+    border-top-color: #3B82F6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   ERROR MESSAGE
+   ============================================================================ */
+.error-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #EF4444;
+    font-size: 15px;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .dettaglio-header-top {
+        flex-direction: column;
+    }
+    
+    .utente-box {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .utente-stats {
+        justify-content: center;
+    }
+    
+    .dettaglio-actions {
+        flex-direction: column;
+    }
+    
+    .risposta-header {
+        flex-wrap: wrap;
+    }
+}

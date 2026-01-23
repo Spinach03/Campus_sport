@@ -1,0 +1,529 @@
+/* ============================================================================
+   GESTIONE RECENSIONI - CSS Specifico
+   ============================================================================ */
+
+/* ============================================================================
+   HEADER SEZIONE
+   ============================================================================ */
+.gestione-header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 16px 0;
+}
+
+.gestione-header .header-icon {
+    font-size: 42px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    flex-shrink: 0;
+}
+
+.gestione-header .page-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.gestione-header .search-box {
+    margin-left: auto;
+}
+
+/* ============================================================================
+   SEARCH BOX
+   ============================================================================ */
+.search-box {
+    display: flex;
+    align-items: center;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 10px 16px;
+    width: 320px;
+    transition: all var(--transition-normal);
+    flex-shrink: 0;
+}
+
+.search-box:focus-within {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 4px var(--accent-blue-glow);
+    width: 360px;
+}
+
+.search-box .search-icon {
+    margin-right: 10px;
+    opacity: 0.6;
+}
+
+.search-box:focus-within .search-icon {
+    opacity: 1;
+}
+
+.search-box .search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.search-box .search-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* ============================================================================
+   KPI CARDS
+   ============================================================================ */
+.kpi-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+}
+
+.kpi-card[data-color="blue"]::before { background: radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%); }
+.kpi-card[data-color="green"]::before { background: radial-gradient(circle, rgba(16,185,129,0.25) 0%, transparent 70%); }
+.kpi-card[data-color="orange"]::before { background: radial-gradient(circle, rgba(245,158,11,0.25) 0%, transparent 70%); }
+.kpi-card[data-color="red"]::before { background: radial-gradient(circle, rgba(239,68,68,0.25) 0%, transparent 70%); }
+.kpi-card[data-color="purple"]::before { background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%); }
+
+.kpi-card:hover::before {
+    opacity: 1;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.kpi-card[data-color="blue"]:hover { border-color: rgba(59,130,246,0.5); }
+.kpi-card[data-color="green"]:hover { border-color: rgba(16,185,129,0.5); }
+.kpi-card[data-color="orange"]:hover { border-color: rgba(245,158,11,0.5); }
+.kpi-card[data-color="red"]:hover { border-color: rgba(239,68,68,0.5); }
+.kpi-card[data-color="purple"]:hover { border-color: rgba(139,92,246,0.5); }
+
+.kpi-card .kpi-icon {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 8px;
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.kpi-card:hover .kpi-icon {
+    transform: scale(1.25) rotate(-5deg);
+}
+
+.kpi-card .kpi-value {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    line-height: 1;
+}
+
+.kpi-card[data-color="blue"] .kpi-value { color: #3B82F6; }
+.kpi-card[data-color="green"] .kpi-value { color: #10B981; }
+.kpi-card[data-color="orange"] .kpi-value { color: #F59E0B; }
+.kpi-card[data-color="red"] .kpi-value { color: #EF4444; }
+.kpi-card[data-color="purple"] .kpi-value { color: #8B5CF6; }
+
+.kpi-card .kpi-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-card .notification-dot {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    background: #EF4444;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+/* ============================================================================
+   FILTRI CARD
+   ============================================================================ */
+.filters-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 20px 24px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 0;
+}
+
+.filter-row:not(:last-child) {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.filter-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 60px;
+}
+
+.filter-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: 'Outfit', sans-serif;
+}
+
+.filter-chip:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--text-primary);
+}
+
+.filter-chip.active {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 2px 8px var(--accent-blue-glow);
+}
+
+.sort-select {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    min-width: 160px;
+    transition: all 0.2s ease;
+}
+
+.sort-select:hover {
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px var(--accent-blue-glow);
+}
+
+/* ============================================================================
+   GRIGLIA RECENSIONI
+   ============================================================================ */
+.recensioni-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+}
+
+/* ============================================================================
+   CARD RECENSIONE
+   ============================================================================ */
+.recensione-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.recensione-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    border-color: var(--accent-blue);
+}
+
+.recensione-card.no-risposta {
+    border-color: rgba(245, 158, 11, 0.5);
+}
+
+.recensione-card.no-risposta:hover {
+    border-color: #F59E0B;
+    box-shadow: 0 12px 40px rgba(245, 158, 11, 0.2);
+}
+
+/* Card Header */
+.recensione-card-header {
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
+    border-bottom: 1px solid var(--border-color);
+}
+
+.campo-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sport-icon {
+    font-size: 28px;
+}
+
+.campo-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.campo-nome {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sport-nome {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.rating-badge {
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.rating-badge.rating-positive {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10B981;
+}
+
+.rating-badge.rating-neutral {
+    background: rgba(245, 158, 11, 0.15);
+    color: #F59E0B;
+}
+
+.rating-badge.rating-negative {
+    background: rgba(239, 68, 68, 0.15);
+    color: #EF4444;
+}
+
+/* User */
+.recensione-user {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.user-email {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Rating Stars */
+.rating-stars {
+    padding: 12px 16px;
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+.star-empty {
+    opacity: 0.3;
+}
+
+/* Commento */
+.recensione-commento {
+    padding: 0 16px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    font-style: italic;
+}
+
+.recensione-commento.no-comment {
+    color: var(--text-muted);
+}
+
+/* Footer */
+.recensione-footer {
+    padding: 12px 16px;
+    background: rgba(15, 23, 42, 0.3);
+    border-top: 1px solid var(--border-color);
+}
+
+.footer-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    align-items: center;
+}
+
+.risposta-badge {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10B981;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.no-risposta-badge {
+    background: rgba(245, 158, 11, 0.15);
+    color: #F59E0B;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   NO RESULTS
+   ============================================================================ */
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.no-results-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.no-results h3 {
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+/* ============================================================================
+   TOAST NOTIFICATION
+   ============================================================================ */
+.toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 24px;
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 99999;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    font-family: 'Outfit', sans-serif;
+}
+
+.toast-notification.show {
+    transform: translateX(0);
+}
+
+.toast-success {
+    background: linear-gradient(135deg, #10B981, #059669);
+}
+
+.toast-error {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .gestione-header {
+        flex-wrap: wrap;
+    }
+    
+    .gestione-header .search-box {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 12px;
+    }
+    
+    .filter-row {
+        flex-wrap: wrap;
+    }
+    
+    .recensioni-grid {
+        grid-template-columns: 1fr;
+    }
+}

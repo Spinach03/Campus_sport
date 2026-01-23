@@ -2628,5 +2628,177 @@ class DatabaseHelper {
         $result = $this->db->query($query);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
+
+    // ============================================================================
+    // RECENSIONI - Statistiche generali per KPI admin
+    // ============================================================================
+    
+    public function getRecensioniStatsGenerali() {
+        $query = "SELECT 
+                    COUNT(*) as totale,
+                    ROUND(AVG(rating_generale), 1) as media_generale,
+                    SUM(CASE WHEN rating_generale >= 4 THEN 1 ELSE 0 END) as positive,
+                    SUM(CASE WHEN rating_generale <= 2 THEN 1 ELSE 0 END) as negative,
+                    SUM(CASE WHEN rating_generale = 3 THEN 1 ELSE 0 END) as neutre,
+                    (SELECT COUNT(*) FROM recensione_risposte) as totale_risposte,
+                    (SELECT COUNT(DISTINCT recensione_id) FROM recensione_risposte) as recensioni_con_risposta
+                  FROM recensioni";
+        $result = $this->db->query($query);
+        $stats = $result->fetch_assoc();
+        
+        // Calcola senza risposta
+        $stats['senza_risposta'] = ($stats['totale'] ?? 0) - ($stats['recensioni_con_risposta'] ?? 0);
+        
+        return $stats;
+    }
+    
+    // ============================================================================
+    // RECENSIONI - Dettaglio singola recensione
+    // ============================================================================
+    
+    public function getRecensioneById($recensioneId) {
+        $query = "SELECT r.*, 
+                    CONCAT(u.nome, ' ', u.cognome) as utente_nome, 
+                    u.email as utente_email,
+                    u.telefono as utente_telefono,
+                    u.created_at as utente_registrato,
+                    c.nome as campo_nome, 
+                    c.location as campo_location,
+                    s.nome as sport_nome,
+                    s.icona as sport_icona,
+                    p.data_prenotazione,
+                    p.ora_inizio,
+                    p.ora_fine,
+                    (SELECT COUNT(*) FROM recensioni WHERE user_id = r.user_id) as utente_tot_recensioni,
+                    (SELECT ROUND(AVG(rating_generale), 1) FROM recensioni WHERE user_id = r.user_id) as utente_media_rating,
+                    (SELECT COUNT(*) FROM prenotazioni WHERE user_id = r.user_id AND stato = 'completata') as utente_prenotazioni
+                  FROM recensioni r
+                  JOIN users u ON r.user_id = u.user_id
+                  JOIN campi_sportivi c ON r.campo_id = c.campo_id
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  LEFT JOIN prenotazioni p ON r.prenotazione_id = p.prenotazione_id
+                  WHERE r.recensione_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $recensioneId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    // ============================================================================
+    // RECENSIONI - Lista completa con filtri avanzati per admin
+    // ============================================================================
+    
+    public function getAllRecensioniAdmin($filtri = []) {
+        $query = "SELECT r.*, 
+                    CONCAT(u.nome, ' ', u.cognome) as utente_nome, 
+                    u.email as utente_email,
+                    c.nome as campo_nome, 
+                    s.nome as sport_nome,
+                    s.icona as sport_icona,
+                    (SELECT COUNT(*) FROM recensione_risposte WHERE recensione_id = r.recensione_id) as num_risposte,
+                    (SELECT MAX(created_at) FROM recensione_risposte WHERE recensione_id = r.recensione_id) as ultima_risposta
+                  FROM recensioni r
+                  JOIN users u ON r.user_id = u.user_id
+                  JOIN campi_sportivi c ON r.campo_id = c.campo_id
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  WHERE 1=1";
+        
+        $params = [];
+        $types = '';
+        
+        // Filtro campo
+        if (!empty($filtri['campo_id'])) {
+            $query .= " AND r.campo_id = ?";
+            $params[] = intval($filtri['campo_id']);
+            $types .= 'i';
+        }
+        
+        // Filtro sport
+        if (!empty($filtri['sport_id'])) {
+            $query .= " AND c.sport_id = ?";
+            $params[] = intval($filtri['sport_id']);
+            $types .= 'i';
+        }
+        
+        // Filtro rating
+        if (!empty($filtri['rating'])) {
+            if ($filtri['rating'] === 'positive') {
+                $query .= " AND r.rating_generale >= 4";
+            } elseif ($filtri['rating'] === 'negative') {
+                $query .= " AND r.rating_generale <= 2";
+            } elseif ($filtri['rating'] === 'neutre') {
+                $query .= " AND r.rating_generale = 3";
+            } elseif (is_numeric($filtri['rating'])) {
+                $query .= " AND r.rating_generale = ?";
+                $params[] = intval($filtri['rating']);
+                $types .= 'i';
+            }
+        }
+        
+        // Filtro con/senza risposta
+        if (!empty($filtri['risposta'])) {
+            if ($filtri['risposta'] === 'con') {
+                $query .= " AND (SELECT COUNT(*) FROM recensione_risposte WHERE recensione_id = r.recensione_id) > 0";
+            } elseif ($filtri['risposta'] === 'senza') {
+                $query .= " AND (SELECT COUNT(*) FROM recensione_risposte WHERE recensione_id = r.recensione_id) = 0";
+            }
+        }
+        
+        // Filtro ricerca
+        if (!empty($filtri['search'])) {
+            $query .= " AND (CONCAT(u.nome, ' ', u.cognome) LIKE ? 
+                        OR u.email LIKE ? 
+                        OR c.nome LIKE ?
+                        OR r.commento LIKE ?)";
+            $searchTerm = '%' . $filtri['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $types .= 'ssss';
+        }
+        
+        // Ordinamento
+        $orderBy = " ORDER BY ";
+        switch ($filtri['ordina'] ?? 'recenti') {
+            case 'vecchie':
+                $orderBy .= "r.created_at ASC";
+                break;
+            case 'rating_alto':
+                $orderBy .= "r.rating_generale DESC, r.created_at DESC";
+                break;
+            case 'rating_basso':
+                $orderBy .= "r.rating_generale ASC, r.created_at DESC";
+                break;
+            case 'campo':
+                $orderBy .= "c.nome ASC, r.created_at DESC";
+                break;
+            default: // recenti
+                $orderBy .= "r.created_at DESC";
+        }
+        $query .= $orderBy;
+        
+        if (!empty($params)) {
+            $stmt = $this->db->prepare($query);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+        } else {
+            $result = $this->db->query($query);
+        }
+        
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // ============================================================================
+    // RECENSIONI - Elimina risposta admin
+    // ============================================================================
+    
+    public function deleteRecensioneRisposta($rispostaId) {
+        $query = "DELETE FROM recensione_risposte WHERE risposta_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $rispostaId);
+        return $stmt->execute();
+    }
 }
 ?>

@@ -70,6 +70,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="comunicazioni.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'comunicazioni.php') echo 'active'; ?>">
+                            <span class="nav-icon">💬</span>
+                            <span class="nav-text">Comunicazioni</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="segnalazioni.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'segnalazioni.php') echo 'active'; ?>">
                             <span class="nav-icon">🚨</span>
                             <span class="nav-text">Segnalazioni</span>
@@ -79,27 +85,21 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="recensioni.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'recensioni.php') echo 'active'; ?>">
+                            <span class="nav-icon">⭐</span>
+                            <span class="nav-text">Recensioni</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="analytics.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'analytics.php') echo 'active'; ?>">
                             <span class="nav-icon">📈</span>
                             <span class="nav-text">Analytics</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="comunicazioni.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'comunicazioni.php') echo 'active'; ?>">
-                            <span class="nav-icon">💬</span>
-                            <span class="nav-text">Comunicazioni</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a href="configurazione.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'configurazione.php') echo 'active'; ?>">
                             <span class="nav-icon">⚙️</span>
                             <span class="nav-text">Configurazione</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="sicurezza.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'sicurezza.php') echo 'active'; ?>">
-                            <span class="nav-icon">🔒</span>
-                            <span class="nav-text">Sicurezza</span>
                         </a>
                     </li>
                     <li class="nav-item nav-item-logout">
