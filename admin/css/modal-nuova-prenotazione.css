@@ -113,6 +113,13 @@ body.modal-open {
     margin-bottom: 8px;
 }
 
+.nc-hint {
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+    margin-top: 6px;
+}
+
 /* Inputs */
 .nc-input,
 .nc-select,
@@ -272,7 +279,7 @@ body.modal-open {
     max-height: 250px;
     overflow-y: auto;
     z-index: 1100;
-    display: none;
+    
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 

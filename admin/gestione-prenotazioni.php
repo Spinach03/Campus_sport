@@ -12,9 +12,9 @@ if (!isUserLoggedIn() || !isAdmin()) {
 // ============================================================================
 
 $action = $_REQUEST['action'] ?? '';
-$isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+$isAjax = isset($_REQUEST['ajax']) || (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest');
 
-if ($isAjax || isset($_POST['ajax'])) {
+if ($isAjax && $action) {
     header('Content-Type: application/json');
     
     switch ($action) {
@@ -92,7 +92,7 @@ if ($isAjax || isset($_POST['ajax'])) {
             $numPartecipanti = intval($_POST['num_partecipanti'] ?? 1);
             $note = trim($_POST['note'] ?? '');
             
-            // Validazioni
+            // Validazioni base
             if (!$userId) {
                 echo json_encode(['success' => false, 'message' => 'Seleziona un utente']);
                 exit;
@@ -103,6 +103,32 @@ if ($isAjax || isset($_POST['ajax'])) {
             }
             if (!$data || !$oraInizio || !$oraFine) {
                 echo json_encode(['success' => false, 'message' => 'Data e orario sono obbligatori']);
+                exit;
+            }
+            
+            // ============================================
+            // VALIDAZIONE GIORNI ANTICIPO MAX
+            // ============================================
+            $giorniAnticipoMax = $dbh->getConfig('giorni_anticipo_max', 7);
+            $dataPrenotazione = new DateTime($data);
+            $oggi = new DateTime('today');
+            $dataMax = (clone $oggi)->modify("+{$giorniAnticipoMax} days");
+            
+            if ($dataPrenotazione < $oggi) {
+                echo json_encode(['success' => false, 'message' => 'Non puoi prenotare per una data passata']);
+                exit;
+            }
+            
+            if ($dataPrenotazione > $dataMax) {
+                echo json_encode(['success' => false, 'message' => "Non puoi prenotare oltre {$giorniAnticipoMax} giorni di anticipo"]);
+                exit;
+            }
+            
+            // ============================================
+            // VALIDAZIONE GIORNI CHIUSURA
+            // ============================================
+            if ($dbh->isGiornoChiusura($data)) {
+                echo json_encode(['success' => false, 'message' => 'La struttura è chiusa in questa data']);
                 exit;
             }
             
@@ -206,6 +232,9 @@ if ($isAjax || isset($_POST['ajax'])) {
 // CARICAMENTO DATI PER LA VISTA
 // ============================================================================
 
+// Aggiorna automaticamente lo stato delle prenotazioni passate
+$dbh->aggiornaStatoPrenotazioniPassate();
+
 // Statistiche per KPI
 $templateParams['stats'] = $dbh->getPrenotazioniStatsAdmin();
 
@@ -228,11 +257,15 @@ $templateParams['prenotazioni'] = $dbh->getAllPrenotazioniAdmin($filtri);
 $templateParams['campi'] = $dbh->getAllCampiSelect();
 $templateParams['sport'] = $dbh->getAllSport();
 
+// Configurazione per nuova prenotazione
+$templateParams['giorni_anticipo_max'] = $dbh->getConfig('giorni_anticipo_max', 7);
+$templateParams['giorni_chiusura'] = $dbh->getGiorniChiusuraArray();
+
 // Impostazioni pagina
 $templateParams['titolo'] = 'Gestione Prenotazioni';
 $templateParams['titolo_pagina'] = 'Gestione Prenotazioni';
 $templateParams['nome'] = 'gestione-prenotazioni.php';
-$templateParams['css_extra'] = ['css/gestione-prenotazioni.css', 'css/modal-prenotazione.css'];
+$templateParams['css_extra'] = ['css/gestione-prenotazioni.css', 'css/modal-prenotazione.css', 'css/modal-nuova-prenotazione.css'];
 
 // Carica template
 require 'template/base.php';

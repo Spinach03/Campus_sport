@@ -3,6 +3,11 @@
      ============================================================================ -->
 
 <?php
+// Configurazione prenotazioni
+$giorniAnticipoMax = $templateParams['giorni_anticipo_max'] ?? 7;
+$giorniChiusura = $templateParams['giorni_chiusura'] ?? [];
+$dataMax = date('Y-m-d', strtotime("+{$giorniAnticipoMax} days"));
+
 // Helper per iniziali
 function getInitials($nome, $cognome = '') {
     $parts = $cognome ? [$nome, $cognome] : explode(' ', $nome);
@@ -133,9 +138,6 @@ $filtri = $templateParams['filtri'] ?? [];
         <div class="filter-chips">
             <button type="button" class="filter-chip <?= empty($filtri['stato']) ? 'active' : '' ?>" data-stato="">
                 Tutti
-            </button>
-            <button type="button" class="filter-chip <?= ($filtri['stato'] ?? '') === 'future' ? 'active' : '' ?>" data-stato="future">
-                <span class="status-dot cyan"></span> Future
             </button>
             <button type="button" class="filter-chip <?= ($filtri['stato'] ?? '') === 'confermata' ? 'active' : '' ?>" data-stato="confermata">
                 <span class="status-dot blue"></span> Confermate
@@ -280,9 +282,9 @@ $filtri = $templateParams['filtri'] ?? [];
 <!-- ============================================================================
      MODAL: DETTAGLIO PRENOTAZIONE
      ============================================================================ -->
-<div class="modal fade" id="modalDettaglio" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content modal-prenotazione-content">
+<div class="modal fade" id="modalDettaglio" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" style="z-index: 1061;">
+        <div class="modal-content modal-prenotazione-content" style="pointer-events: auto;">
             <div class="modal-header">
                 <h5 class="modal-title">
                     Dettaglio Prenotazione #<span id="modalPrenotazioneId"></span>
@@ -304,9 +306,9 @@ $filtri = $templateParams['filtri'] ?? [];
 <!-- ============================================================================
      MODAL: NUOVA PRENOTAZIONE
      ============================================================================ -->
-<div class="modal fade" id="modalNuovaPrenotazione" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content nuovo-campo-modal">
+<div class="modal fade" id="modalNuovaPrenotazione" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" style="z-index: 1061;">
+        <div class="modal-content nuovo-campo-modal" style="pointer-events: auto;">
             <!-- Header -->
             <div class="modal-header nuovo-campo-header">
                 <div class="d-flex align-items-center gap-3">
@@ -333,7 +335,7 @@ $filtri = $templateParams['filtri'] ?? [];
                         <div class="search-user-container">
                             <input type="text" id="searchUserInput" class="nc-input" 
                                    placeholder="Cerca per nome, cognome o email..." autocomplete="off">
-                            <div id="userSearchResults" class="search-results-dropdown"></div>
+                            <div id="userSearchResults" class="search-results-dropdown" style="display: none;"></div>
                         </div>
                         <input type="hidden" id="selectedUserId" name="user_id">
                         <div id="selectedUserCard" class="selected-user-card" style="display: none;">
@@ -370,7 +372,9 @@ $filtri = $templateParams['filtri'] ?? [];
                         <div class="col-md-4">
                             <label class="nc-label">📆 Data <span class="text-danger">*</span></label>
                             <input type="date" id="inputData" name="data" class="nc-input" 
-                                   min="<?= date('Y-m-d') ?>" required>
+                                   min="<?= date('Y-m-d') ?>" 
+                                   max="<?= $dataMax ?>" required>
+                            <small class="nc-hint">Puoi prenotare fino a <?= $giorniAnticipoMax ?> giorni in anticipo</small>
                         </div>
                         <div class="col-md-4">
                             <label class="nc-label">🕐 Ora Inizio <span class="text-danger">*</span></label>
@@ -420,9 +424,9 @@ $filtri = $templateParams['filtri'] ?? [];
 <!-- ============================================================================
      MODAL: CANCELLA PRENOTAZIONE
      ============================================================================ -->
-<div class="modal fade" id="modalCancella" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-prenotazione-content">
+<div class="modal fade" id="modalCancella" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered" style="z-index: 1071;">
+        <div class="modal-content modal-prenotazione-content" style="pointer-events: auto;">
             <div class="modal-header modal-header-danger">
                 <h5 class="modal-title">Cancella Prenotazione</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
@@ -468,52 +472,315 @@ $filtri = $templateParams['filtri'] ?? [];
      JAVASCRIPT
      ============================================================================ -->
 <script>
+// ============================================================================
+// VARIABILI GLOBALI
+// ============================================================================
 let currentPrenotazioneId = null;
 let searchTimeout = null;
 
+// Giorni di chiusura (dalla configurazione)
+const giorniChiusura = <?= json_encode($giorniChiusura) ?>;
+
 // ============================================================================
-// GESTIONE FILTRI
+// INIZIALIZZAZIONE - TUTTO DENTRO DOMContentLoaded
 // ============================================================================
-
-// Filtro stato (chips)
-document.querySelectorAll('.filter-chip[data-stato]').forEach(chip => {
-    chip.addEventListener('click', function() {
-        document.querySelectorAll('.filter-chip[data-stato]').forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
-        applicaFiltri();
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // ========================================================================
+    // FIX MODAL - Sposta i modal nel body per evitare problemi z-index
+    // ========================================================================
+    const modalsToMove = ['modalNuovaPrenotazione', 'modalDettaglio', 'modalCancella'];
+    modalsToMove.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal && modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
     });
-});
-
-// KPI cards cliccabili
-document.querySelectorAll('.kpi-card[data-stato]').forEach(card => {
-    card.addEventListener('click', function() {
-        const stato = this.dataset.stato;
-        document.querySelectorAll('.filter-chip[data-stato]').forEach(c => c.classList.remove('active'));
-        const chip = document.querySelector(`.filter-chip[data-stato="${stato}"]`);
-        if (chip) chip.classList.add('active');
-        applicaFiltri();
+    
+    // ========================================================================
+    // GESTIONE FILTRI
+    // ========================================================================
+    
+    // Filtro stato (chips)
+    document.querySelectorAll('.filter-chip[data-stato]').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('.filter-chip[data-stato]').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            applicaFiltri();
+        });
     });
-});
-
-// Altri filtri
-document.getElementById('filtroCampo').addEventListener('change', applicaFiltri);
-document.getElementById('filtroSport').addEventListener('change', applicaFiltri);
-document.getElementById('filtroData').addEventListener('change', applicaFiltri);
-document.getElementById('filtroOrdina').addEventListener('change', applicaFiltri);
-
-// Ricerca con debounce
-document.getElementById('filtroSearch').addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(applicaFiltri, 500);
-});
-
-// Ricerca con Enter
-document.getElementById('filtroSearch').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        clearTimeout(searchTimeout);
-        applicaFiltri();
+    
+    // KPI cards cliccabili
+    document.querySelectorAll('.kpi-card[data-stato]').forEach(card => {
+        card.addEventListener('click', function() {
+            const stato = this.dataset.stato;
+            document.querySelectorAll('.filter-chip[data-stato]').forEach(c => c.classList.remove('active'));
+            const chip = document.querySelector(`.filter-chip[data-stato="${stato}"]`);
+            if (chip) chip.classList.add('active');
+            applicaFiltri();
+        });
+    });
+    
+    // Altri filtri
+    const filtroCampo = document.getElementById('filtroCampo');
+    const filtroSport = document.getElementById('filtroSport');
+    const filtroData = document.getElementById('filtroData');
+    const filtroOrdina = document.getElementById('filtroOrdina');
+    const filtroSearch = document.getElementById('filtroSearch');
+    
+    if (filtroCampo) filtroCampo.addEventListener('change', applicaFiltri);
+    if (filtroSport) filtroSport.addEventListener('change', applicaFiltri);
+    if (filtroData) filtroData.addEventListener('change', applicaFiltri);
+    if (filtroOrdina) filtroOrdina.addEventListener('change', applicaFiltri);
+    
+    // Ricerca con debounce
+    if (filtroSearch) {
+        filtroSearch.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(applicaFiltri, 500);
+        });
+        
+        // Ricerca con Enter
+        filtroSearch.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                applicaFiltri();
+            }
+        });
     }
-});
+    
+    // ========================================================================
+    // RICERCA UTENTI NEL MODAL NUOVA PRENOTAZIONE
+    // ========================================================================
+    const searchUserInput = document.getElementById('searchUserInput');
+    const userSearchResults = document.getElementById('userSearchResults');
+    
+    if (searchUserInput) {
+        searchUserInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const search = this.value.trim();
+            
+            if (search.length < 2) {
+                userSearchResults.innerHTML = '';
+                userSearchResults.style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                console.log('Searching users:', search); // Debug
+                
+                fetch(`gestione-prenotazioni.php?ajax=1&action=search_users&search=${encodeURIComponent(search)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        console.log('Search results:', data); // Debug
+                        
+                        if (data.success && data.users && data.users.length > 0) {
+                            let html = '';
+                            data.users.forEach(user => {
+                                const initials = getInitialsJS(user.nome, user.cognome);
+                                html += `
+                                    <div class="search-result-item" onclick="selectUser(${user.user_id}, '${escapeHtmlAttr(user.nome)}', '${escapeHtmlAttr(user.cognome)}', '${escapeHtmlAttr(user.email)}')">
+                                        <div class="search-result-avatar">${initials}</div>
+                                        <div class="search-result-info">
+                                            <div class="search-result-name">${escapeHtml(user.nome)} ${escapeHtml(user.cognome)}</div>
+                                            <div class="search-result-email">${escapeHtml(user.email)}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            userSearchResults.innerHTML = html;
+                            userSearchResults.style.display = 'block';
+                        } else {
+                            userSearchResults.innerHTML = '<div class="no-results-message">Nessun utente trovato</div>';
+                            userSearchResults.style.display = 'block';
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Search error:', err);
+                        userSearchResults.innerHTML = '<div class="no-results-message">Errore di ricerca</div>';
+                        userSearchResults.style.display = 'block';
+                    });
+            }, 300);
+        });
+    }
+    
+    // Chiudi dropdown quando si clicca fuori
+    document.addEventListener('click', function(e) {
+        const container = document.querySelector('.search-user-container');
+        if (userSearchResults && container && !container.contains(e.target)) {
+            userSearchResults.style.display = 'none';
+        }
+    });
+    
+    // ========================================================================
+    // CAMBIO SPORT -> CARICA CAMPI
+    // ========================================================================
+    const selectSport = document.getElementById('selectSport');
+    const selectCampo = document.getElementById('selectCampo');
+    
+    if (selectSport) {
+        selectSport.addEventListener('change', function() {
+            const sportId = this.value;
+            console.log('Sport changed:', sportId); // Debug
+            
+            if (!sportId) {
+                selectCampo.innerHTML = '<option value="">Prima seleziona uno sport...</option>';
+                selectCampo.disabled = true;
+                resetSlotSelects();
+                return;
+            }
+            
+            // Mostra loading
+            selectCampo.innerHTML = '<option value="">Caricamento campi...</option>';
+            selectCampo.disabled = true;
+            
+            fetch(`gestione-prenotazioni.php?ajax=1&action=get_campi&sport_id=${sportId}`)
+                .then(r => r.json())
+                .then(data => {
+                    console.log('Campi response:', data); // Debug
+                    
+                    if (data.success && data.campi && data.campi.length > 0) {
+                        let html = '<option value="">Seleziona campo...</option>';
+                        data.campi.forEach(campo => {
+                            html += `<option value="${campo.campo_id}">${escapeHtml(campo.nome)} (${campo.tipo})</option>`;
+                        });
+                        selectCampo.innerHTML = html;
+                        selectCampo.disabled = false;
+                    } else {
+                        selectCampo.innerHTML = '<option value="">Nessun campo disponibile</option>';
+                        selectCampo.disabled = true;
+                    }
+                    resetSlotSelects();
+                })
+                .catch(err => {
+                    console.error('Error loading campi:', err);
+                    selectCampo.innerHTML = '<option value="">Errore caricamento</option>';
+                    selectCampo.disabled = true;
+                });
+        });
+    }
+    
+    // ========================================================================
+    // CAMBIO CAMPO O DATA -> CARICA SLOT
+    // ========================================================================
+    if (selectCampo) {
+        selectCampo.addEventListener('change', caricaSlot);
+    }
+    
+    const inputData = document.getElementById('inputData');
+    if (inputData) {
+        inputData.addEventListener('change', function() {
+            // Verifica se è un giorno di chiusura
+            if (giorniChiusura.includes(this.value)) {
+                showToast('La struttura è chiusa in questa data', 'error');
+                this.value = '';
+                resetSlotSelects();
+                return;
+            }
+            caricaSlot();
+        });
+    }
+    
+    // ========================================================================
+    // CAMBIO ORA INIZIO -> IMPOSTA ORA FINE
+    // ========================================================================
+    const selectOraInizio = document.getElementById('selectOraInizio');
+    if (selectOraInizio) {
+        selectOraInizio.addEventListener('change', function() {
+            const selectOraFine = document.getElementById('selectOraFine');
+            const selectedOption = this.options[this.selectedIndex];
+            
+            if (!this.value) {
+                selectOraFine.innerHTML = '<option value="">Seleziona ora inizio...</option>';
+                selectOraFine.disabled = true;
+                return;
+            }
+            
+            const oraFine = selectedOption.dataset.oraFine;
+            selectOraFine.innerHTML = `<option value="${oraFine}">${oraFine.substring(0, 5)}</option>`;
+            selectOraFine.disabled = false;
+        });
+    }
+    
+}); // Fine DOMContentLoaded
+
+// ============================================================================
+// FUNZIONI HELPER
+// ============================================================================
+
+function cleanupBackdrops() {
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+}
+
+function resetSlotSelects() {
+    const selectOraInizio = document.getElementById('selectOraInizio');
+    const selectOraFine = document.getElementById('selectOraFine');
+    const slotsInfo = document.getElementById('slotsInfo');
+    
+    if (selectOraInizio) {
+        selectOraInizio.innerHTML = '<option value="">Seleziona campo e data...</option>';
+        selectOraInizio.disabled = true;
+    }
+    if (selectOraFine) {
+        selectOraFine.innerHTML = '<option value="">Seleziona ora inizio...</option>';
+        selectOraFine.disabled = true;
+    }
+    if (slotsInfo) {
+        slotsInfo.style.display = 'none';
+    }
+}
+
+function caricaSlot() {
+    const campoId = document.getElementById('selectCampo').value;
+    const data = document.getElementById('inputData').value;
+    const selectOraInizio = document.getElementById('selectOraInizio');
+    const selectOraFine = document.getElementById('selectOraFine');
+    const slotsInfo = document.getElementById('slotsInfo');
+    
+    console.log('caricaSlot - campo:', campoId, 'data:', data); // Debug
+    
+    if (!campoId || !data) {
+        resetSlotSelects();
+        return;
+    }
+    
+    // Mostra loading
+    selectOraInizio.innerHTML = '<option value="">Caricamento slot...</option>';
+    selectOraInizio.disabled = true;
+    
+    fetch(`gestione-prenotazioni.php?ajax=1&action=get_slots&campo_id=${campoId}&data=${data}`)
+        .then(r => r.json())
+        .then(response => {
+            console.log('Slots response:', response); // Debug
+            
+            if (response.success && response.slots && response.slots.length > 0) {
+                let html = '<option value="">Seleziona ora...</option>';
+                response.slots.forEach(slot => {
+                    html += `<option value="${slot.ora_inizio}" data-ora-fine="${slot.ora_fine}">${slot.ora_inizio.substring(0, 5)}</option>`;
+                });
+                selectOraInizio.innerHTML = html;
+                selectOraInizio.disabled = false;
+                slotsInfo.innerHTML = `<span class="text-success">✓ ${response.slots.length} slot disponibili</span>`;
+                slotsInfo.style.display = 'block';
+            } else {
+                selectOraInizio.innerHTML = '<option value="">Nessuno slot disponibile</option>';
+                selectOraInizio.disabled = true;
+                slotsInfo.innerHTML = '<span class="text-danger">✗ Nessuno slot disponibile per questa data</span>';
+                slotsInfo.style.display = 'block';
+            }
+            
+            selectOraFine.innerHTML = '<option value="">Seleziona ora inizio...</option>';
+            selectOraFine.disabled = true;
+        })
+        .catch(err => {
+            console.error('Error loading slots:', err);
+            selectOraInizio.innerHTML = '<option value="">Errore caricamento</option>';
+            selectOraInizio.disabled = true;
+        });
+}
 
 function applicaFiltri() {
     const params = new URLSearchParams();
@@ -523,19 +790,19 @@ function applicaFiltri() {
         params.set('stato', statoAttivo.dataset.stato);
     }
     
-    const search = document.getElementById('filtroSearch').value.trim();
+    const search = document.getElementById('filtroSearch')?.value.trim();
     if (search) params.set('search', search);
     
-    const campo = document.getElementById('filtroCampo').value;
+    const campo = document.getElementById('filtroCampo')?.value;
     if (campo) params.set('campo', campo);
     
-    const sport = document.getElementById('filtroSport').value;
+    const sport = document.getElementById('filtroSport')?.value;
     if (sport) params.set('sport', sport);
     
-    const data = document.getElementById('filtroData').value;
+    const data = document.getElementById('filtroData')?.value;
     if (data) params.set('data', data);
     
-    const ordina = document.getElementById('filtroOrdina').value;
+    const ordina = document.getElementById('filtroOrdina')?.value;
     if (ordina) params.set('ordina', ordina);
     
     window.location.href = 'gestione-prenotazioni.php?' + params.toString();
@@ -580,13 +847,11 @@ function renderDettaglio(p) {
     
     let html = `
         <div class="dettaglio-container">
-            <!-- Header -->
             <div class="dettaglio-header">
                 <span class="stato-badge-large stato-${stato.class}">${stato.label}</span>
                 <span class="data-badge">Creata il ${formatDate(p.created_at)}</span>
             </div>
             
-            <!-- Info Campo -->
             <div class="dettaglio-section">
                 <h6>Campo</h6>
                 <div class="campo-dettaglio">
@@ -598,7 +863,6 @@ function renderDettaglio(p) {
                 </div>
             </div>
             
-            <!-- Data e Orario -->
             <div class="dettaglio-section">
                 <h6>Data e Orario</h6>
                 <div class="datetime-dettaglio">
@@ -617,7 +881,6 @@ function renderDettaglio(p) {
                 </div>
             </div>
             
-            <!-- Utente -->
             <div class="dettaglio-section">
                 <h6>Utente</h6>
                 <div class="user-dettaglio">
@@ -637,7 +900,6 @@ function renderDettaglio(p) {
             </div>
             
             ${p.note ? `
-            <!-- Note -->
             <div class="dettaglio-section">
                 <h6>Note</h6>
                 <div class="note-box">${escapeHtml(p.note)}</div>
@@ -645,7 +907,6 @@ function renderDettaglio(p) {
             ` : ''}
             
             ${p.stato === 'cancellata' && p.motivo_cancellazione ? `
-            <!-- Motivo Cancellazione -->
             <div class="dettaglio-section section-danger">
                 <h6>Motivo Cancellazione</h6>
                 <div class="note-box">${escapeHtml(p.motivo_cancellazione)}</div>
@@ -654,17 +915,15 @@ function renderDettaglio(p) {
             ` : ''}
             
             ${p.check_in_effettuato ? `
-            <!-- Check-in -->
             <div class="dettaglio-section section-success">
                 <h6>Check-in Effettuato</h6>
                 <p>Orario check-in: ${p.ora_check_in ? formatDate(p.ora_check_in) : 'N/A'}</p>
             </div>
             ` : ''}
             
-            <!-- Azioni -->
             ${canCancel ? `
             <div class="dettaglio-actions">
-                <button class="btn btn-danger" onclick="apriCancellazione(${p.prenotazione_id}, '${escapeHtml(p.campo_nome)}', '${formatDataSola(p.data_prenotazione)} ${p.ora_inizio.substring(0, 5)}-${p.ora_fine.substring(0, 5)}', '${escapeHtml(p.user_nome)} ${escapeHtml(p.user_cognome)}')">
+                <button class="btn btn-danger" onclick="apriCancellazione(${p.prenotazione_id}, '${escapeHtmlAttr(p.campo_nome)}', '${formatDataSola(p.data_prenotazione)} ${p.ora_inizio.substring(0, 5)}-${p.ora_fine.substring(0, 5)}', '${escapeHtmlAttr(p.user_nome)} ${escapeHtmlAttr(p.user_cognome)}')">
                     Cancella Prenotazione
                 </button>
             </div>
@@ -681,69 +940,26 @@ function renderDettaglio(p) {
 
 function apriNuovaPrenotazione() {
     // Reset form
-    document.getElementById('formNuovaPrenotazione').reset();
+    const form = document.getElementById('formNuovaPrenotazione');
+    if (form) form.reset();
+    
     document.getElementById('selectedUserId').value = '';
     document.getElementById('selectedUserCard').style.display = 'none';
     document.getElementById('searchUserInput').value = '';
     document.getElementById('userSearchResults').innerHTML = '';
-    document.getElementById('selectCampo').innerHTML = '<option value="">Prima seleziona uno sport...</option>';
-    document.getElementById('selectCampo').disabled = true;
-    document.getElementById('selectOraInizio').innerHTML = '<option value="">Seleziona data...</option>';
-    document.getElementById('selectOraInizio').disabled = true;
-    document.getElementById('selectOraFine').innerHTML = '<option value="">Seleziona ora inizio...</option>';
-    document.getElementById('selectOraFine').disabled = true;
-    document.getElementById('slotsInfo').style.display = 'none';
+    document.getElementById('userSearchResults').style.display = 'none';
+    
+    const selectCampo = document.getElementById('selectCampo');
+    selectCampo.innerHTML = '<option value="">Prima seleziona uno sport...</option>';
+    selectCampo.disabled = true;
+    
+    const selectSport = document.getElementById('selectSport');
+    selectSport.value = '';
+    
+    resetSlotSelects();
     
     new bootstrap.Modal(document.getElementById('modalNuovaPrenotazione')).show();
 }
-
-// Ricerca utenti
-document.getElementById('searchUserInput').addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    const search = this.value.trim();
-    const resultsContainer = document.getElementById('userSearchResults');
-    
-    if (search.length < 2) {
-        resultsContainer.innerHTML = '';
-        resultsContainer.classList.remove('show');
-        return;
-    }
-    
-    searchTimeout = setTimeout(() => {
-        fetch(`gestione-prenotazioni.php?ajax=1&action=search_users&search=${encodeURIComponent(search)}`)
-            .then(r => r.json())
-            .then(data => {
-                if (data.success && data.users.length > 0) {
-                    let html = '';
-                    data.users.forEach(user => {
-                        html += `
-                            <div class="search-result-item" onclick="selectUser(${user.user_id}, '${escapeHtml(user.nome)}', '${escapeHtml(user.cognome)}', '${escapeHtml(user.email)}')">
-                                <div class="search-result-avatar">${getInitialsJS(user.nome, user.cognome)}</div>
-                                <div class="search-result-info">
-                                    <div class="search-result-name">${escapeHtml(user.nome)} ${escapeHtml(user.cognome)}</div>
-                                    <div class="search-result-email">${escapeHtml(user.email)}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    resultsContainer.innerHTML = html;
-                    resultsContainer.classList.add('show');
-                } else {
-                    resultsContainer.innerHTML = '<div class="no-results-message">Nessun utente trovato</div>';
-                    resultsContainer.classList.add('show');
-                }
-            });
-    }, 300);
-});
-
-// Chiudi dropdown quando si clicca fuori
-document.addEventListener('click', function(e) {
-    const container = document.querySelector('.search-user-container');
-    const resultsContainer = document.getElementById('userSearchResults');
-    if (container && !container.contains(e.target)) {
-        resultsContainer.classList.remove('show');
-    }
-});
 
 function selectUser(id, nome, cognome, email) {
     document.getElementById('selectedUserId').value = id;
@@ -753,97 +969,14 @@ function selectUser(id, nome, cognome, email) {
     document.getElementById('selectedUserCard').style.display = 'flex';
     document.getElementById('searchUserInput').value = '';
     document.getElementById('userSearchResults').innerHTML = '';
-    document.getElementById('userSearchResults').classList.remove('show');
+    document.getElementById('userSearchResults').style.display = 'none';
 }
 
 function removeSelectedUser() {
     document.getElementById('selectedUserId').value = '';
     document.getElementById('selectedUserCard').style.display = 'none';
+    document.getElementById('searchUserInput').focus();
 }
-
-// Cambio sport -> carica campi
-document.getElementById('selectSport').addEventListener('change', function() {
-    const sportId = this.value;
-    const selectCampo = document.getElementById('selectCampo');
-    
-    if (!sportId) {
-        selectCampo.innerHTML = '<option value="">Prima seleziona uno sport...</option>';
-        selectCampo.disabled = true;
-        return;
-    }
-    
-    fetch(`gestione-prenotazioni.php?ajax=1&action=get_campi&sport_id=${sportId}`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success && data.campi.length > 0) {
-                let html = '<option value="">Seleziona campo...</option>';
-                data.campi.forEach(campo => {
-                    html += `<option value="${campo.campo_id}">${campo.nome} (${campo.tipo})</option>`;
-                });
-                selectCampo.innerHTML = html;
-                selectCampo.disabled = false;
-            } else {
-                selectCampo.innerHTML = '<option value="">Nessun campo disponibile</option>';
-                selectCampo.disabled = true;
-            }
-        });
-});
-
-// Cambio campo o data -> carica slot
-document.getElementById('selectCampo').addEventListener('change', caricaSlot);
-document.getElementById('inputData').addEventListener('change', caricaSlot);
-
-function caricaSlot() {
-    const campoId = document.getElementById('selectCampo').value;
-    const data = document.getElementById('inputData').value;
-    const selectOraInizio = document.getElementById('selectOraInizio');
-    const selectOraFine = document.getElementById('selectOraFine');
-    
-    if (!campoId || !data) {
-        selectOraInizio.innerHTML = '<option value="">Seleziona campo e data...</option>';
-        selectOraInizio.disabled = true;
-        selectOraFine.innerHTML = '<option value="">Seleziona ora inizio...</option>';
-        selectOraFine.disabled = true;
-        document.getElementById('slotsInfo').style.display = 'none';
-        return;
-    }
-    
-    fetch(`gestione-prenotazioni.php?ajax=1&action=get_slots&campo_id=${campoId}&data=${data}`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success && data.slots.length > 0) {
-                let html = '<option value="">Seleziona ora...</option>';
-                data.slots.forEach(slot => {
-                    html += `<option value="${slot.ora_inizio}" data-ora-fine="${slot.ora_fine}">${slot.ora_inizio.substring(0, 5)}</option>`;
-                });
-                selectOraInizio.innerHTML = html;
-                selectOraInizio.disabled = false;
-                document.getElementById('slotsInfo').innerHTML = `<span class="text-success">${data.slots.length} slot disponibili</span>`;
-                document.getElementById('slotsInfo').style.display = 'block';
-            } else {
-                selectOraInizio.innerHTML = '<option value="">Nessuno slot disponibile</option>';
-                selectOraInizio.disabled = true;
-                document.getElementById('slotsInfo').innerHTML = '<span class="text-danger">Nessuno slot disponibile per questa data</span>';
-                document.getElementById('slotsInfo').style.display = 'block';
-            }
-        });
-}
-
-// Cambio ora inizio -> imposta ora fine
-document.getElementById('selectOraInizio').addEventListener('change', function() {
-    const selectOraFine = document.getElementById('selectOraFine');
-    const selectedOption = this.options[this.selectedIndex];
-    
-    if (!this.value) {
-        selectOraFine.innerHTML = '<option value="">Seleziona ora inizio...</option>';
-        selectOraFine.disabled = true;
-        return;
-    }
-    
-    const oraFine = selectedOption.dataset.oraFine;
-    selectOraFine.innerHTML = `<option value="${oraFine}">${oraFine.substring(0, 5)}</option>`;
-    selectOraFine.disabled = false;
-});
 
 function creaPrenotazione() {
     const form = document.getElementById('formNuovaPrenotazione');
@@ -854,8 +987,18 @@ function creaPrenotazione() {
         return;
     }
     
-    if (!form.checkValidity()) {
-        form.reportValidity();
+    if (!document.getElementById('selectCampo').value) {
+        showToast('Seleziona un campo', 'error');
+        return;
+    }
+    
+    if (!document.getElementById('inputData').value) {
+        showToast('Seleziona una data', 'error');
+        return;
+    }
+    
+    if (!document.getElementById('selectOraInizio').value) {
+        showToast('Seleziona un orario', 'error');
         return;
     }
     
@@ -863,7 +1006,9 @@ function creaPrenotazione() {
     formData.append('ajax', '1');
     formData.append('action', 'create_prenotazione');
     
-    document.getElementById('btnCreaPrenotazione').disabled = true;
+    const btnCrea = document.getElementById('btnCreaPrenotazione');
+    btnCrea.disabled = true;
+    btnCrea.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creazione...';
     
     fetch('gestione-prenotazioni.php', {
         method: 'POST',
@@ -876,11 +1021,13 @@ function creaPrenotazione() {
             bootstrap.Modal.getInstance(document.getElementById('modalNuovaPrenotazione')).hide();
             setTimeout(() => location.reload(), 1000);
         }
-        document.getElementById('btnCreaPrenotazione').disabled = false;
+        btnCrea.disabled = false;
+        btnCrea.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Crea Prenotazione';
     })
     .catch(() => {
         showToast('Errore di connessione', 'error');
-        document.getElementById('btnCreaPrenotazione').disabled = false;
+        btnCrea.disabled = false;
+        btnCrea.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Crea Prenotazione';
     });
 }
 
@@ -896,12 +1043,16 @@ function apriCancellazione(id, campoNome, dataOra, userNome) {
     document.getElementById('formCancella').reset();
     document.getElementById('inviaNotificaCancella').checked = true;
     
-    // Chiudi modal dettaglio
-    bootstrap.Modal.getInstance(document.getElementById('modalDettaglio')).hide();
+    // Chiudi modal dettaglio e pulisci backdrop
+    const modalDettaglio = bootstrap.Modal.getInstance(document.getElementById('modalDettaglio'));
+    if (modalDettaglio) {
+        modalDettaglio.hide();
+    }
     
     setTimeout(() => {
+        cleanupBackdrops();
         new bootstrap.Modal(document.getElementById('modalCancella')).show();
-    }, 300);
+    }, 350);
 }
 
 function confermaCancellazione() {
@@ -932,7 +1083,7 @@ function confermaCancellazione() {
 // ============================================================================
 
 function getInitialsJS(nome, cognome) {
-    return (nome.charAt(0) + (cognome ? cognome.charAt(0) : '')).toUpperCase();
+    return ((nome ? nome.charAt(0) : '') + (cognome ? cognome.charAt(0) : '')).toUpperCase() || '??';
 }
 
 function formatDate(d) {
@@ -954,6 +1105,11 @@ function escapeHtml(t) {
     const d = document.createElement('div');
     d.textContent = t;
     return d.innerHTML;
+}
+
+function escapeHtmlAttr(t) {
+    if (!t) return '';
+    return t.replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
 function showToast(msg, type) {

@@ -3124,6 +3124,33 @@ class DatabaseHelper {
     // ============================================================================
     
     /**
+     * Aggiorna automaticamente lo stato delle prenotazioni passate
+     * - Se check-in effettuato → completata
+     * - Se NO check-in → no_show
+     */
+    public function aggiornaStatoPrenotazioniPassate() {
+        // Aggiorna a 'completata' le prenotazioni passate CON check-in
+        $queryCompletate = "UPDATE prenotazioni 
+                           SET stato = 'completata' 
+                           WHERE stato = 'confermata' 
+                             AND check_in_effettuato = 1
+                             AND CONCAT(data_prenotazione, ' ', ora_fine) < NOW()";
+        $this->db->query($queryCompletate);
+        $completate = $this->db->affected_rows;
+        
+        // Aggiorna a 'no_show' le prenotazioni passate SENZA check-in
+        $queryNoShow = "UPDATE prenotazioni 
+                        SET stato = 'no_show' 
+                        WHERE stato = 'confermata' 
+                          AND (check_in_effettuato = 0 OR check_in_effettuato IS NULL)
+                          AND CONCAT(data_prenotazione, ' ', ora_fine) < NOW()";
+        $this->db->query($queryNoShow);
+        $noShow = $this->db->affected_rows;
+        
+        return ['completate' => $completate, 'no_show' => $noShow];
+    }
+    
+    /**
      * Ottieni statistiche prenotazioni per admin dashboard
      */
     public function getPrenotazioniStatsAdmin() {
@@ -3496,6 +3523,224 @@ class DatabaseHelper {
         $query = "SELECT campo_id, nome, tipo_campo as tipo FROM campi_sportivi WHERE stato != 'chiuso' ORDER BY nome";
         $result = $this->db->query($query);
         return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // ============================================================================
+    // CONFIGURAZIONE SISTEMA
+    // ============================================================================
+    
+    /**
+     * Ottieni valore configurazione
+     */
+    public function getConfig($chiave, $default = null) {
+        $query = "SELECT valore, tipo FROM system_config WHERE chiave = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('s', $chiave);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        
+        if (!$result) {
+            return $default;
+        }
+        
+        // Converti il valore in base al tipo
+        switch ($result['tipo']) {
+            case 'int':
+                return intval($result['valore']);
+            case 'boolean':
+                return $result['valore'] === '1' || $result['valore'] === 'true';
+            case 'json':
+                return json_decode($result['valore'], true);
+            default:
+                return $result['valore'];
+        }
+    }
+    
+    /**
+     * Salva valore configurazione
+     */
+    public function saveConfig($chiave, $valore, $tipo = 'string', $adminId = null) {
+        // Converti il valore in stringa per il salvataggio
+        if ($tipo === 'json') {
+            $valore = json_encode($valore);
+        } elseif ($tipo === 'boolean') {
+            $valore = $valore ? '1' : '0';
+        } else {
+            $valore = strval($valore);
+        }
+        
+        $query = "INSERT INTO system_config (chiave, valore, tipo, updated_by) 
+                  VALUES (?, ?, ?, ?)
+                  ON DUPLICATE KEY UPDATE valore = VALUES(valore), tipo = VALUES(tipo), updated_by = VALUES(updated_by)";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('sssi', $chiave, $valore, $tipo, $adminId);
+        
+        return $stmt->execute();
+    }
+    
+    /**
+     * Ottieni tutti i template notifiche
+     */
+    public function getAllNotificationTemplates() {
+        $query = "SELECT * FROM notification_templates ORDER BY tipo";
+        $result = $this->db->query($query);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+    
+    /**
+     * Ottieni solo i template notifiche per prenotazioni (conferma, reminder, cancellazione)
+     */
+    public function getNotificationTemplatesPrenotazioni() {
+        $query = "SELECT * FROM notification_templates 
+                  WHERE tipo IN ('conferma_prenotazione', 'reminder_prenotazione', 'cancellazione_prenotazione')
+                  ORDER BY FIELD(tipo, 'conferma_prenotazione', 'reminder_prenotazione', 'cancellazione_prenotazione')";
+        $result = $this->db->query($query);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+    
+    /**
+     * Ottieni un template notifica per ID
+     */
+    public function getNotificationTemplate($templateId) {
+        $query = "SELECT * FROM notification_templates WHERE template_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $templateId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    /**
+     * Aggiorna template notifica
+     */
+    public function updateNotificationTemplate($templateId, $titolo, $messaggio, $attivo, $adminId) {
+        $query = "UPDATE notification_templates 
+                  SET titolo_template = ?, messaggio_template = ?, attivo = ?, updated_by = ?
+                  WHERE template_id = ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ssiii', $titolo, $messaggio, $attivo, $adminId, $templateId);
+        
+        return $stmt->execute();
+    }
+    
+    /**
+     * Ottieni tutti i badge
+     */
+    public function getAllBadges() {
+        $query = "SELECT * FROM badges ORDER BY categoria, nome";
+        $result = $this->db->query($query);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+    
+    /**
+     * Ottieni badge per ID
+     */
+    public function getBadgeById($badgeId) {
+        $query = "SELECT * FROM badges WHERE badge_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $badgeId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    /**
+     * Aggiorna badge
+     */
+    public function updateBadge($badgeId, $nome, $descrizione, $criterioValore, $xpReward, $attivo) {
+        $query = "UPDATE badges 
+                  SET nome = ?, descrizione = ?, criterio_valore = ?, xp_reward = ?, attivo = ?
+                  WHERE badge_id = ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ssiiii', $nome, $descrizione, $criterioValore, $xpReward, $attivo, $badgeId);
+        
+        return $stmt->execute();
+    }
+    
+    /**
+     * Ottieni giorni di chiusura
+     */
+    public function getGiorniChiusura() {
+        $query = "SELECT * FROM giorni_chiusura WHERE data >= CURDATE() ORDER BY data";
+        $result = $this->db->query($query);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+    
+    /**
+     * Aggiungi giorno di chiusura
+     */
+    public function addGiornoChiusura($data, $motivo, $adminId) {
+        $query = "INSERT IGNORE INTO giorni_chiusura (data, motivo, created_by) VALUES (?, ?, ?)";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ssi', $data, $motivo, $adminId);
+        return $stmt->execute() && $stmt->affected_rows > 0;
+    }
+    
+    /**
+     * Rimuovi giorno di chiusura
+     */
+    public function removeGiornoChiusura($chiusuraId) {
+        $query = "DELETE FROM giorni_chiusura WHERE id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $chiusuraId);
+        return $stmt->execute() && $stmt->affected_rows > 0;
+    }
+    
+    /**
+     * Verifica se una data è un giorno di chiusura
+     */
+    public function isGiornoChiusura($data) {
+        $query = "SELECT COUNT(*) as cnt FROM giorni_chiusura WHERE data = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('s', $data);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        return $result['cnt'] > 0;
+    }
+    
+    /**
+     * Ottieni array di date di chiusura (per JavaScript)
+     */
+    public function getGiorniChiusuraArray() {
+        $query = "SELECT data FROM giorni_chiusura WHERE data >= CURDATE() ORDER BY data";
+        $result = $this->db->query($query);
+        $dates = [];
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $dates[] = $row['data'];
+            }
+        }
+        return $dates;
+    }
+    
+    /**
+     * Ottieni periodi blackout
+     */
+    public function getPeriodiBlackout() {
+        $query = "SELECT * FROM periodi_blackout WHERE data_fine >= CURDATE() ORDER BY data_inizio";
+        $result = $this->db->query($query);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+    
+    /**
+     * Aggiungi periodo blackout
+     */
+    public function addPeriodoBlackout($dataInizio, $dataFine, $motivo, $adminId) {
+        $query = "INSERT INTO periodi_blackout (data_inizio, data_fine, motivo, created_by) VALUES (?, ?, ?, ?)";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('sssi', $dataInizio, $dataFine, $motivo, $adminId);
+        return $stmt->execute();
+    }
+    
+    /**
+     * Rimuovi periodo blackout
+     */
+    public function removePeriodoBlackout($blackoutId) {
+        $query = "DELETE FROM periodi_blackout WHERE id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $blackoutId);
+        return $stmt->execute() && $stmt->affected_rows > 0;
     }
 
 

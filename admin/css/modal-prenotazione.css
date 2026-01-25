@@ -1,0 +1,516 @@
+/* ============================================================================
+   MODAL PRENOTAZIONE - Stili per Dettaglio e Cancella
+   ============================================================================ */
+
+/* ============================================================================
+   FIX CRITICI PER FUNZIONAMENTO MODAL
+   ============================================================================ */
+
+/* Z-Index corretti */
+#modalDettaglio {
+    z-index: 1060 !important;
+}
+
+#modalDettaglio .modal-dialog {
+    z-index: 1061 !important;
+    pointer-events: auto !important;
+}
+
+#modalDettaglio .modal-content {
+    pointer-events: auto !important;
+}
+
+#modalCancella {
+    z-index: 1070 !important;
+}
+
+#modalCancella .modal-dialog {
+    z-index: 1071 !important;
+    pointer-events: auto !important;
+}
+
+#modalCancella .modal-content {
+    pointer-events: auto !important;
+}
+
+/* Assicura che tutti gli elementi siano cliccabili */
+#modalDettaglio input,
+#modalDettaglio select,
+#modalDettaglio textarea,
+#modalDettaglio button,
+#modalDettaglio label,
+#modalCancella input,
+#modalCancella select,
+#modalCancella textarea,
+#modalCancella button,
+#modalCancella label {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================================================
+   MODAL PRENOTAZIONE CONTENT - Stile Dark Premium
+   ============================================================================ */
+.modal-prenotazione-content {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.15) !important;
+    border-radius: 20px !important;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    color: #f1f5f9;
+}
+
+.modal-prenotazione-content .modal-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    padding: 20px 24px;
+}
+
+.modal-prenotazione-content .modal-header .modal-title {
+    color: #f1f5f9;
+    font-weight: 700;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-prenotazione-content .modal-body {
+    padding: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-prenotazione-content .modal-footer {
+    background: rgba(30, 41, 59, 0.5);
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    padding: 16px 24px;
+}
+
+/* ============================================================================
+   HEADER VARIANTS
+   ============================================================================ */
+.modal-header-danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05)) !important;
+    border-bottom: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.modal-header-danger .modal-title {
+    color: #fca5a5;
+}
+
+.modal-header-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)) !important;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.modal-header-success .modal-title {
+    color: #6ee7b7;
+}
+
+/* ============================================================================
+   DETTAGLIO SECTIONS
+   ============================================================================ */
+.dettaglio-section {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.dettaglio-section h6 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dettaglio-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.dettaglio-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.dettaglio-label {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.dettaglio-value {
+    color: #f1f5f9;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   USER INFO BOX
+   ============================================================================ */
+.user-info-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 10px;
+}
+
+.user-avatar-detail {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.user-info-detail {
+    flex: 1;
+}
+
+.user-name-detail {
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 2px;
+}
+
+.user-email-detail {
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* ============================================================================
+   CANCELLA BOX
+   ============================================================================ */
+.cancel-info-box {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.cancel-info-box p {
+    color: #fca5a5;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.cancel-prenotazione-info {
+    color: #f1f5f9;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.cancel-prenotazione-info strong {
+    color: #f87171;
+}
+
+/* ============================================================================
+   FORM CONTROLS DARK
+   ============================================================================ */
+.form-control-dark {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(148, 163, 184, 0.2) !important;
+    border-radius: 10px !important;
+    color: #f1f5f9 !important;
+    padding: 12px 16px;
+    font-size: 14px;
+}
+
+.form-control-dark:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+    outline: none;
+}
+
+.form-control-dark::placeholder {
+    color: #64748b;
+}
+
+.form-label {
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.form-check-label {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.form-check-input {
+    background-color: rgba(15, 23, 42, 0.6);
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.form-check-input:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+/* ============================================================================
+   STATUS BADGES
+   ============================================================================ */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-badge.confermata {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.status-badge.completata {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-badge.cancellata {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-badge.no_show {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* ============================================================================
+   BUTTONS
+   ============================================================================ */
+.modal-prenotazione-content .btn-secondary {
+    background: #334155;
+    border: none;
+    color: #f1f5f9;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.modal-prenotazione-content .btn-secondary:hover {
+    background: #475569;
+}
+
+.modal-prenotazione-content .btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    transition: all 0.2s ease;
+}
+
+.modal-prenotazione-content .btn-danger:hover {
+    background: linear-gradient(135deg, #f87171, #ef4444);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+.modal-prenotazione-content .btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+}
+
+.modal-prenotazione-content .btn-primary:hover {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* ============================================================================
+   LOADING SPINNER
+   ============================================================================ */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.loading-spinner .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(59, 130, 246, 0.2);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-spinner p {
+    color: #64748b;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================================================
+   CLOSE BUTTON
+   ============================================================================ */
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.7;
+}
+
+.btn-close-white:hover {
+    opacity: 1;
+}
+
+/* ============================================================================
+   INVITATI LIST
+   ============================================================================ */
+.invitati-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.invitato-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 8px;
+}
+
+.invitato-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.invitato-nome {
+    color: #e2e8f0;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.invitato-stato {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.invitato-stato.accettato {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.invitato-stato.in_attesa {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+.invitato-stato.rifiutato {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+/* ============================================================================
+   SCROLLBAR
+   ============================================================================ */
+.modal-prenotazione-content .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-prenotazione-content .modal-body::-webkit-scrollbar-track {
+    background: #1e293b;
+    border-radius: 3px;
+}
+
+.modal-prenotazione-content .modal-body::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 3px;
+}
+
+.modal-prenotazione-content .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .modal-prenotazione-content .modal-header {
+        padding: 16px 20px;
+    }
+    
+    .modal-prenotazione-content .modal-body {
+        padding: 20px;
+    }
+    
+    .modal-prenotazione-content .modal-footer {
+        padding: 12px 20px;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .modal-prenotazione-content .modal-footer .btn {
+        width: 100%;
+    }
+    
+    .user-info-box {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .dettaglio-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}
