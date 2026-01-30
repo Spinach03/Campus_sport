@@ -1779,3 +1779,31 @@
         flex-wrap: wrap;
     }
 }
+
+/* ============================================================================
+   BOTTONE ELIMINA BLOCCO MANUTENZIONE
+   ============================================================================ */
+
+.btn-delete-blocco {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    margin-left: auto;
+}
+
+.btn-delete-blocco:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: scale(1.05);
+}
+
+.manutenzione-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}

@@ -249,7 +249,7 @@ class DatabaseHelper {
                     c.capienza_max, c.tipo_superficie, c.tipo_campo, c.lunghezza_m, c.larghezza_m,
                     c.orario_apertura, c.orario_chiusura, c.stato, c.rating_medio, c.num_recensioni, c.created_at,
                     (SELECT COUNT(*) FROM prenotazioni p WHERE p.campo_id = c.campo_id AND p.data_prenotazione = CURDATE() AND p.stato IN ('confermata', 'completata')) as prenotazioni_oggi,
-                    (SELECT COUNT(*) FROM prenotazioni p WHERE p.campo_id = c.campo_id AND p.stato IN ('confermata', 'completata')) as prenotazioni_settimana,
+                    (SELECT COUNT(*) FROM prenotazioni p WHERE p.campo_id = c.campo_id AND p.data_prenotazione >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND p.stato IN ('confermata', 'completata')) as prenotazioni_settimana,
                     (SELECT path_foto FROM campo_foto WHERE campo_id = c.campo_id AND is_principale = 1 LIMIT 1) as foto_principale,
                     (SELECT COUNT(*) FROM blocchi_manutenzione bm WHERE bm.campo_id = c.campo_id AND bm.data_inizio > CURDATE()) as manutenzioni_future
                   FROM campi_sportivi c
@@ -311,7 +311,7 @@ class DatabaseHelper {
     public function getCampoById($campoId) {
         $query = "SELECT c.*, s.nome as sport_nome,
                     (SELECT COUNT(*) FROM prenotazioni p WHERE p.campo_id = c.campo_id AND p.data_prenotazione = CURDATE() AND p.stato IN ('confermata', 'completata')) as prenotazioni_oggi,
-                    (SELECT COUNT(*) FROM prenotazioni p WHERE p.campo_id = c.campo_id AND p.stato IN ('confermata', 'completata')) as prenotazioni_settimana,
+                    (SELECT COUNT(*) FROM prenotazioni p WHERE p.campo_id = c.campo_id AND p.data_prenotazione >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND p.stato IN ('confermata', 'completata')) as prenotazioni_settimana,
                     (SELECT COUNT(*) FROM prenotazioni p WHERE p.campo_id = c.campo_id AND p.stato IN ('confermata', 'completata')) as prenotazioni_totali
                   FROM campi_sportivi c
                   JOIN sport s ON c.sport_id = s.sport_id
@@ -968,6 +968,173 @@ class DatabaseHelper {
         $stats['metriche'] = $stmt4->get_result()->fetch_assoc();
         
         return $stats;
+    }
+
+    // ============================================================================
+    // CAMPI - Statistiche settimanali reali per grafico
+    // ============================================================================
+    
+    public function getStatisticheSettimanaleCampo($campoId) {
+        $stats = [];
+        $giorniIta = ['', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+        
+        for ($i = 6; $i >= 0; $i--) {
+            $data = date('Y-m-d', strtotime("-$i days"));
+            $giornoSettimana = date('N', strtotime($data));
+            $stats[$data] = [
+                'data' => $data,
+                'giorno' => $giorniIta[$giornoSettimana],
+                'totale' => 0
+            ];
+        }
+        
+        $query = "SELECT DATE(data_prenotazione) as data, COUNT(*) as totale
+                  FROM prenotazioni 
+                  WHERE campo_id = ? 
+                    AND data_prenotazione >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+                    AND data_prenotazione <= CURDATE()
+                    AND stato IN ('completata', 'confermata')
+                  GROUP BY DATE(data_prenotazione)
+                  ORDER BY data_prenotazione ASC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $campoId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $prenotazioniPerGiorno = $result->fetch_all(MYSQLI_ASSOC);
+        
+        foreach ($prenotazioniPerGiorno as $p) {
+            if (isset($stats[$p['data']])) {
+                $stats[$p['data']]['totale'] = intval($p['totale']);
+            }
+        }
+        
+        return array_values($stats);
+    }
+    
+    // ============================================================================
+    // CAMPI - Calcolo utilizzo reale (ore prenotate / ore disponibili)
+    // ============================================================================
+    
+    public function getUtilizzoRealeCampo($campoId, $giorni = 7) {
+        $queryInfo = "SELECT orario_apertura, orario_chiusura FROM campi_sportivi WHERE campo_id = ?";
+        $stmt = $this->db->prepare($queryInfo);
+        $stmt->bind_param('i', $campoId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $campo = $result->fetch_assoc();
+        
+        if (!$campo) return 0;
+        
+        $oraApertura = strtotime($campo['orario_apertura']);
+        $oraChiusura = strtotime($campo['orario_chiusura']);
+        $oreDisponibiliGiorno = ($oraChiusura - $oraApertura) / 3600;
+        $oreTotaliDisponibili = $oreDisponibiliGiorno * $giorni;
+        
+        if ($oreTotaliDisponibili <= 0) return 0;
+        
+        $query = "SELECT SUM(TIMESTAMPDIFF(HOUR, ora_inizio, ora_fine)) as ore_prenotate
+                  FROM prenotazioni 
+                  WHERE campo_id = ? 
+                    AND data_prenotazione >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+                    AND data_prenotazione <= CURDATE()
+                    AND stato IN ('completata', 'confermata')";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $campoId, $giorni);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        $orePrenotate = floatval($row['ore_prenotate'] ?? 0);
+        $utilizzo = round(($orePrenotate / $oreTotaliDisponibili) * 100, 1);
+        return min(100, $utilizzo);
+    }
+
+    // ============================================================================
+    // CAMPI - Gestione automatica stato manutenzione
+    // Controlla i blocchi manutenzione e aggiorna lo stato dei campi
+    // ============================================================================
+    
+    public function aggiornaStatiManutenzione() {
+        $oggi = date('Y-m-d');
+        $oraAttuale = date('H:i:s');
+        
+        // 1. Trova campi che DEVONO essere in manutenzione
+        // (hanno un blocco attivo: data_inizio <= oggi <= data_fine)
+        $queryAttivi = "SELECT DISTINCT bm.campo_id 
+                        FROM blocchi_manutenzione bm
+                        JOIN campi_sportivi c ON bm.campo_id = c.campo_id
+                        WHERE bm.data_inizio <= ? 
+                          AND bm.data_fine >= ?
+                          AND c.stato != 'chiuso'";
+        
+        $stmt = $this->db->prepare($queryAttivi);
+        $stmt->bind_param('ss', $oggi, $oggi);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $campiInManutenzione = $result->fetch_all(MYSQLI_ASSOC);
+        
+        // Metti in manutenzione i campi con blocco attivo
+        foreach ($campiInManutenzione as $row) {
+            $updateQuery = "UPDATE campi_sportivi SET stato = 'manutenzione' 
+                           WHERE campo_id = ? AND stato = 'disponibile'";
+            $stmtUpdate = $this->db->prepare($updateQuery);
+            $stmtUpdate->bind_param('i', $row['campo_id']);
+            $stmtUpdate->execute();
+        }
+        
+        // 2. Trova campi che erano in manutenzione ma NON hanno più blocchi attivi
+        // e li rimette disponibili
+        $queryFiniti = "SELECT c.campo_id 
+                        FROM campi_sportivi c
+                        WHERE c.stato = 'manutenzione'
+                          AND c.campo_id NOT IN (
+                              SELECT DISTINCT bm.campo_id 
+                              FROM blocchi_manutenzione bm
+                              WHERE bm.data_inizio <= ? AND bm.data_fine >= ?
+                          )";
+        
+        $stmt2 = $this->db->prepare($queryFiniti);
+        $stmt2->bind_param('ss', $oggi, $oggi);
+        $stmt2->execute();
+        $result2 = $stmt2->get_result();
+        $campiDaRiaprire = $result2->fetch_all(MYSQLI_ASSOC);
+        
+        // Rimetti disponibili i campi senza blocchi attivi
+        foreach ($campiDaRiaprire as $row) {
+            $updateQuery = "UPDATE campi_sportivi SET stato = 'disponibile' 
+                           WHERE campo_id = ?";
+            $stmtUpdate = $this->db->prepare($updateQuery);
+            $stmtUpdate->bind_param('i', $row['campo_id']);
+            $stmtUpdate->execute();
+        }
+        
+        // 3. Elimina i blocchi manutenzione completati (opzionale - li tiene per storico)
+        // Se vuoi eliminarli decommentare:
+        // $this->db->query("DELETE FROM blocchi_manutenzione WHERE data_fine < CURDATE()");
+        
+        return true;
+    }
+
+    // ============================================================================
+    // CAMPI - Termina manutenzione attiva (imposta data_fine = ieri)
+    // ============================================================================
+    
+    public function terminaManutenzioneAttiva($campoId) {
+        $ieri = date('Y-m-d', strtotime('-1 day'));
+        $oggi = date('Y-m-d');
+        
+        // Aggiorna tutti i blocchi attivi per questo campo impostando data_fine = ieri
+        $query = "UPDATE blocchi_manutenzione 
+                  SET data_fine = ? 
+                  WHERE campo_id = ? 
+                    AND data_inizio <= ? 
+                    AND data_fine >= ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('siss', $ieri, $campoId, $oggi, $oggi);
+        return $stmt->execute();
     }
 
     // ============================================================================

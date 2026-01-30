@@ -23,6 +23,12 @@ if ($isAjax || isset($_POST['ajax'])) {
         case 'create':
             $servizi = isset($_POST['servizi']) ? $_POST['servizi'] : [];
             
+            // Validazione tipo_campo
+            $tipoCampo = $_POST['tipo_campo'] ?? 'outdoor';
+            if (!in_array($tipoCampo, ['indoor', 'outdoor'])) {
+                $tipoCampo = 'outdoor';
+            }
+            
             $data = [
                 'nome' => trim($_POST['nome'] ?? ''),
                 'sport_id' => intval($_POST['sport_id'] ?? 0),
@@ -30,7 +36,7 @@ if ($isAjax || isset($_POST['ajax'])) {
                 'descrizione' => trim($_POST['descrizione'] ?? ''),
                 'capienza_max' => intval($_POST['capienza_max'] ?? 0),
                 'tipo_superficie' => $_POST['tipo_superficie'] ?? 'erba_sintetica',
-                'tipo_campo' => $_POST['tipo_campo'] ?? 'outdoor',
+                'tipo_campo' => $tipoCampo,
                 'lunghezza_m' => floatval($_POST['lunghezza_m'] ?? 0) ?: null,
                 'larghezza_m' => floatval($_POST['larghezza_m'] ?? 0) ?: null,
                 'orario_apertura' => $_POST['orario_apertura'] ?? '08:00',
@@ -61,6 +67,12 @@ if ($isAjax || isset($_POST['ajax'])) {
             $campoId = intval($_POST['campo_id'] ?? 0);
             $servizi = isset($_POST['servizi']) ? $_POST['servizi'] : [];
             
+            // Validazione tipo_campo
+            $tipoCampo = $_POST['tipo_campo'] ?? 'outdoor';
+            if (!in_array($tipoCampo, ['indoor', 'outdoor'])) {
+                $tipoCampo = 'outdoor';
+            }
+            
             $data = [
                 'nome' => trim($_POST['nome'] ?? ''),
                 'sport_id' => intval($_POST['sport_id'] ?? 0),
@@ -68,7 +80,7 @@ if ($isAjax || isset($_POST['ajax'])) {
                 'descrizione' => trim($_POST['descrizione'] ?? ''),
                 'capienza_max' => intval($_POST['capienza_max'] ?? 0),
                 'tipo_superficie' => $_POST['tipo_superficie'] ?? 'erba_sintetica',
-                'tipo_campo' => $_POST['tipo_campo'] ?? 'outdoor',
+                'tipo_campo' => $tipoCampo,
                 'lunghezza_m' => floatval($_POST['lunghezza_m'] ?? 0) ?: null,
                 'larghezza_m' => floatval($_POST['larghezza_m'] ?? 0) ?: null,
                 'orario_apertura' => $_POST['orario_apertura'] ?? '08:00',
@@ -158,6 +170,8 @@ if ($isAjax || isset($_POST['ajax'])) {
                 $foto = $dbh->getCampoFoto($campoId);
                 $storico = $dbh->getCampoStorico($campoId);
                 $stats = $dbh->getStatisticheCampo($campoId);
+                $statsSettimanali = $dbh->getStatisticheSettimanaleCampo($campoId);
+                $utilizzoReale = $dbh->getUtilizzoRealeCampo($campoId, 7);
                 $recensioni = $dbh->getRecensioniCampo($campoId, 100);
                 $recensioniStats = $dbh->getRecensioniStatsCampo($campoId);
                 $blocchiManutenzione = $dbh->getBlocchiManutenzione($campoId);
@@ -169,6 +183,8 @@ if ($isAjax || isset($_POST['ajax'])) {
                     'foto' => $foto,
                     'storico' => $storico,
                     'stats' => $stats,
+                    'stats_settimanali' => $statsSettimanali,
+                    'utilizzo_reale' => $utilizzoReale,
                     'recensioni' => $recensioni,
                     'recensioni_stats' => $recensioniStats,
                     'blocchi_manutenzione' => $blocchiManutenzione
@@ -198,6 +214,33 @@ if ($isAjax || isset($_POST['ajax'])) {
                 exit;
             }
             
+            // Validazione: non si può creare manutenzione nel passato
+            $oggi = date('Y-m-d');
+            $oraAttuale = date('H:i');
+            
+            if ($data['data_inizio'] < $oggi) {
+                echo json_encode(['success' => false, 'message' => 'Non puoi programmare una manutenzione nel passato']);
+                exit;
+            }
+            
+            // Se data è oggi, l'ora deve essere futura
+            if ($data['data_inizio'] == $oggi && $data['ora_inizio'] <= $oraAttuale) {
+                echo json_encode(['success' => false, 'message' => 'L\'ora di inizio deve essere successiva all\'ora attuale']);
+                exit;
+            }
+            
+            // Data fine deve essere >= data inizio
+            if ($data['data_fine'] < $data['data_inizio']) {
+                echo json_encode(['success' => false, 'message' => 'La data di fine non può essere prima della data di inizio']);
+                exit;
+            }
+            
+            // Se stessa data, ora fine > ora inizio
+            if ($data['data_fine'] == $data['data_inizio'] && $data['ora_fine'] <= $data['ora_inizio']) {
+                echo json_encode(['success' => false, 'message' => 'L\'ora di fine deve essere successiva all\'ora di inizio']);
+                exit;
+            }
+            
             $bloccoId = $dbh->createBloccoManutenzione($data);
             
             if ($bloccoId) {
@@ -217,6 +260,23 @@ if ($isAjax || isset($_POST['ajax'])) {
                 echo json_encode(['success' => true, 'message' => 'Blocco rimosso']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Errore rimozione blocco']);
+            }
+            exit;
+            
+        // ============================================
+        // TERMINA MANUTENZIONE (anticipa la fine)
+        // ============================================
+        case 'termina_manutenzione':
+            $campoId = intval($_POST['campo_id'] ?? 0);
+            
+            if ($campoId) {
+                // Termina tutti i blocchi manutenzione attivi per questo campo
+                $dbh->terminaManutenzioneAttiva($campoId);
+                // Rimetti il campo disponibile
+                $dbh->updateStatoCampo($campoId, 'disponibile');
+                echo json_encode(['success' => true, 'message' => 'Manutenzione terminata']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'ID campo non valido']);
             }
             exit;
             
@@ -318,6 +378,9 @@ if ($isAjax || isset($_POST['ajax'])) {
 // ============================================================================
 // CARICAMENTO DATI PER LA PAGINA
 // ============================================================================
+
+// Aggiorna automaticamente lo stato dei campi in base ai blocchi manutenzione
+$dbh->aggiornaStatiManutenzione();
 
 $filtri = [
     'sport' => $_GET['sport'] ?? '',

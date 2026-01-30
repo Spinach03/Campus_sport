@@ -861,19 +861,19 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                     <div class="row g-3 mb-3">
                         <div class="col-md-3">
                             <label class="nc-label">Data Inizio <span class="text-danger">*</span></label>
-                            <input type="date" class="nc-input" name="data_inizio" required>
+                            <input type="date" class="nc-input" name="data_inizio" id="blocco_data_inizio" required>
                         </div>
                         <div class="col-md-3">
                             <label class="nc-label">Ora Inizio</label>
-                            <input type="time" class="nc-input" name="ora_inizio" value="08:00">
+                            <input type="time" class="nc-input" name="ora_inizio" id="blocco_ora_inizio" value="08:00">
                         </div>
                         <div class="col-md-3">
                             <label class="nc-label">Data Fine <span class="text-danger">*</span></label>
-                            <input type="date" class="nc-input" name="data_fine" required>
+                            <input type="date" class="nc-input" name="data_fine" id="blocco_data_fine" required>
                         </div>
                         <div class="col-md-3">
                             <label class="nc-label">Ora Fine</label>
-                            <input type="time" class="nc-input" name="ora_fine" value="22:00">
+                            <input type="time" class="nc-input" name="ora_fine" id="blocco_ora_fine" value="22:00">
                         </div>
                     </div>
                     
@@ -1397,7 +1397,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Stats
         document.getElementById('detailPrenOggi').textContent = campo.prenotazioni_oggi || 0;
         document.getElementById('detailPrenSett').textContent = campo.prenotazioni_settimana || 0;
-        document.getElementById('detailUtilizzo').textContent = Math.min(100, (campo.prenotazioni_settimana || 0) * 3) + '%';
+        document.getElementById('detailUtilizzo').textContent = (data.utilizzo_reale || 0) + '%';
         document.getElementById('detailNumRec').textContent = campo.num_recensioni || 0;
         
         // Rating
@@ -1522,6 +1522,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="manutenzione-item-date">${dIn} - ${dFi}</div>
                             ${b.motivo ? `<div class="manutenzione-item-motivo">${b.motivo}</div>` : ''}
                         </div>
+                        <button class="btn-delete-blocco" onclick="eliminaBloccoManutenzione(${b.blocco_id})" title="Elimina manutenzione">
+                            🗑️
+                        </button>
                     </div>
                 `;
             }).join('');
@@ -1569,8 +1572,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Calendario - Carica prenotazioni
         loadPrenotazioniCalendario(campo.campo_id);
         
-        // Statistiche - Genera grafico
-        generateStatsChart(campo);
+        // Statistiche - Genera grafico con dati reali
+        generateStatsChart(campo, data.stats_settimanali);
     }
     
     // ============================================================================
@@ -1687,27 +1690,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ============================================================================
-    // GENERA GRAFICO STATISTICHE
+    // GENERA GRAFICO STATISTICHE - USA DATI REALI
     // ============================================================================
-    function generateStatsChart(campo) {
+    function generateStatsChart(campo, statsSettimanali) {
         const chartContainer = document.getElementById('weeklyChart');
-        const giorni = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
         
-        // Genera dati casuali basati sulle prenotazioni settimanali
-        const prenotazioniSett = campo.prenotazioni_settimana || 0;
-        const mediaGiorno = Math.ceil(prenotazioniSett / 7);
+        if (!statsSettimanali || statsSettimanali.length === 0) {
+            chartContainer.innerHTML = '<div class="text-center text-muted py-4">Nessun dato disponibile</div>';
+            document.getElementById('statsTotale').textContent = '0';
+            document.getElementById('statsMedia').textContent = '0';
+            document.getElementById('statsPicco').textContent = '-';
+            return;
+        }
         
-        // Simula distribuzione (weekend più prenotazioni)
-        const valori = [
-            Math.floor(mediaGiorno * 0.8),
-            Math.floor(mediaGiorno * 0.9),
-            Math.floor(mediaGiorno * 1.0),
-            Math.floor(mediaGiorno * 0.9),
-            Math.floor(mediaGiorno * 1.2),
-            Math.floor(mediaGiorno * 1.5),
-            Math.floor(mediaGiorno * 1.3)
-        ];
-        
+        const valori = statsSettimanali.map(s => s.totale || 0);
+        const giorni = statsSettimanali.map(s => s.giorno);
         const maxVal = Math.max(...valori, 1);
         
         chartContainer.innerHTML = valori.map((val, i) => `
@@ -1718,14 +1715,13 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `).join('');
         
-        // Summary
         const totale = valori.reduce((a, b) => a + b, 0);
         const media = (totale / 7).toFixed(1);
         const piccoIndex = valori.indexOf(maxVal);
         
         document.getElementById('statsTotale').textContent = totale;
         document.getElementById('statsMedia').textContent = media;
-        document.getElementById('statsPicco').textContent = giorni[piccoIndex];
+        document.getElementById('statsPicco').textContent = valori[piccoIndex] > 0 ? giorni[piccoIndex] : '-';
     }
     
     // ============================================================================
@@ -2012,16 +2008,94 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('blocco_campo_id').value = currentCampoId;
         document.getElementById('manutenzioneSubtitle').textContent = document.getElementById('detailNome').textContent;
         
-        // Set default dates
-        const today = new Date().toISOString().split('T')[0];
-        document.querySelector('#formBloccoManutenzione [name="data_inizio"]').value = today;
-        document.querySelector('#formBloccoManutenzione [name="data_fine"]').value = today;
+        // Set default dates e limiti
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const currentHour = now.getHours().toString().padStart(2, '0');
+        const currentMinute = now.getMinutes().toString().padStart(2, '0');
+        const currentTime = `${currentHour}:${currentMinute}`;
+        
+        // Imposta min date = oggi (non si può mettere manutenzione nel passato)
+        document.getElementById('blocco_data_inizio').min = today;
+        document.getElementById('blocco_data_fine').min = today;
+        
+        // Imposta valori default
+        document.getElementById('blocco_data_inizio').value = today;
+        document.getElementById('blocco_data_fine').value = today;
+        
+        // Se oggi, imposta ora minima = ora attuale (arrotondata all'ora successiva)
+        const nextHour = (now.getHours() + 1).toString().padStart(2, '0') + ':00';
+        document.getElementById('blocco_ora_inizio').value = nextHour;
+        document.getElementById('blocco_ora_fine').value = '22:00';
         
         new bootstrap.Modal(document.getElementById('modalBloccoManutenzione')).show();
     });
     
+    // Aggiorna limiti ora quando cambia la data
+    document.getElementById('blocco_data_inizio').addEventListener('change', function() {
+        const dataInizio = this.value;
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Se data inizio è oggi, l'ora deve essere >= ora attuale
+        if (dataInizio === today) {
+            const now = new Date();
+            const nextHour = (now.getHours() + 1).toString().padStart(2, '0') + ':00';
+            const oraInizioInput = document.getElementById('blocco_ora_inizio');
+            
+            // Se l'ora impostata è nel passato, aggiornala
+            if (oraInizioInput.value < nextHour) {
+                oraInizioInput.value = nextHour;
+            }
+        }
+        
+        // Data fine non può essere prima di data inizio
+        document.getElementById('blocco_data_fine').min = dataInizio;
+        if (document.getElementById('blocco_data_fine').value < dataInizio) {
+            document.getElementById('blocco_data_fine').value = dataInizio;
+        }
+    });
+    
     document.getElementById('btnCreaBlocco').addEventListener('click', function() {
         const form = document.getElementById('formBloccoManutenzione');
+        
+        // Validazione data/ora
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        const dataInizio = document.getElementById('blocco_data_inizio').value;
+        const oraInizio = document.getElementById('blocco_ora_inizio').value;
+        const dataFine = document.getElementById('blocco_data_fine').value;
+        const oraFine = document.getElementById('blocco_ora_fine').value;
+        
+        // Controlla che data inizio non sia nel passato
+        if (dataInizio < today) {
+            showToast('Non puoi programmare una manutenzione nel passato', 'error');
+            return;
+        }
+        
+        // Se data è oggi, controlla che l'ora non sia nel passato
+        if (dataInizio === today) {
+            const currentHour = now.getHours().toString().padStart(2, '0');
+            const currentMinute = now.getMinutes().toString().padStart(2, '0');
+            const currentTime = `${currentHour}:${currentMinute}`;
+            
+            if (oraInizio <= currentTime) {
+                showToast('L\'ora di inizio deve essere successiva all\'ora attuale', 'error');
+                return;
+            }
+        }
+        
+        // Controlla che data fine >= data inizio
+        if (dataFine < dataInizio) {
+            showToast('La data di fine non può essere prima della data di inizio', 'error');
+            return;
+        }
+        
+        // Se stessa data, controlla che ora fine > ora inizio
+        if (dataFine === dataInizio && oraFine <= oraInizio) {
+            showToast('L\'ora di fine deve essere successiva all\'ora di inizio', 'error');
+            return;
+        }
+        
         const formData = new FormData(form);
         formData.append('action', 'blocco_manutenzione');
         formData.append('ajax', '1');
@@ -2051,9 +2125,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Termina manutenzione
     window.terminaManutenzione = function(campoId) {
         const formData = new FormData();
-        formData.append('action', 'change_status');
+        formData.append('action', 'termina_manutenzione');
         formData.append('campo_id', campoId);
-        formData.append('stato', 'disponibile');
         formData.append('ajax', '1');
         
         fetch('gestione-campi.php', {
@@ -2065,6 +2138,37 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 showToast('Manutenzione terminata', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Errore', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Errore di connessione', 'error');
+        });
+    };
+    
+    // Elimina blocco manutenzione futura
+    window.eliminaBloccoManutenzione = function(bloccoId) {
+        if (!confirm('Sei sicuro di voler eliminare questa manutenzione programmata?')) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('action', 'remove_blocco');
+        formData.append('blocco_id', bloccoId);
+        formData.append('ajax', '1');
+        
+        fetch('gestione-campi.php', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Manutenzione eliminata', 'success');
                 setTimeout(() => location.reload(), 1000);
             } else {
                 showToast(data.message || 'Errore', 'error');
