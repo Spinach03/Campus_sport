@@ -1,4 +1,9 @@
--- MySQL Workbench Forward Engineering
+-- =====================================================
+-- CAMPUS SPORTS ARENA - SCHEMA COMPLETO
+-- =====================================================
+-- File unico con tutte le tabelle del database
+-- Eseguire PRIMA di dati_completi.sql
+-- =====================================================
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
@@ -7,17 +12,14 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,N
 -- -----------------------------------------------------
 -- Schema campus_sports_arena
 -- -----------------------------------------------------
+DROP SCHEMA IF EXISTS `campus_sports_arena`;
+CREATE SCHEMA IF NOT EXISTS `campus_sports_arena` DEFAULT CHARACTER SET utf8mb4;
+USE `campus_sports_arena`;
 
 -- -----------------------------------------------------
--- Schema campus_sports_arena
+-- Table `corsi_laurea`
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `campus_sports_arena` DEFAULT CHARACTER SET utf8mb4 ;
-USE `campus_sports_arena` ;
-
--- -----------------------------------------------------
--- Table `campus_sports_arena`.`corsi_laurea`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`corsi_laurea` (
+CREATE TABLE IF NOT EXISTS `corsi_laurea` (
   `corso_id` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(150) NOT NULL,
   `facolta` VARCHAR(150) NULL,
@@ -25,11 +27,10 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`corsi_laurea` (
   PRIMARY KEY (`corso_id`))
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`sport`
+-- Table `sport`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`sport` (
+CREATE TABLE IF NOT EXISTS `sport` (
   `sport_id` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(50) NOT NULL,
   `descrizione` TEXT NULL,
@@ -40,11 +41,10 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`sport` (
   UNIQUE INDEX `nome_UNIQUE` (`nome` ASC))
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`livelli`
+-- Table `livelli`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`livelli` (
+CREATE TABLE IF NOT EXISTS `livelli` (
   `livello_id` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(50) NOT NULL,
   `xp_minimo` INT NOT NULL,
@@ -56,11 +56,10 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`livelli` (
   UNIQUE INDEX `nome_UNIQUE` (`nome` ASC))
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`badges`
+-- Table `badges`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`badges` (
+CREATE TABLE IF NOT EXISTS `badges` (
   `badge_id` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(100) NOT NULL,
   `descrizione` TEXT NOT NULL,
@@ -74,11 +73,10 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`badges` (
   PRIMARY KEY (`badge_id`))
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`users`
+-- Table `users`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`users` (
+CREATE TABLE IF NOT EXISTS `users` (
   `user_id` INT NOT NULL AUTO_INCREMENT,
   `email` VARCHAR(255) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
@@ -94,25 +92,23 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`users` (
   UNIQUE INDEX `email_UNIQUE` (`email` ASC))
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`admins`
+-- Table `admins`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`admins` (
+CREATE TABLE IF NOT EXISTS `admins` (
   `user_id` INT NOT NULL,
   PRIMARY KEY (`user_id`),
   CONSTRAINT `fk_admins_users`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`users` (`user_id`)
+    REFERENCES `users` (`user_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`utenti_standard`
+-- Table `utenti_standard`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`utenti_standard` (
+CREATE TABLE IF NOT EXISTS `utenti_standard` (
   `user_id` INT NOT NULL,
   `corso_laurea_id` INT NULL,
   `anno_iscrizione` INT NULL,
@@ -126,26 +122,25 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`utenti_standard` (
   INDEX `fk_utenti_standard_livelli_idx` (`livello_id` ASC),
   CONSTRAINT `fk_utenti_standard_users`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`users` (`user_id`)
+    REFERENCES `users` (`user_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_utenti_standard_corsi_laurea`
     FOREIGN KEY (`corso_laurea_id`)
-    REFERENCES `campus_sports_arena`.`corsi_laurea` (`corso_id`)
+    REFERENCES `corsi_laurea` (`corso_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT `fk_utenti_standard_livelli`
     FOREIGN KEY (`livello_id`)
-    REFERENCES `campus_sports_arena`.`livelli` (`livello_id`)
+    REFERENCES `livelli` (`livello_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`campi_sportivi`
+-- Table `campi_sportivi`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`campi_sportivi` (
+CREATE TABLE IF NOT EXISTS `campi_sportivi` (
   `campo_id` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(100) NOT NULL,
   `sport_id` INT NOT NULL,
@@ -170,21 +165,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`campi_sportivi` (
   INDEX `fk_campi_sportivi_admins_idx` (`created_by` ASC),
   CONSTRAINT `fk_campi_sportivi_sport`
     FOREIGN KEY (`sport_id`)
-    REFERENCES `campus_sports_arena`.`sport` (`sport_id`)
+    REFERENCES `sport` (`sport_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE,
   CONSTRAINT `fk_campi_sportivi_admins`
     FOREIGN KEY (`created_by`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`campo_foto`
+-- Table `campo_foto`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`campo_foto` (
+CREATE TABLE IF NOT EXISTS `campo_foto` (
   `foto_id` INT NOT NULL AUTO_INCREMENT,
   `campo_id` INT NOT NULL,
   `path_foto` VARCHAR(255) NOT NULL,
@@ -194,16 +188,15 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`campo_foto` (
   INDEX `fk_campo_foto_campi_sportivi_idx` (`campo_id` ASC),
   CONSTRAINT `fk_campo_foto_campi_sportivi`
     FOREIGN KEY (`campo_id`)
-    REFERENCES `campus_sports_arena`.`campi_sportivi` (`campo_id`)
+    REFERENCES `campi_sportivi` (`campo_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`campo_servizi`
+-- Table `campo_servizi`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`campo_servizi` (
+CREATE TABLE IF NOT EXISTS `campo_servizi` (
   `campo_id` INT NOT NULL,
   `illuminazione_notturna` TINYINT NOT NULL DEFAULT 0,
   `spogliatoi` TINYINT NOT NULL DEFAULT 0,
@@ -215,16 +208,15 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`campo_servizi` (
   PRIMARY KEY (`campo_id`),
   CONSTRAINT `fk_campo_servizi_campi_sportivi`
     FOREIGN KEY (`campo_id`)
-    REFERENCES `campus_sports_arena`.`campi_sportivi` (`campo_id`)
+    REFERENCES `campi_sportivi` (`campo_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`campo_disponibilita_giorni`
+-- Table `campo_disponibilita_giorni`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`campo_disponibilita_giorni` (
+CREATE TABLE IF NOT EXISTS `campo_disponibilita_giorni` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `campo_id` INT NOT NULL,
   `giorno_settimana` ENUM('lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica') NOT NULL,
@@ -235,16 +227,15 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`campo_disponibilita_giorni` (
   UNIQUE INDEX `campo_giorno_UNIQUE` (`campo_id` ASC, `giorno_settimana` ASC),
   CONSTRAINT `fk_campo_disponibilita_campi_sportivi`
     FOREIGN KEY (`campo_id`)
-    REFERENCES `campus_sports_arena`.`campi_sportivi` (`campo_id`)
+    REFERENCES `campi_sportivi` (`campo_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`blocchi_manutenzione`
+-- Table `blocchi_manutenzione`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`blocchi_manutenzione` (
+CREATE TABLE IF NOT EXISTS `blocchi_manutenzione` (
   `blocco_id` INT NOT NULL AUTO_INCREMENT,
   `campo_id` INT NOT NULL,
   `data_inizio` DATE NOT NULL,
@@ -260,21 +251,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`blocchi_manutenzione` (
   INDEX `fk_blocchi_manutenzione_admins_idx` (`created_by` ASC),
   CONSTRAINT `fk_blocchi_manutenzione_campi_sportivi`
     FOREIGN KEY (`campo_id`)
-    REFERENCES `campus_sports_arena`.`campi_sportivi` (`campo_id`)
+    REFERENCES `campi_sportivi` (`campo_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_blocchi_manutenzione_admins`
     FOREIGN KEY (`created_by`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`campo_storico_modifiche`
+-- Table `campo_storico_modifiche`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`campo_storico_modifiche` (
+CREATE TABLE IF NOT EXISTS `campo_storico_modifiche` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `campo_id` INT NOT NULL,
   `admin_id` INT NOT NULL,
@@ -287,21 +277,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`campo_storico_modifiche` (
   INDEX `fk_campo_storico_admins_idx` (`admin_id` ASC),
   CONSTRAINT `fk_campo_storico_campi_sportivi`
     FOREIGN KEY (`campo_id`)
-    REFERENCES `campus_sports_arena`.`campi_sportivi` (`campo_id`)
+    REFERENCES `campi_sportivi` (`campo_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_campo_storico_admins`
     FOREIGN KEY (`admin_id`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`prenotazioni`
+-- Table `prenotazioni`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`prenotazioni` (
+CREATE TABLE IF NOT EXISTS `prenotazioni` (
   `prenotazione_id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `campo_id` INT NOT NULL,
@@ -309,7 +298,7 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`prenotazioni` (
   `ora_inizio` TIME NOT NULL,
   `ora_fine` TIME NOT NULL,
   `num_partecipanti` INT NOT NULL,
-  `stato` ENUM('confermata', 'cancellata', 'completata', 'no_show') NOT NULL DEFAULT 'confermata',
+  `stato` ENUM('confermata', 'cancellata', 'completata', 'no_show', 'in_attesa') NOT NULL DEFAULT 'confermata',
   `check_in_effettuato` TINYINT NOT NULL DEFAULT 0,
   `ora_check_in` DATETIME NULL,
   `note` TEXT NULL,
@@ -324,21 +313,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`prenotazioni` (
   INDEX `fk_prenotazioni_campi_sportivi_idx` (`campo_id` ASC),
   CONSTRAINT `fk_prenotazioni_utenti_standard`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`utenti_standard` (`user_id`)
+    REFERENCES `utenti_standard` (`user_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE,
   CONSTRAINT `fk_prenotazioni_campi_sportivi`
     FOREIGN KEY (`campo_id`)
-    REFERENCES `campus_sports_arena`.`campi_sportivi` (`campo_id`)
+    REFERENCES `campi_sportivi` (`campo_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`prenotazione_inviti`
+-- Table `prenotazione_inviti`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`prenotazione_inviti` (
+CREATE TABLE IF NOT EXISTS `prenotazione_inviti` (
   `invito_id` INT NOT NULL AUTO_INCREMENT,
   `prenotazione_id` INT NOT NULL,
   `user_id` INT NOT NULL,
@@ -351,21 +339,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`prenotazione_inviti` (
   INDEX `fk_prenotazione_inviti_utenti_standard_idx` (`user_id` ASC),
   CONSTRAINT `fk_prenotazione_inviti_prenotazioni`
     FOREIGN KEY (`prenotazione_id`)
-    REFERENCES `campus_sports_arena`.`prenotazioni` (`prenotazione_id`)
+    REFERENCES `prenotazioni` (`prenotazione_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_prenotazione_inviti_utenti_standard`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`utenti_standard` (`user_id`)
+    REFERENCES `utenti_standard` (`user_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`recensioni`
+-- Table `recensioni`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`recensioni` (
+CREATE TABLE IF NOT EXISTS `recensioni` (
   `recensione_id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `campo_id` INT NOT NULL,
@@ -384,30 +371,25 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`recensioni` (
   INDEX `fk_recensioni_prenotazioni_idx` (`prenotazione_id` ASC),
   CONSTRAINT `fk_recensioni_utenti_standard`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`utenti_standard` (`user_id`)
+    REFERENCES `utenti_standard` (`user_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE,
   CONSTRAINT `fk_recensioni_campi_sportivi`
     FOREIGN KEY (`campo_id`)
-    REFERENCES `campus_sports_arena`.`campi_sportivi` (`campo_id`)
+    REFERENCES `campi_sportivi` (`campo_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_recensioni_prenotazioni`
     FOREIGN KEY (`prenotazione_id`)
-    REFERENCES `campus_sports_arena`.`prenotazioni` (`prenotazione_id`)
+    REFERENCES `prenotazioni` (`prenotazione_id`)
     ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT `chk_rating_generale` CHECK (`rating_generale` >= 1 AND `rating_generale` <= 5),
-  CONSTRAINT `chk_rating_condizioni` CHECK (`rating_condizioni` IS NULL OR (`rating_condizioni` >= 1 AND `rating_condizioni` <= 5)),
-  CONSTRAINT `chk_rating_pulizia` CHECK (`rating_pulizia` IS NULL OR (`rating_pulizia` >= 1 AND `rating_pulizia` <= 5)),
-  CONSTRAINT `chk_rating_illuminazione` CHECK (`rating_illuminazione` IS NULL OR (`rating_illuminazione` >= 1 AND `rating_illuminazione` <= 5)))
+    ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`recensione_foto`
+-- Table `recensione_foto`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`recensione_foto` (
+CREATE TABLE IF NOT EXISTS `recensione_foto` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `recensione_id` INT NOT NULL,
   `path_foto` VARCHAR(255) NOT NULL,
@@ -416,16 +398,15 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`recensione_foto` (
   INDEX `fk_recensione_foto_recensioni_idx` (`recensione_id` ASC),
   CONSTRAINT `fk_recensione_foto_recensioni`
     FOREIGN KEY (`recensione_id`)
-    REFERENCES `campus_sports_arena`.`recensioni` (`recensione_id`)
+    REFERENCES `recensioni` (`recensione_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`recensione_risposte`
+-- Table `recensione_risposte`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`recensione_risposte` (
+CREATE TABLE IF NOT EXISTS `recensione_risposte` (
   `risposta_id` INT NOT NULL AUTO_INCREMENT,
   `recensione_id` INT NOT NULL,
   `admin_id` INT NOT NULL,
@@ -436,21 +417,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`recensione_risposte` (
   INDEX `fk_recensione_risposte_admins_idx` (`admin_id` ASC),
   CONSTRAINT `fk_recensione_risposte_recensioni`
     FOREIGN KEY (`recensione_id`)
-    REFERENCES `campus_sports_arena`.`recensioni` (`recensione_id`)
+    REFERENCES `recensioni` (`recensione_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_recensione_risposte_admins`
     FOREIGN KEY (`admin_id`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`recensione_voti_utili`
+-- Table `recensione_voti_utili`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`recensione_voti_utili` (
+CREATE TABLE IF NOT EXISTS `recensione_voti_utili` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `recensione_id` INT NOT NULL,
   `user_id` INT NOT NULL,
@@ -461,21 +441,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`recensione_voti_utili` (
   INDEX `fk_recensione_voti_utenti_standard_idx` (`user_id` ASC),
   CONSTRAINT `fk_recensione_voti_recensioni`
     FOREIGN KEY (`recensione_id`)
-    REFERENCES `campus_sports_arena`.`recensioni` (`recensione_id`)
+    REFERENCES `recensioni` (`recensione_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_recensione_voti_utenti_standard`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`utenti_standard` (`user_id`)
+    REFERENCES `utenti_standard` (`user_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`segnalazioni`
+-- Table `segnalazioni`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`segnalazioni` (
+CREATE TABLE IF NOT EXISTS `segnalazioni` (
   `segnalazione_id` INT NOT NULL AUTO_INCREMENT,
   `user_segnalante_id` INT NOT NULL,
   `user_segnalato_id` INT NOT NULL,
@@ -497,35 +476,34 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`segnalazioni` (
   INDEX `fk_segnalazioni_admins_idx` (`admin_id` ASC),
   CONSTRAINT `fk_segnalazioni_segnalante`
     FOREIGN KEY (`user_segnalante_id`)
-    REFERENCES `campus_sports_arena`.`utenti_standard` (`user_id`)
+    REFERENCES `utenti_standard` (`user_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE,
   CONSTRAINT `fk_segnalazioni_segnalato`
     FOREIGN KEY (`user_segnalato_id`)
-    REFERENCES `campus_sports_arena`.`utenti_standard` (`user_id`)
+    REFERENCES `utenti_standard` (`user_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE,
   CONSTRAINT `fk_segnalazioni_prenotazioni`
     FOREIGN KEY (`prenotazione_id`)
-    REFERENCES `campus_sports_arena`.`prenotazioni` (`prenotazione_id`)
+    REFERENCES `prenotazioni` (`prenotazione_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT `fk_segnalazioni_admins`
     FOREIGN KEY (`admin_id`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`penalty_log`
+-- Table `penalty_log`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`penalty_log` (
+CREATE TABLE IF NOT EXISTS `penalty_log` (
   `log_id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `punti` INT NOT NULL,
-  `motivo` ENUM('no_show', 'cancellazione_tardiva', 'segnalazione', 'manuale_add', 'manuale_remove', 'reset') NOT NULL,
+  `motivo` ENUM('no_show', 'cancellazione_tardiva', 'segnalazione', 'manuale_add', 'manuale_remove', 'reset', 'admin_add', 'admin_remove') NOT NULL,
   `descrizione` TEXT NULL,
   `prenotazione_id` INT NULL,
   `segnalazione_id` INT NULL,
@@ -538,31 +516,30 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`penalty_log` (
   INDEX `fk_penalty_log_admins_idx` (`admin_id` ASC),
   CONSTRAINT `fk_penalty_log_utenti_standard`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`utenti_standard` (`user_id`)
+    REFERENCES `utenti_standard` (`user_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_penalty_log_prenotazioni`
     FOREIGN KEY (`prenotazione_id`)
-    REFERENCES `campus_sports_arena`.`prenotazioni` (`prenotazione_id`)
+    REFERENCES `prenotazioni` (`prenotazione_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT `fk_penalty_log_segnalazioni`
     FOREIGN KEY (`segnalazione_id`)
-    REFERENCES `campus_sports_arena`.`segnalazioni` (`segnalazione_id`)
+    REFERENCES `segnalazioni` (`segnalazione_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT `fk_penalty_log_admins`
     FOREIGN KEY (`admin_id`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`sanzioni`
+-- Table `sanzioni`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`sanzioni` (
+CREATE TABLE IF NOT EXISTS `sanzioni` (
   `sanzione_id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `tipo` ENUM('warning', 'sospensione', 'ban') NOT NULL,
@@ -577,21 +554,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`sanzioni` (
   INDEX `fk_sanzioni_admins_idx` (`admin_id` ASC),
   CONSTRAINT `fk_sanzioni_utenti_standard`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`utenti_standard` (`user_id`)
+    REFERENCES `utenti_standard` (`user_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_sanzioni_admins`
     FOREIGN KEY (`admin_id`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`user_badges`
+-- Table `user_badges`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`user_badges` (
+CREATE TABLE IF NOT EXISTS `user_badges` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `badge_id` INT NOT NULL,
@@ -602,21 +578,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`user_badges` (
   INDEX `fk_user_badges_badges_idx` (`badge_id` ASC),
   CONSTRAINT `fk_user_badges_utenti_standard`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`utenti_standard` (`user_id`)
+    REFERENCES `utenti_standard` (`user_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_user_badges_badges`
     FOREIGN KEY (`badge_id`)
-    REFERENCES `campus_sports_arena`.`badges` (`badge_id`)
+    REFERENCES `badges` (`badge_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`user_sport_preferiti`
+-- Table `user_sport_preferiti`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`user_sport_preferiti` (
+CREATE TABLE IF NOT EXISTS `user_sport_preferiti` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `sport_id` INT NOT NULL,
@@ -626,21 +601,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`user_sport_preferiti` (
   INDEX `fk_user_sport_preferiti_sport_idx` (`sport_id` ASC),
   CONSTRAINT `fk_user_sport_preferiti_utenti_standard`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`utenti_standard` (`user_id`)
+    REFERENCES `utenti_standard` (`user_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_user_sport_preferiti_sport`
     FOREIGN KEY (`sport_id`)
-    REFERENCES `campus_sports_arena`.`sport` (`sport_id`)
+    REFERENCES `sport` (`sport_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`notifiche`
+-- Table `notifiche`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`notifiche` (
+CREATE TABLE IF NOT EXISTS `notifiche` (
   `notifica_id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `tipo` VARCHAR(50) NOT NULL,
@@ -654,16 +628,15 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`notifiche` (
   INDEX `fk_notifiche_users_idx` (`user_id` ASC),
   CONSTRAINT `fk_notifiche_users`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`users` (`user_id`)
+    REFERENCES `users` (`user_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`notification_templates`
+-- Table `notification_templates`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`notification_templates` (
+CREATE TABLE IF NOT EXISTS `notification_templates` (
   `template_id` INT NOT NULL AUTO_INCREMENT,
   `tipo` VARCHAR(50) NOT NULL,
   `titolo_template` VARCHAR(255) NOT NULL,
@@ -677,16 +650,15 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`notification_templates` (
   INDEX `fk_notification_templates_admins_idx` (`updated_by` ASC),
   CONSTRAINT `fk_notification_templates_admins`
     FOREIGN KEY (`updated_by`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`broadcast_messages`
+-- Table `broadcast_messages`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`broadcast_messages` (
+CREATE TABLE IF NOT EXISTS `broadcast_messages` (
   `broadcast_id` INT NOT NULL AUTO_INCREMENT,
   `admin_id` INT NOT NULL,
   `oggetto` VARCHAR(255) NOT NULL,
@@ -703,16 +675,15 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`broadcast_messages` (
   INDEX `fk_broadcast_messages_admins_idx` (`admin_id` ASC),
   CONSTRAINT `fk_broadcast_messages_admins`
     FOREIGN KEY (`admin_id`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE RESTRICT
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`audit_log`
+-- Table `audit_log`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`audit_log` (
+CREATE TABLE IF NOT EXISTS `audit_log` (
   `log_id` BIGINT NOT NULL AUTO_INCREMENT,
   `tipo_operazione` ENUM('CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'PERMISSION_CHANGE') NOT NULL,
   `entita` VARCHAR(50) NOT NULL,
@@ -731,21 +702,20 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`audit_log` (
   INDEX `idx_audit_log_entita` (`entita` ASC, `entita_id` ASC),
   CONSTRAINT `fk_audit_log_admins`
     FOREIGN KEY (`admin_id`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT `fk_audit_log_users`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`users` (`user_id`)
+    REFERENCES `users` (`user_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`system_config`
+-- Table `system_config`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`system_config` (
+CREATE TABLE IF NOT EXISTS `system_config` (
   `config_id` INT NOT NULL AUTO_INCREMENT,
   `chiave` VARCHAR(100) NOT NULL,
   `valore` TEXT NOT NULL,
@@ -758,16 +728,15 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`system_config` (
   INDEX `fk_system_config_admins_idx` (`updated_by` ASC),
   CONSTRAINT `fk_system_config_admins`
     FOREIGN KEY (`updated_by`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`user_sessions`
+-- Table `user_sessions`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`user_sessions` (
+CREATE TABLE IF NOT EXISTS `user_sessions` (
   `session_id` INT NOT NULL AUTO_INCREMENT,
   `user_id` INT NOT NULL,
   `token` VARCHAR(255) NOT NULL,
@@ -782,16 +751,15 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`user_sessions` (
   INDEX `fk_user_sessions_users_idx` (`user_id` ASC),
   CONSTRAINT `fk_user_sessions_users`
     FOREIGN KEY (`user_id`)
-    REFERENCES `campus_sports_arena`.`users` (`user_id`)
+    REFERENCES `users` (`user_id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`login_attempts`
+-- Table `login_attempts`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`login_attempts` (
+CREATE TABLE IF NOT EXISTS `login_attempts` (
   `attempt_id` INT NOT NULL AUTO_INCREMENT,
   `email` VARCHAR(255) NOT NULL,
   `ip_address` VARCHAR(45) NOT NULL,
@@ -804,11 +772,10 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`login_attempts` (
   INDEX `idx_login_attempts_created_at` (`created_at` ASC))
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
--- Table `campus_sports_arena`.`ip_blacklist`
+-- Table `ip_blacklist`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`ip_blacklist` (
+CREATE TABLE IF NOT EXISTS `ip_blacklist` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `ip_address` VARCHAR(45) NOT NULL,
   `motivo` TEXT NULL,
@@ -821,8 +788,27 @@ CREATE TABLE IF NOT EXISTS `campus_sports_arena`.`ip_blacklist` (
   INDEX `fk_ip_blacklist_admins_idx` (`created_by` ASC),
   CONSTRAINT `fk_ip_blacklist_admins`
     FOREIGN KEY (`created_by`)
-    REFERENCES `campus_sports_arena`.`admins` (`user_id`)
+    REFERENCES `admins` (`user_id`)
     ON DELETE RESTRICT
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `giorni_chiusura`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `giorni_chiusura` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `data` DATE NOT NULL,
+  `motivo` VARCHAR(255) NULL,
+  `created_by` INT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `data_UNIQUE` (`data` ASC),
+  INDEX `fk_giorni_chiusura_admin_idx` (`created_by` ASC),
+  CONSTRAINT `fk_giorni_chiusura_admin`
+    FOREIGN KEY (`created_by`)
+    REFERENCES `users` (`user_id`)
+    ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
@@ -830,3 +816,7 @@ ENGINE = InnoDB;
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
+-- =====================================================
+-- FINE SCHEMA - 34 TABELLE TOTALI
+-- =====================================================

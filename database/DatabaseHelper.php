@@ -3713,35 +3713,6 @@ class DatabaseHelper {
         }
         return $dates;
     }
-    
-    /**
-     * Ottieni periodi blackout
-     */
-    public function getPeriodiBlackout() {
-        $query = "SELECT * FROM periodi_blackout WHERE data_fine >= CURDATE() ORDER BY data_inizio";
-        $result = $this->db->query($query);
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
-    
-    /**
-     * Aggiungi periodo blackout
-     */
-    public function addPeriodoBlackout($dataInizio, $dataFine, $motivo, $adminId) {
-        $query = "INSERT INTO periodi_blackout (data_inizio, data_fine, motivo, created_by) VALUES (?, ?, ?, ?)";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('sssi', $dataInizio, $dataFine, $motivo, $adminId);
-        return $stmt->execute();
-    }
-    
-    /**
-     * Rimuovi periodo blackout
-     */
-    public function removePeriodoBlackout($blackoutId) {
-        $query = "DELETE FROM periodi_blackout WHERE id = ?";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('i', $blackoutId);
-        return $stmt->execute() && $stmt->affected_rows > 0;
-    }
 
 
 }

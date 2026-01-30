@@ -1,0 +1,775 @@
+/* ============================================================================
+   MODAL PRENOTAZIONE - CSS Specifico
+   Campus Sports Arena - Admin Panel
+   Design Premium ispirato a modal-segnalazione e modal-utente
+   ============================================================================ */
+
+/* ============================================================================
+   FIX CRITICI PER FUNZIONAMENTO MODAL
+   ============================================================================ */
+.modal-backdrop.show {
+    z-index: 1055 !important;
+    opacity: 0.7 !important;
+}
+
+#modalDettaglio,
+#modalNuovaPrenotazione,
+#modalCancella {
+    z-index: 1060 !important;
+}
+
+#modalDettaglio .modal-dialog,
+#modalNuovaPrenotazione .modal-dialog,
+#modalCancella .modal-dialog {
+    z-index: 1061 !important;
+    pointer-events: auto !important;
+}
+
+#modalDettaglio .modal-content,
+#modalNuovaPrenotazione .modal-content,
+#modalCancella .modal-content {
+    pointer-events: auto !important;
+}
+
+/* Assicura che tutti gli elementi siano cliccabili */
+#modalDettaglio input,
+#modalDettaglio select,
+#modalDettaglio textarea,
+#modalDettaglio button,
+#modalDettaglio .btn,
+#modalNuovaPrenotazione input,
+#modalNuovaPrenotazione select,
+#modalNuovaPrenotazione textarea,
+#modalNuovaPrenotazione button,
+#modalNuovaPrenotazione .btn,
+#modalCancella input,
+#modalCancella select,
+#modalCancella textarea,
+#modalCancella button,
+#modalCancella .btn {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================================================
+   MODAL CONTENT BASE
+   ============================================================================ */
+.modal-prenotazione-content {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 20px;
+    overflow: hidden;
+    color: #f1f5f9;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modal-prenotazione-content .modal-header {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    padding: 20px 24px;
+}
+
+.modal-prenotazione-content .modal-header.modal-header-create {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+}
+
+.modal-prenotazione-content .modal-header.modal-header-danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+}
+
+.modal-prenotazione-content .modal-title {
+    color: #f1f5f9;
+    font-weight: 600;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-prenotazione-content .modal-body {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.modal-prenotazione-content .modal-footer {
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+    background: rgba(15, 23, 42, 0.5);
+    padding: 16px 24px;
+}
+
+/* Scrollbar personalizzata */
+.modal-prenotazione-content .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-prenotazione-content .modal-body::-webkit-scrollbar-track {
+    background: rgba(148, 163, 184, 0.1);
+    border-radius: 3px;
+}
+
+.modal-prenotazione-content .modal-body::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.5);
+    border-radius: 3px;
+}
+
+/* ============================================================================
+   BTN CLOSE WHITE
+   ============================================================================ */
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.btn-close-white:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+/* ============================================================================
+   DETTAGLIO CONTAINER
+   ============================================================================ */
+.dettaglio-container {
+    color: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.dettaglio-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+/* Stato Badge Large */
+.stato-badge-large {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stato-badge-large.stato-blue {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3B82F6;
+    border: 2px solid rgba(59, 130, 246, 0.4);
+}
+
+.stato-badge-large.stato-green {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10B981;
+    border: 2px solid rgba(16, 185, 129, 0.4);
+}
+
+.stato-badge-large.stato-red {
+    background: rgba(239, 68, 68, 0.15);
+    color: #EF4444;
+    border: 2px solid rgba(239, 68, 68, 0.4);
+}
+
+.stato-badge-large.stato-orange {
+    background: rgba(245, 158, 11, 0.15);
+    color: #F59E0B;
+    border: 2px solid rgba(245, 158, 11, 0.4);
+}
+
+.data-badge {
+    background: rgba(148, 163, 184, 0.15);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* ============================================================================
+   DETTAGLIO SECTION - Stile ispirato a segnalazioni
+   ============================================================================ */
+.dettaglio-section {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 14px;
+    padding: 18px;
+    transition: all 0.2s ease;
+}
+
+.dettaglio-section:hover {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(148, 163, 184, 0.15);
+}
+
+.dettaglio-section h6 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dettaglio-section.section-danger {
+    border-left: 3px solid #EF4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.dettaglio-section.section-success {
+    border-left: 3px solid #10B981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+/* ============================================================================
+   CAMPO DETTAGLIO
+   ============================================================================ */
+.campo-dettaglio {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.campo-icon-large {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.campo-info-large {
+    flex: 1;
+}
+
+.campo-nome-large {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+}
+
+.campo-sport-large {
+    font-size: 14px;
+    color: #3B82F6;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.campo-tipo {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* ============================================================================
+   DATETIME DETTAGLIO
+   ============================================================================ */
+.datetime-dettaglio {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.datetime-item {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+    padding: 12px 16px;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.datetime-label {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.datetime-value-large {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+/* ============================================================================
+   USER DETTAGLIO - Ispirato a profilo-box di segnalazioni
+   ============================================================================ */
+.user-dettaglio {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.user-avatar-large {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+    flex-shrink: 0;
+}
+
+.user-info-large {
+    flex: 1;
+}
+
+.user-nome-large {
+    font-size: 17px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+}
+
+.user-email-large {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+
+.user-stats-mini {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.user-stats-mini span {
+    font-size: 12px;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.5);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+/* ============================================================================
+   NOTE BOX
+   ============================================================================ */
+.note-box {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+/* ============================================================================
+   DETTAGLIO ACTIONS
+   ============================================================================ */
+.dettaglio-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.dettaglio-actions .btn {
+    flex: 1;
+    padding: 12px 20px;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.dettaglio-actions .btn:hover {
+    transform: translateY(-2px);
+}
+
+/* ============================================================================
+   FORM SECTION - Per modal nuova prenotazione
+   ============================================================================ */
+.form-section {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ============================================================================
+   FORM CONTROLS DARK
+   ============================================================================ */
+.form-control-dark,
+.form-select-dark {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1px solid rgba(148, 163, 184, 0.2) !important;
+    border-radius: 10px !important;
+    color: #f1f5f9 !important;
+    font-family: 'Outfit', sans-serif !important;
+    padding: 12px 16px !important;
+    transition: all 0.2s ease !important;
+}
+
+.form-control-dark:focus,
+.form-select-dark:focus {
+    border-color: #3B82F6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+    color: #f1f5f9 !important;
+}
+
+.form-control-dark::placeholder {
+    color: #64748b !important;
+}
+
+.form-control-dark:disabled,
+.form-select-dark:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.form-label {
+    color: #94a3b8;
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.form-check-label {
+    color: #94a3b8;
+}
+
+.form-check-input {
+    background-color: rgba(15, 23, 42, 0.6);
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.form-check-input:checked {
+    background-color: #3B82F6;
+    border-color: #3B82F6;
+}
+
+/* ============================================================================
+   SEARCH USER CONTAINER
+   ============================================================================ */
+.search-user-container {
+    position: relative;
+}
+
+.search-results-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #1e293b;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 10px;
+    margin-top: 4px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.result-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+}
+
+.result-info {
+    flex: 1;
+}
+
+.result-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.result-email {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.no-results-small {
+    padding: 16px;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* ============================================================================
+   SELECTED USER CARD
+   ============================================================================ */
+.selected-user-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 12px;
+    margin-top: 12px;
+}
+
+.selected-user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+}
+
+.selected-user-info {
+    flex: 1;
+}
+
+.selected-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.selected-user-email {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.btn-remove-user {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #EF4444;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-remove-user:hover {
+    background: rgba(239, 68, 68, 0.25);
+    transform: scale(1.05);
+}
+
+/* ============================================================================
+   SLOTS INFO
+   ============================================================================ */
+.slots-info {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+/* ============================================================================
+   CANCEL INFO BOX
+   ============================================================================ */
+.cancel-info-box {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.cancel-info-box p {
+    margin: 0 0 12px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.cancel-prenotazione-info {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 14px;
+    color: #f1f5f9;
+    line-height: 1.6;
+}
+
+.cancel-prenotazione-info strong {
+    color: #f1f5f9;
+}
+
+/* ============================================================================
+   LOADING SPINNER
+   ============================================================================ */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+}
+
+.loading-spinner .spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid rgba(59, 130, 246, 0.2);
+    border-top-color: #3B82F6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   ERROR MESSAGE
+   ============================================================================ */
+.error-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #EF4444;
+    font-size: 15px;
+}
+
+/* ============================================================================
+   BUTTONS STYLE
+   ============================================================================ */
+.modal-prenotazione-content .btn-success {
+    background: linear-gradient(135deg, #10B981, #059669);
+    border: none;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.modal-prenotazione-content .btn-success:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.modal-prenotazione-content .btn-danger {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+    border: none;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.modal-prenotazione-content .btn-danger:hover {
+    background: linear-gradient(135deg, #DC2626, #B91C1C);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.modal-prenotazione-content .btn-secondary {
+    background: rgba(100, 116, 139, 0.3);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+}
+
+.modal-prenotazione-content .btn-secondary:hover {
+    background: rgba(100, 116, 139, 0.5);
+    color: #f1f5f9;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .modal-prenotazione-content .modal-body {
+        padding: 16px;
+    }
+    
+    .dettaglio-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .datetime-dettaglio {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .datetime-item {
+        min-width: auto;
+    }
+    
+    .user-dettaglio {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .user-stats-mini {
+        justify-content: center;
+    }
+    
+    .dettaglio-actions {
+        flex-direction: column;
+    }
+    
+    .campo-dettaglio {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .campo-info-large {
+        text-align: center;
+    }
+}
