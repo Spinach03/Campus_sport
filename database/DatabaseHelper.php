@@ -2678,14 +2678,146 @@ class DatabaseHelper {
     }
     
     // ============================================================================
-    // BROADCAST - Elimina broadcast (solo bozze)
+    // BROADCAST - Elimina broadcast (bozze e programmati)
     // ============================================================================
     
     public function deleteBroadcast($broadcastId) {
-        $query = "DELETE FROM broadcast_messages WHERE broadcast_id = ? AND stato = 'bozza'";
+        // Permette di eliminare solo bozze e programmati (non quelli già inviati)
+        $query = "DELETE FROM broadcast_messages WHERE broadcast_id = ? AND stato IN ('bozza', 'programmato')";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param('i', $broadcastId);
         return $stmt->execute() && $stmt->affected_rows > 0;
+    }
+    
+    // ============================================================================
+    // BROADCAST - Aggiorna comunicazione programmata
+    // ============================================================================
+    
+    public function updateScheduledBroadcast($broadcastId, $data) {
+        // Verifica che sia programmato o bozza
+        $check = $this->getBroadcastById($broadcastId);
+        if (!$check || !in_array($check['stato'], ['programmato', 'bozza'])) {
+            return false;
+        }
+        
+        // Conta nuovi destinatari
+        $targetFilter = !empty($data['target_filter']) ? $data['target_filter'] : null;
+        $numDestinatari = $this->countDestinatariBroadcast($data['target_type'], $targetFilter);
+        
+        $query = "UPDATE broadcast_messages 
+                  SET oggetto = ?, messaggio = ?, target_type = ?, target_filter = ?, 
+                      canale = ?, scheduled_at = ?, num_destinatari = ?
+                  WHERE broadcast_id = ? AND stato IN ('programmato', 'bozza')";
+        
+        $stmt = $this->db->prepare($query);
+        $scheduledAt = !empty($data['scheduled_at']) ? $data['scheduled_at'] : null;
+        $targetFilterJson = $targetFilter ? json_encode($targetFilter) : null;
+        
+        $stmt->bind_param('ssssssis', 
+            $data['oggetto'],
+            $data['messaggio'],
+            $data['target_type'],
+            $targetFilterJson,
+            $data['canale'],
+            $scheduledAt,
+            $numDestinatari,
+            $broadcastId
+        );
+        
+        return $stmt->execute() && $stmt->affected_rows > 0;
+    }
+    
+    // ============================================================================
+    // BROADCAST - Invia subito un broadcast programmato
+    // ============================================================================
+    
+    public function sendScheduledNow($broadcastId, $adminId) {
+        // Verifica che sia programmato
+        $broadcast = $this->getBroadcastById($broadcastId);
+        if (!$broadcast || $broadcast['stato'] !== 'programmato') {
+            return ['success' => false, 'message' => 'Solo le comunicazioni programmate possono essere inviate'];
+        }
+        
+        // Invia le notifiche
+        return $this->executeBroadcastSend($broadcastId, $broadcast);
+    }
+    
+    // ============================================================================
+    // BROADCAST - Processa e invia i broadcast programmati scaduti
+    // ============================================================================
+    
+    public function processScheduledBroadcasts() {
+        // Trova tutti i broadcast programmati la cui data è passata
+        $query = "SELECT * FROM broadcast_messages 
+                  WHERE stato = 'programmato' 
+                    AND scheduled_at IS NOT NULL 
+                    AND scheduled_at <= NOW()";
+        
+        $result = $this->db->query($query);
+        $broadcasts = $result->fetch_all(MYSQLI_ASSOC);
+        
+        $processed = 0;
+        foreach ($broadcasts as $broadcast) {
+            $sendResult = $this->executeBroadcastSend($broadcast['broadcast_id'], $broadcast);
+            if ($sendResult['success']) {
+                $processed++;
+            }
+        }
+        
+        return $processed;
+    }
+    
+    // ============================================================================
+    // BROADCAST - Esegue l'invio effettivo di un broadcast
+    // ============================================================================
+    
+    private function executeBroadcastSend($broadcastId, $broadcast) {
+        $this->db->begin_transaction();
+        
+        try {
+            // Decodifica target filter
+            $targetFilter = !empty($broadcast['target_filter']) ? json_decode($broadcast['target_filter'], true) : null;
+            if (is_array($targetFilter)) {
+                $targetFilter = $targetFilter[0] ?? null;
+            }
+            
+            // Ottieni destinatari
+            $destinatari = $this->getDestinatariBroadcast($broadcast['target_type'], $targetFilter);
+            
+            // Invia notifiche in-app
+            if ($broadcast['canale'] === 'in_app' || $broadcast['canale'] === 'entrambi') {
+                foreach ($destinatari as $dest) {
+                    $this->creaNotifica(
+                        $dest['user_id'],
+                        'broadcast',
+                        $broadcast['oggetto'],
+                        $broadcast['messaggio']
+                    );
+                }
+            }
+            
+            // Aggiorna stato a inviato
+            $updateQuery = "UPDATE broadcast_messages 
+                           SET stato = 'inviato', sent_at = NOW() 
+                           WHERE broadcast_id = ?";
+            $updateStmt = $this->db->prepare($updateQuery);
+            $updateStmt->bind_param('i', $broadcastId);
+            $updateStmt->execute();
+            
+            $this->db->commit();
+            
+            return [
+                'success' => true,
+                'destinatari' => count($destinatari)
+            ];
+            
+        } catch (Exception $e) {
+            $this->db->rollback();
+            return [
+                'success' => false,
+                'message' => 'Errore: ' . $e->getMessage()
+            ];
+        }
     }
     
     // ============================================================================
@@ -2701,11 +2833,17 @@ class DatabaseHelper {
     }
     
     // ============================================================================
-    // TEMPLATE NOTIFICHE - Ottieni tutti i template
+    // TEMPLATE NOTIFICHE - Ottieni template per broadcast (esclusi quelli di sistema)
     // ============================================================================
     
     public function getNotificationTemplates() {
-        $query = "SELECT * FROM notification_templates WHERE attivo = 1 ORDER BY updated_at DESC";
+        // Escludi template di sistema (prenotazioni automatiche, reminder, broadcast salvati automaticamente)
+        $query = "SELECT * FROM notification_templates 
+                  WHERE attivo = 1 
+                    AND tipo NOT LIKE 'prenotazione_%' 
+                    AND tipo NOT LIKE 'reminder_%'
+                    AND tipo NOT LIKE 'broadcast_%'
+                  ORDER BY titolo_template ASC";
         $result = $this->db->query($query);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
@@ -2725,6 +2863,82 @@ class DatabaseHelper {
         $stmt = $this->db->prepare($query);
         $stmt->bind_param('sssi', $data['tipo'], $data['titolo'], $data['messaggio'], $data['admin_id']);
         return $stmt->execute();
+    }
+    
+    // ============================================================================
+    // TEMPLATE NOTIFICHE - Inizializza template predefiniti per broadcast
+    // ============================================================================
+    
+    public function initDefaultBroadcastTemplates() {
+        // Verifica se ci sono già template (escludendo quelli di sistema per prenotazioni)
+        $query = "SELECT COUNT(*) as cnt FROM notification_templates 
+                  WHERE tipo NOT LIKE 'prenotazione_%' AND tipo NOT LIKE 'reminder_%' AND attivo = 1";
+        $result = $this->db->query($query);
+        $count = $result->fetch_assoc()['cnt'];
+        
+        // Se ci sono già template broadcast, non fare nulla
+        if ($count > 0) {
+            return false;
+        }
+        
+        // Template predefiniti per comunicazioni broadcast
+        $templates = [
+            [
+                'tipo' => 'promo_sconto',
+                'titolo' => '🎉 Promozione Speciale',
+                'messaggio' => "Ciao!\n\nAbbiamo una promozione speciale per te!\n\n[Descrivi qui la promozione o lo sconto]\n\nApprofittane subito, l'offerta è valida fino al [data].\n\nCi vediamo in campo!\nIl Team Campus Sports"
+            ],
+            [
+                'tipo' => 'chiusura_natale',
+                'titolo' => '🎄 Chiusura Festività Natalizie',
+                'messaggio' => "Cari utenti,\n\nvi informiamo che il Campus Sports Arena resterà chiuso per le festività natalizie dal [data inizio] al [data fine].\n\nRiapriremo regolarmente il [data riapertura].\n\nAuguri di Buone Feste!\nIl Team Campus Sports"
+            ],
+            [
+                'tipo' => 'chiusura_pasqua',
+                'titolo' => '🐣 Chiusura Festività Pasquali',
+                'messaggio' => "Cari utenti,\n\nvi informiamo che il Campus Sports Arena resterà chiuso per le festività pasquali dal [data inizio] al [data fine].\n\nRiapriremo regolarmente il [data riapertura].\n\nBuona Pasqua!\nIl Team Campus Sports"
+            ],
+            [
+                'tipo' => 'manutenzione_straordinaria',
+                'titolo' => '🔧 Manutenzione Straordinaria',
+                'messaggio' => "Cari utenti,\n\nvi informiamo che il [nome campo/struttura] sarà chiuso per manutenzione straordinaria dal [data inizio] al [data fine].\n\nCi scusiamo per il disagio.\n\nIl Team Campus Sports"
+            ],
+            [
+                'tipo' => 'evento_speciale',
+                'titolo' => '🏆 Evento Speciale',
+                'messaggio' => "Cari utenti,\n\nsiamo lieti di annunciare [nome evento]!\n\n📅 Data: [data]\n⏰ Orario: [orario]\n📍 Luogo: [luogo]\n\n[Descrizione evento]\n\nVi aspettiamo numerosi!\nIl Team Campus Sports"
+            ],
+            [
+                'tipo' => 'nuovo_campo',
+                'titolo' => '🆕 Nuovo Campo Disponibile',
+                'messaggio' => "Ottime notizie!\n\nÈ ora disponibile un nuovo campo: [nome campo]!\n\n🏟️ Sport: [sport]\n📍 Posizione: [posizione]\n✨ Caratteristiche: [caratteristiche]\n\nPrenota subito il tuo slot!\nIl Team Campus Sports"
+            ],
+            [
+                'tipo' => 'reminder_generale',
+                'titolo' => '📢 Promemoria Importante',
+                'messaggio' => "Cari utenti,\n\nvi ricordiamo che [contenuto promemoria].\n\nPer qualsiasi domanda, non esitate a contattarci.\n\nIl Team Campus Sports"
+            ],
+            [
+                'tipo' => 'tornei_iscrizioni',
+                'titolo' => '🏅 Iscrizioni Torneo Aperte',
+                'messaggio' => "Cari sportivi!\n\nSono aperte le iscrizioni per il torneo di [sport]!\n\n📅 Data torneo: [data]\n👥 Squadre: [numero] max\n🏆 Premi: [premi]\n⏰ Iscrizioni entro: [scadenza]\n\nNon perdere questa occasione!\nIl Team Campus Sports"
+            ]
+        ];
+        
+        // Inserisci i template
+        $query = "INSERT INTO notification_templates (tipo, titolo_template, messaggio_template, canale, attivo) 
+                  VALUES (?, ?, ?, 'entrambi', 1)
+                  ON DUPLICATE KEY UPDATE 
+                  titolo_template = VALUES(titolo_template),
+                  messaggio_template = VALUES(messaggio_template)";
+        $stmt = $this->db->prepare($query);
+        
+        foreach ($templates as $t) {
+            $stmt->bind_param('sss', $t['tipo'], $t['titolo'], $t['messaggio']);
+            $stmt->execute();
+        }
+        
+        return true;
     }
     
     // ============================================================================
@@ -3528,12 +3742,13 @@ class DatabaseHelper {
     
     /**
      * Ottieni campi disponibili per uno sport
+     * Include anche campi in manutenzione perché possono avere slot disponibili fuori dal periodo di manutenzione
      */
     public function getCampiDisponibiliPerPrenotazione($sportId = null) {
-        $query = "SELECT c.campo_id, c.nome, c.tipo_campo as tipo, s.nome as sport_nome, s.icona
+        $query = "SELECT c.campo_id, c.nome, c.tipo_campo as tipo, c.stato, s.nome as sport_nome, s.icona
                   FROM campi_sportivi c
                   JOIN sport s ON c.sport_id = s.sport_id
-                  WHERE c.stato = 'disponibile'";
+                  WHERE c.stato != 'chiuso'";
         
         $params = [];
         $types = '';
@@ -3556,8 +3771,14 @@ class DatabaseHelper {
     
     /**
      * Ottieni slot disponibili per un campo in una data
+     * Esclude slot che cadono durante blocchi di manutenzione
      */
     public function getSlotDisponibili($campoId, $data) {
+        // Verifica prima se il campo è chiuso
+        if ($this->isCampoChiuso($campoId)) {
+            return []; // Campo chiuso, nessuno slot disponibile
+        }
+        
         // Ottieni orari di apertura (assumo 08:00-22:00 come default)
         $oraApertura = '08:00:00';
         $oraChiusura = '22:00:00';
@@ -3573,6 +3794,9 @@ class DatabaseHelper {
         $stmt->bind_param('is', $campoId, $data);
         $stmt->execute();
         $prenotazioni = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Ottieni blocchi manutenzione per quella data
+        $blocchiManutenzione = $this->getBlocchiManutenzionePerData($campoId, $data);
         
         // Genera tutti gli slot possibili
         $slots = [];
@@ -3608,6 +3832,23 @@ class DatabaseHelper {
                 }
             }
             
+            // Verifica che lo slot non cada durante una manutenzione
+            if ($disponibile) {
+                foreach ($blocchiManutenzione as $blocco) {
+                    // Costruisci datetime completo per confronto
+                    $manutenzioneInizio = strtotime($blocco['data_inizio'] . ' ' . $blocco['ora_inizio']);
+                    $manutenzioneFine = strtotime($blocco['data_fine'] . ' ' . $blocco['ora_fine']);
+                    $slotInizioDateTime = strtotime($data . ' ' . $slotInizio);
+                    $slotFineDateTime = strtotime($data . ' ' . $slotFine);
+                    
+                    // Se c'è sovrapposizione con la manutenzione, lo slot non è disponibile
+                    if ($slotInizioDateTime < $manutenzioneFine && $slotFineDateTime > $manutenzioneInizio) {
+                        $disponibile = false;
+                        break;
+                    }
+                }
+            }
+            
             if ($disponibile) {
                 $slots[] = [
                     'ora_inizio' => $slotInizio,
@@ -3623,8 +3864,20 @@ class DatabaseHelper {
     
     /**
      * Verifica se uno slot è disponibile
+     * Controlla: prenotazioni esistenti, blocchi manutenzione, stato campo
      */
     public function isSlotDisponibile($campoId, $data, $oraInizio, $oraFine) {
+        // 1. Verifica che il campo non sia chiuso
+        if ($this->isCampoChiuso($campoId)) {
+            return false;
+        }
+        
+        // 2. Verifica che lo slot non cada durante una manutenzione
+        if ($this->isSlotInManutenzione($campoId, $data, $oraInizio, $oraFine)) {
+            return false;
+        }
+        
+        // 3. Verifica che non ci siano prenotazioni sovrapposte
         $query = "SELECT COUNT(*) as count 
                   FROM prenotazioni 
                   WHERE campo_id = ? 
@@ -3641,6 +3894,59 @@ class DatabaseHelper {
         $result = $stmt->get_result()->fetch_assoc();
         
         return $result['count'] == 0;
+    }
+    
+    /**
+     * Verifica se il campo è chiuso
+     */
+    public function isCampoChiuso($campoId) {
+        $query = "SELECT stato FROM campi_sportivi WHERE campo_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $campoId);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        return $result && $result['stato'] === 'chiuso';
+    }
+    
+    /**
+     * Verifica se uno slot cade durante un blocco manutenzione
+     * Restituisce true se lo slot è BLOCCATO da una manutenzione
+     */
+    public function isSlotInManutenzione($campoId, $data, $oraInizio, $oraFine) {
+        // Costruisco i datetime dello slot
+        $slotInizio = $data . ' ' . $oraInizio;
+        $slotFine = $data . ' ' . $oraFine;
+        
+        // Cerco blocchi manutenzione che si sovrappongono allo slot
+        // Sovrapposizione: slot_inizio < manutenzione_fine AND slot_fine > manutenzione_inizio
+        $query = "SELECT COUNT(*) as count 
+                  FROM blocchi_manutenzione 
+                  WHERE campo_id = ? 
+                    AND CONCAT(data_inizio, ' ', ora_inizio) < ?
+                    AND CONCAT(data_fine, ' ', ora_fine) > ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('iss', $campoId, $slotFine, $slotInizio);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        
+        return $result['count'] > 0;
+    }
+    
+    /**
+     * Ottieni i blocchi manutenzione per un campo che interessano una data specifica
+     */
+    public function getBlocchiManutenzionePerData($campoId, $data) {
+        $query = "SELECT * FROM blocchi_manutenzione 
+                  WHERE campo_id = ? 
+                    AND data_inizio <= ? 
+                    AND data_fine >= ?
+                  ORDER BY ora_inizio ASC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('iss', $campoId, $data, $data);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
     
     /**

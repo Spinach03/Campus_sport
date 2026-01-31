@@ -37,8 +37,7 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
                 'target_type' => $_POST['target_type'] ?? 'tutti',
                 'target_filter' => !empty($_POST['target_filter']) ? json_encode($_POST['target_filter']) : null,
                 'canale' => $_POST['canale'] ?? 'in_app',
-                'scheduled_at' => !empty($_POST['scheduled_at']) ? $_POST['scheduled_at'] : null,
-                'salva_template' => isset($_POST['salva_template']) && $_POST['salva_template'] == '1'
+                'scheduled_at' => !empty($_POST['scheduled_at']) ? $_POST['scheduled_at'] : null
             ];
             
             // Validazione
@@ -53,6 +52,15 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
             if (empty($data['messaggio'])) {
                 echo json_encode(['success' => false, 'message' => 'Il messaggio è obbligatorio']);
                 exit;
+            }
+            
+            // Validazione data futura se programmata
+            if (!empty($data['scheduled_at'])) {
+                $scheduledTime = strtotime($data['scheduled_at']);
+                if ($scheduledTime <= time()) {
+                    echo json_encode(['success' => false, 'message' => 'La data di programmazione deve essere nel futuro']);
+                    exit;
+                }
             }
             
             $result = $dbh->createBroadcast($data);
@@ -191,22 +199,82 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
             exit;
         
         // ============================================================================
-        // Elimina broadcast (solo bozze)
+        // Elimina broadcast (bozze e programmati)
         // ============================================================================
         case 'delete_broadcast':
             $id = intval($_POST['id'] ?? 0);
             
-            // Verifica che sia una bozza
+            // Verifica che sia una bozza o programmato
             $broadcast = $dbh->getBroadcastById($id);
-            if (!$broadcast || $broadcast['stato'] !== 'bozza') {
-                echo json_encode(['success' => false, 'message' => 'Solo le bozze possono essere eliminate']);
+            if (!$broadcast || !in_array($broadcast['stato'], ['bozza', 'programmato'])) {
+                echo json_encode(['success' => false, 'message' => 'Solo le bozze e le comunicazioni programmate possono essere eliminate']);
                 exit;
             }
             
             if ($dbh->deleteBroadcast($id)) {
-                echo json_encode(['success' => true, 'message' => 'Bozza eliminata']);
+                $tipo = $broadcast['stato'] === 'bozza' ? 'Bozza' : 'Comunicazione programmata';
+                echo json_encode(['success' => true, 'message' => $tipo . ' eliminata']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Errore durante l\'eliminazione']);
+            }
+            exit;
+        
+        // ============================================================================
+        // Invia subito un broadcast programmato
+        // ============================================================================
+        case 'send_scheduled_now':
+            $id = intval($_POST['id'] ?? 0);
+            
+            $result = $dbh->sendScheduledNow($id, $adminId);
+            
+            if ($result['success']) {
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Comunicazione inviata con successo',
+                    'destinatari' => $result['destinatari']
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => $result['message'] ?? 'Errore durante l\'invio']);
+            }
+            exit;
+        
+        // ============================================================================
+        // Aggiorna broadcast programmato
+        // ============================================================================
+        case 'update_scheduled':
+            $id = intval($_POST['id'] ?? 0);
+            $data = [
+                'oggetto' => trim($_POST['oggetto'] ?? ''),
+                'messaggio' => trim($_POST['messaggio'] ?? ''),
+                'target_type' => $_POST['target_type'] ?? 'tutti',
+                'target_filter' => !empty($_POST['target_filter']) ? $_POST['target_filter'] : null,
+                'canale' => $_POST['canale'] ?? 'in_app',
+                'scheduled_at' => !empty($_POST['scheduled_at']) ? $_POST['scheduled_at'] : null
+            ];
+            
+            // Validazione
+            if (empty($data['oggetto'])) {
+                echo json_encode(['success' => false, 'message' => 'L\'oggetto è obbligatorio']);
+                exit;
+            }
+            if (empty($data['messaggio'])) {
+                echo json_encode(['success' => false, 'message' => 'Il messaggio è obbligatorio']);
+                exit;
+            }
+            
+            // Validazione data futura se programmata
+            if (!empty($data['scheduled_at'])) {
+                $scheduledTime = strtotime($data['scheduled_at']);
+                if ($scheduledTime <= time()) {
+                    echo json_encode(['success' => false, 'message' => 'La data di programmazione deve essere nel futuro']);
+                    exit;
+                }
+            }
+            
+            if ($dbh->updateScheduledBroadcast($id, $data)) {
+                echo json_encode(['success' => true, 'message' => 'Comunicazione aggiornata con successo']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Errore durante l\'aggiornamento']);
             }
             exit;
         
@@ -248,50 +316,6 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
                 echo json_encode(['success' => false, 'message' => $result['message'] ?? 'Errore durante l\'invio']);
             }
             exit;
-            exit;
-        
-        // ============================================================================
-        // Ottieni template
-        // ============================================================================
-        case 'get_templates':
-            $templates = $dbh->getNotificationTemplates();
-            echo json_encode(['success' => true, 'templates' => $templates]);
-            exit;
-        
-        // ============================================================================
-        // Salva template
-        // ============================================================================
-        case 'save_template':
-            $data = [
-                'tipo' => 'custom_' . time(),
-                'titolo' => trim($_POST['titolo'] ?? ''),
-                'messaggio' => trim($_POST['messaggio'] ?? ''),
-                'admin_id' => $adminId
-            ];
-            
-            if (empty($data['titolo']) || empty($data['messaggio'])) {
-                echo json_encode(['success' => false, 'message' => 'Titolo e messaggio sono obbligatori']);
-                exit;
-            }
-            
-            if ($dbh->saveNotificationTemplate($data)) {
-                echo json_encode(['success' => true, 'message' => 'Template salvato']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Errore durante il salvataggio']);
-            }
-            exit;
-        
-        // ============================================================================
-        // Elimina template
-        // ============================================================================
-        case 'delete_template':
-            $id = intval($_POST['id'] ?? 0);
-            
-            if ($dbh->deleteNotificationTemplate($id)) {
-                echo json_encode(['success' => true, 'message' => 'Template eliminato']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Errore durante l\'eliminazione']);
-            }
             exit;
         
         // ============================================================================
@@ -342,6 +366,9 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == 1) {
 // CARICAMENTO DATI PER LA VISTA
 // ============================================================================
 
+// Processa automaticamente i broadcast programmati scaduti
+$dbh->processScheduledBroadcasts();
+
 // Statistiche per KPI
 $templateParams['stats'] = $dbh->getBroadcastStats();
 
@@ -353,9 +380,6 @@ $filtri = [
 $templateParams['filtri'] = $filtri;
 $templateParams['broadcasts'] = $dbh->getAllBroadcasts($filtri);
 
-// Template salvati
-$templateParams['templates'] = $dbh->getNotificationTemplates();
-
 // Dati per filtri destinatari
 $templateParams['corsi'] = $dbh->getCorsiLaurea();
 $templateParams['sport'] = $dbh->getAllSport();
@@ -364,8 +388,7 @@ $templateParams['livelli'] = $dbh->getAllLivelli();
 // Target types per dropdown (solo quelli sensati)
 $templateParams['target_types'] = [
     'tutti' => ['label' => 'Tutti gli Utenti', 'icon' => '👥', 'desc' => 'Invia a tutti gli utenti registrati'],
-    'corso' => ['label' => 'Per Corso di Laurea', 'icon' => '🎓', 'desc' => 'Seleziona specifici corsi'],
-    'livello' => ['label' => 'Per Livello', 'icon' => '🏅', 'desc' => 'Solo Bronze, Silver, Gold o Platinum']
+    'corso' => ['label' => 'Per Corso di Laurea', 'icon' => '🎓', 'desc' => 'Seleziona specifici corsi']
 ];
 
 // Impostazioni pagina

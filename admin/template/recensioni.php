@@ -24,6 +24,28 @@ function renderStars($rating) {
     }
     return $html;
 }
+
+// Helper per emoji sport
+function getSportEmoji($sportNome) {
+    $sportNome = strtolower($sportNome);
+    $emojiMap = [
+        'calcio' => '⚽',
+        'basket' => '🏀',
+        'pallavolo' => '🏐',
+        'tennis' => '🎾',
+        'padel' => '🎾',
+        'badminton' => '🏸',
+        'ping pong' => '🏓'
+    ];
+    
+    foreach ($emojiMap as $key => $emoji) {
+        if (strpos($sportNome, $key) !== false) {
+            return $emoji;
+        }
+    }
+    
+    return '🏟️'; // Default
+}
 ?>
 
 <!-- Header -->
@@ -171,9 +193,8 @@ function renderStars($rating) {
         <!-- Header Card -->
         <div class="recensione-card-header">
             <div class="campo-info">
-                <span class="sport-icon"><?= $recensione['sport_icona'] ?? '🏟️' ?></span>
                 <div class="campo-details">
-                    <div class="campo-nome"><?= htmlspecialchars($recensione['campo_nome']) ?></div>
+                    <div class="campo-nome"><?= getSportEmoji($recensione['sport_nome']) ?> <?= htmlspecialchars($recensione['campo_nome']) ?></div>
                     <div class="sport-nome"><?= htmlspecialchars($recensione['sport_nome']) ?></div>
                 </div>
             </div>
@@ -535,9 +556,8 @@ function renderDettaglio(r) {
             <!-- Header con campo e rating -->
             <div class="dettaglio-header-top">
                 <div class="campo-box">
-                    <span class="sport-icon-big">${r.sport_icona || '🏟️'}</span>
                     <div>
-                        <div class="campo-nome-big">${escapeHtml(r.campo_nome)}</div>
+                        <div class="campo-nome-big">${getSportEmoji(r.sport_nome)} ${escapeHtml(r.campo_nome)}</div>
                         <div class="campo-location">${escapeHtml(r.campo_location || '')}</div>
                         <div class="sport-nome-small">${escapeHtml(r.sport_nome)}</div>
                     </div>
@@ -808,6 +828,19 @@ function confermaEliminaRisposta() {
 function getInitials(nome) {
     if (!nome) return '??';
     return nome.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+}
+
+function getSportEmoji(sportNome) {
+    if (!sportNome) return '🏟️';
+    const nome = sportNome.toLowerCase();
+    const emojiMap = {
+        'calcio': '⚽', 'basket': '🏀', 'pallavolo': '🏐',
+        'tennis': '🎾', 'padel': '🎾', 'badminton': '🏸', 'ping pong': '🏓'
+    };
+    for (const [key, emoji] of Object.entries(emojiMap)) {
+        if (nome.includes(key)) return emoji;
+    }
+    return '🏟️';
 }
 
 function formatDate(d) { 

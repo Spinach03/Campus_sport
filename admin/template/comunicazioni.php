@@ -80,10 +80,6 @@ $stats = $templateParams['stats'] ?? ['totale' => 0, 'inviati' => 0, 'programmat
     <button class="tab-btn" data-tab="messaggio" onclick="switchTab('messaggio')">
         ✉️ Messaggio Diretto
     </button>
-    <button class="tab-btn" data-tab="templates" onclick="switchTab('templates')">
-        📑 Template
-        <span class="tab-badge"><?= count($templateParams['templates'] ?? []) ?></span>
-    </button>
 </div>
 
 <!-- ============================================================================
@@ -203,17 +199,6 @@ $stats = $templateParams['stats'] ?? ['totale' => 0, 'inviati' => 0, 'programmat
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        
-                        <!-- Sub-filtro per Livello -->
-                        <div id="subfilter-livello" class="target-subfilter">
-                            <label class="form-section-title" style="font-size:13px;">🏅 Seleziona Livello</label>
-                            <select class="form-select-dark" name="target_filter_livello" id="filterLivello">
-                                <option value="">Tutti i livelli</option>
-                                <?php foreach ($templateParams['livelli'] as $livello): ?>
-                                <option value="<?= $livello['livello_id'] ?>"><?= htmlspecialchars($livello['nome']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
                     </div>
                     
                     <!-- Oggetto -->
@@ -272,18 +257,10 @@ $stats = $templateParams['stats'] ?? ['totale' => 0, 'inviati' => 0, 'programmat
                             </label>
                         </div>
                         <div id="scheduleDatetime" class="schedule-datetime">
-                            <input type="date" class="form-control-dark" name="schedule_date" id="scheduleDate">
+                            <input type="date" class="form-control-dark" name="schedule_date" id="scheduleDate" min="<?= date('Y-m-d') ?>">
                             <input type="time" class="form-control-dark" name="schedule_time" id="scheduleTime">
+                            <small class="text-muted" style="width: 100%; margin-top: 5px; color: var(--text-muted);">* Data e ora sono entrambi obbligatori</small>
                         </div>
-                    </div>
-                    
-                    <!-- Opzioni aggiuntive -->
-                    <div class="form-section">
-                        <label class="channel-option" style="width: fit-content;">
-                            <input type="checkbox" name="salva_template" value="1">
-                            <span class="channel-icon">📑</span>
-                            <span class="channel-text">Salva come Template</span>
-                        </label>
                     </div>
                     
                     <!-- Actions -->
@@ -507,40 +484,6 @@ $stats = $templateParams['stats'] ?? ['totale' => 0, 'inviati' => 0, 'programmat
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- ============================================================================
-     TAB: TEMPLATES
-     ============================================================================ -->
-<div id="tab-templates" class="tab-content">
-    <div class="templates-grid">
-        <?php if (empty($templateParams['templates'])): ?>
-        <div class="no-results">
-            <div class="no-results-icon">📑</div>
-            <h3>Nessun template salvato</h3>
-            <p>Salva un broadcast come template per riutilizzarlo in futuro.</p>
-        </div>
-        <?php else: ?>
-        
-        <?php foreach ($templateParams['templates'] as $template): ?>
-        <div class="template-card">
-            <div class="template-card-header">
-                <div class="template-title"><?= htmlspecialchars($template['titolo_template']) ?></div>
-                <div class="template-actions">
-                    <button class="template-action-btn" onclick="useTemplate(<?= $template['template_id'] ?>, '<?= addslashes($template['titolo_template']) ?>', '<?= addslashes($template['messaggio_template']) ?>')" title="Usa questo template">
-                        ✏️
-                    </button>
-                    <button class="template-action-btn delete" onclick="deleteTemplate(<?= $template['template_id'] ?>)" title="Elimina template">
-                        🗑️
-                    </button>
-                </div>
-            </div>
-            <div class="template-preview"><?= htmlspecialchars($template['messaggio_template']) ?></div>
-        </div>
-        <?php endforeach; ?>
-        
-        <?php endif; ?>
     </div>
 </div>
 
@@ -823,8 +766,22 @@ function saveDraft() {
 document.getElementById('broadcastForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
     
+    // Verifica se stiamo aggiornando una comunicazione programmata o una bozza
+    const scheduledId = this.dataset.scheduledId;
+    const draftId = this.dataset.draftId;
+    
     const formData = new FormData();
-    formData.append('action', 'send_broadcast');
+    
+    // Determina l'azione
+    if (scheduledId) {
+        formData.append('action', 'update_scheduled');
+        formData.append('id', scheduledId);
+    } else if (draftId) {
+        formData.append('action', 'send_broadcast');
+    } else {
+        formData.append('action', 'send_broadcast');
+    }
+    
     formData.append('oggetto', document.getElementById('broadcastOggetto').value);
     formData.append('messaggio', document.getElementById('broadcastMessaggio').value);
     formData.append('target_type', document.querySelector('input[name="target_type"]:checked').value);
@@ -847,18 +804,19 @@ document.getElementById('broadcastForm')?.addEventListener('submit', function(e)
     formData.append('canale', canale);
     
     // Schedule
-    const schedule = document.querySelector('input[name="schedule"]:checked').value;
+    const scheduleChecked = document.querySelector('input[name="schedule"]:checked');
+    const schedule = scheduleChecked ? scheduleChecked.value : 'now';
     if (schedule === 'later') {
         const date = document.getElementById('scheduleDate').value;
         const time = document.getElementById('scheduleTime').value;
-        if (date && time) {
-            formData.append('scheduled_at', `${date} ${time}:00`);
+        
+        // Validazione: entrambi data e ora sono obbligatori
+        if (!date || !time) {
+            showToast('Per programmare l\'invio devi inserire sia la data che l\'ora', 'error');
+            return;
         }
-    }
-    
-    // Salva template
-    if (document.querySelector('input[name="salva_template"]')?.checked) {
-        formData.append('salva_template', '1');
+        
+        formData.append('scheduled_at', `${date} ${time}:00`);
     }
     
     // Mostra progress
@@ -874,7 +832,7 @@ document.getElementById('broadcastForm')?.addEventListener('submit', function(e)
         percent += 10;
         if (percent <= 90) {
             progressBar.style.width = percent + '%';
-            progressText.textContent = `Invio in corso... ${percent}%`;
+            progressText.textContent = scheduledId ? `Aggiornamento in corso... ${percent}%` : `Invio in corso... ${percent}%`;
         }
     }, 200);
     
@@ -890,6 +848,11 @@ document.getElementById('broadcastForm')?.addEventListener('submit', function(e)
         if (data.success) {
             progressText.textContent = `✅ ${data.message}`;
             showToast(data.message, 'success');
+            
+            // Pulisci i dataset
+            delete document.getElementById('broadcastForm').dataset.scheduledId;
+            delete document.getElementById('broadcastForm').dataset.draftId;
+            
             setTimeout(() => {
                 location.reload();
             }, 1500);
@@ -1070,6 +1033,10 @@ document.getElementById('messageForm')?.addEventListener('submit', function(e) {
         if (data.success) {
             showToast(data.message, 'success');
             resetMessageForm();
+            // Ricarica la pagina dopo 1 secondo per mostrare il messaggio nello storico
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } else {
             showToast(data.message || 'Errore durante l\'invio', 'error');
         }
@@ -1153,41 +1120,6 @@ function switchPreviewMsg(type) {
 }
 
 // ============================================================================
-// TEMPLATES
-// ============================================================================
-function useTemplate(id, titolo, messaggio) {
-    switchTab('compose');
-    document.getElementById('broadcastOggetto').value = titolo;
-    document.getElementById('broadcastMessaggio').value = messaggio;
-    // Aggiorna preview
-    document.getElementById('previewTitleInapp').textContent = titolo;
-    document.getElementById('previewMessageInapp').textContent = messaggio;
-    document.getElementById('previewTitleEmail').textContent = titolo;
-    document.getElementById('previewMessageEmail').textContent = messaggio;
-    document.getElementById('previewSubjectEmail').textContent = titolo;
-    document.getElementById('oggettoCount').textContent = titolo.length;
-}
-
-function deleteTemplate(id) {
-    if (!confirm('Sei sicuro di voler eliminare questo template?')) return;
-    
-    fetch('comunicazioni.php?ajax=1', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `action=delete_template&id=${id}`
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            showToast(data.message, 'success');
-            location.reload();
-        } else {
-            showToast(data.message, 'error');
-        }
-    });
-}
-
-// ============================================================================
 // VIEW BROADCAST DETAIL
 // ============================================================================
 function viewBroadcast(id) {
@@ -1257,6 +1189,23 @@ function viewBroadcast(id) {
                             </button>
                             <button onclick="deleteDraft(${b.broadcast_id})" class="btn-action-danger" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(239, 68, 68, 0.2); color: #EF4444;">
                                 🗑️ Elimina
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (b.stato === 'programmato') {
+                azioniHtml = `
+                    <div class="dettaglio-section mt-4" style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid #F59E0B; padding: 16px;">
+                        <h6 style="margin-bottom: 12px;">⚡ Azioni Programmata</h6>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button onclick="editScheduled(${b.broadcast_id})" class="btn-action-primary" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">
+                                ✏️ Modifica
+                            </button>
+                            <button onclick="sendScheduledNow(${b.broadcast_id})" class="btn-action-success" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(16, 185, 129, 0.2); color: #10B981;">
+                                📨 Invia Subito
+                            </button>
+                            <button onclick="cancelScheduled(${b.broadcast_id})" class="btn-action-danger" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(239, 68, 68, 0.2); color: #EF4444;">
+                                ❌ Annulla
                             </button>
                         </div>
                     </div>
@@ -1446,6 +1395,136 @@ function deleteDraft(id) {
         'Sei sicuro di voler eliminare questa bozza? L\'azione è irreversibile.',
         '🗑️',
         'Elimina',
+        'btn-danger-gradient',
+        () => {
+            fetch('comunicazioni.php?ajax=1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=delete_broadcast&id=${id}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('modalDettaglioBroadcast'))?.hide();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+        }
+    );
+}
+
+// ============================================================================
+// FUNZIONI PER COMUNICAZIONI PROGRAMMATE
+// ============================================================================
+
+function editScheduled(id) {
+    // Chiudi il modal
+    bootstrap.Modal.getInstance(document.getElementById('modalDettaglioBroadcast')).hide();
+    
+    // Carica i dati della comunicazione programmata nel form
+    fetch(`comunicazioni.php?ajax=1&action=get_broadcast&id=${id}`)
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const b = data.broadcast;
+            
+            // Vai al tab compose
+            switchTab('compose');
+            
+            // Compila il form
+            document.getElementById('broadcastOggetto').value = b.oggetto;
+            document.getElementById('broadcastMessaggio').value = b.messaggio;
+            
+            // Seleziona target type
+            document.querySelectorAll('.target-option').forEach(opt => {
+                opt.classList.remove('selected');
+                const radio = opt.querySelector('input[type="radio"]');
+                if (radio.value === b.target_type) {
+                    opt.classList.add('selected');
+                    radio.checked = true;
+                }
+            });
+            
+            // Canali
+            document.querySelector('input[name="canale_inapp"]').checked = (b.canale === 'in_app' || b.canale === 'entrambi');
+            document.querySelector('input[name="canale_email"]').checked = (b.canale === 'email' || b.canale === 'entrambi');
+            
+            // Imposta data programmata se presente
+            if (b.scheduled_at) {
+                // Seleziona opzione "Programma"
+                document.querySelectorAll('.schedule-option').forEach(o => o.classList.remove('selected'));
+                const scheduleOption = document.querySelector('.schedule-option[data-schedule="later"]');
+                if (scheduleOption) {
+                    scheduleOption.classList.add('selected');
+                }
+                
+                // Mostra il campo datetime e imposta il valore
+                const scheduleDatetime = document.getElementById('scheduleDatetime');
+                if (scheduleDatetime) {
+                    scheduleDatetime.classList.add('active');
+                    // Converti la data nel formato corretto per datetime-local
+                    const dt = new Date(b.scheduled_at);
+                    const formattedDate = dt.toISOString().slice(0, 16);
+                    scheduleDatetime.querySelector('input').value = formattedDate;
+                }
+            }
+            
+            // Aggiorna preview
+            document.getElementById('previewTitleInapp').textContent = b.oggetto;
+            document.getElementById('previewMessageInapp').textContent = b.messaggio;
+            document.getElementById('previewTitleEmail').textContent = b.oggetto;
+            document.getElementById('previewMessageEmail').textContent = b.messaggio;
+            document.getElementById('previewSubjectEmail').textContent = b.oggetto;
+            document.getElementById('oggettoCount').textContent = b.oggetto.length;
+            
+            // Aggiorna conteggio destinatari
+            updateRecipientsCount();
+            
+            // Salva l'ID della comunicazione programmata per l'aggiornamento
+            document.getElementById('broadcastForm').dataset.scheduledId = id;
+            delete document.getElementById('broadcastForm').dataset.draftId;
+            
+            showToast('Comunicazione programmata caricata. Modifica e salva!', 'info');
+        }
+    });
+}
+
+function sendScheduledNow(id) {
+    showConfirmModal(
+        '📨 Invia Subito',
+        'Vuoi inviare questa comunicazione adesso ignorando la programmazione?',
+        '📨',
+        'Invia Ora',
+        'btn-primary-gradient',
+        () => {
+            fetch('comunicazioni.php?ajax=1', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `action=send_scheduled_now&id=${id}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message + ` (${data.destinatari} destinatari)`, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('modalDettaglioBroadcast'))?.hide();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+        }
+    );
+}
+
+function cancelScheduled(id) {
+    showConfirmModal(
+        '❌ Annulla Comunicazione',
+        'Sei sicuro di voler annullare questa comunicazione programmata? L\'azione è irreversibile.',
+        '❌',
+        'Annulla Comunicazione',
         'btn-danger-gradient',
         () => {
             fetch('comunicazioni.php?ajax=1', {

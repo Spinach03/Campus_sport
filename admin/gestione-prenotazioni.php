@@ -132,6 +132,22 @@ if ($isAjax && $action) {
                 exit;
             }
             
+            // ============================================
+            // VALIDAZIONE CAMPO CHIUSO
+            // ============================================
+            if ($dbh->isCampoChiuso($campoId)) {
+                echo json_encode(['success' => false, 'message' => 'Il campo selezionato è chiuso e non accetta prenotazioni']);
+                exit;
+            }
+            
+            // ============================================
+            // VALIDAZIONE MANUTENZIONE
+            // ============================================
+            if ($dbh->isSlotInManutenzione($campoId, $data, $oraInizio, $oraFine)) {
+                echo json_encode(['success' => false, 'message' => 'Il campo è in manutenzione durante l\'orario selezionato']);
+                exit;
+            }
+            
             // Verifica che l'utente non sia admin
             $user = $dbh->getUserById($userId);
             if (!$user || $user['ruolo'] === 'admin') {
