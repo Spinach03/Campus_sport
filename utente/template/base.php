@@ -12,6 +12,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../css/style.css">
+    <?php 
+    // CSS aggiuntivi specifici per pagina
+    if(isset($templateParams["css_extra"]) && is_array($templateParams["css_extra"])){
+        foreach($templateParams["css_extra"] as $css){
+            echo '<link rel="stylesheet" href="' . htmlspecialchars($css) . '">' . "\n    ";
+        }
+    }
+    ?>
 </head>
 <body>
     <div class="app-container">

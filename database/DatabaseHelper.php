@@ -760,6 +760,59 @@ class DatabaseHelper {
     }
     
     // ============================================================================
+    // RECENSIONI - Recensioni di un campo con risposte admin (per area utente)
+    // ============================================================================
+    
+    public function getRecensioniCampoConRisposte($campoId) {
+        try {
+            $query = "SELECT r.recensione_id, r.rating_generale, r.commento, r.created_at,
+                        CONCAT(u.nome, ' ', u.cognome) as utente_nome,
+                        UPPER(LEFT(u.nome, 1)) as utente_iniziale
+                      FROM recensioni r
+                      JOIN users u ON r.user_id = u.user_id
+                      WHERE r.campo_id = ?
+                      ORDER BY r.created_at DESC";
+            
+            $stmt = $this->db->prepare($query);
+            if (!$stmt) {
+                return [];
+            }
+            $stmt->bind_param('i', $campoId);
+            $stmt->execute();
+            $recensioni = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            
+            // Per ogni recensione, carica l'eventuale risposta admin
+            foreach ($recensioni as &$recensione) {
+                $recensione['risposta'] = null;
+                
+                try {
+                    $queryRisposta = "SELECT rr.testo, rr.created_at as risposta_data,
+                                        CONCAT(a.nome, ' ', a.cognome) as admin_nome
+                                      FROM recensione_risposte rr
+                                      JOIN users a ON rr.admin_id = a.user_id
+                                      WHERE rr.recensione_id = ?
+                                      LIMIT 1";
+                    $stmtRisposta = $this->db->prepare($queryRisposta);
+                    if ($stmtRisposta) {
+                        $stmtRisposta->bind_param('i', $recensione['recensione_id']);
+                        $stmtRisposta->execute();
+                        $risposta = $stmtRisposta->get_result()->fetch_assoc();
+                        if ($risposta) {
+                            $recensione['risposta'] = $risposta;
+                        }
+                    }
+                } catch (Exception $e) {
+                    // Tabella risposte non esiste, ignora
+                }
+            }
+            
+            return $recensioni;
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+    
+    // ============================================================================
     // RECENSIONI - Tutte le recensioni (per gestione)
     // ============================================================================
     
@@ -3913,40 +3966,54 @@ class DatabaseHelper {
      * Restituisce true se lo slot è BLOCCATO da una manutenzione
      */
     public function isSlotInManutenzione($campoId, $data, $oraInizio, $oraFine) {
-        // Costruisco i datetime dello slot
-        $slotInizio = $data . ' ' . $oraInizio;
-        $slotFine = $data . ' ' . $oraFine;
-        
-        // Cerco blocchi manutenzione che si sovrappongono allo slot
-        // Sovrapposizione: slot_inizio < manutenzione_fine AND slot_fine > manutenzione_inizio
-        $query = "SELECT COUNT(*) as count 
-                  FROM blocchi_manutenzione 
-                  WHERE campo_id = ? 
-                    AND CONCAT(data_inizio, ' ', ora_inizio) < ?
-                    AND CONCAT(data_fine, ' ', ora_fine) > ?";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('iss', $campoId, $slotFine, $slotInizio);
-        $stmt->execute();
-        $result = $stmt->get_result()->fetch_assoc();
-        
-        return $result['count'] > 0;
+        try {
+            // Costruisco i datetime dello slot
+            $slotInizio = $data . ' ' . $oraInizio;
+            $slotFine = $data . ' ' . $oraFine;
+            
+            // Cerco blocchi manutenzione che si sovrappongono allo slot
+            // Sovrapposizione: slot_inizio < manutenzione_fine AND slot_fine > manutenzione_inizio
+            $query = "SELECT COUNT(*) as count 
+                      FROM blocchi_manutenzione 
+                      WHERE campo_id = ? 
+                        AND CONCAT(data_inizio, ' ', ora_inizio) < ?
+                        AND CONCAT(data_fine, ' ', ora_fine) > ?";
+            
+            $stmt = $this->db->prepare($query);
+            if (!$stmt) {
+                return false; // Tabella non esiste, nessuna manutenzione
+            }
+            $stmt->bind_param('iss', $campoId, $slotFine, $slotInizio);
+            $stmt->execute();
+            $result = $stmt->get_result()->fetch_assoc();
+            
+            return $result['count'] > 0;
+        } catch (Exception $e) {
+            return false; // In caso di errore, considera lo slot come disponibile
+        }
     }
     
     /**
      * Ottieni i blocchi manutenzione per un campo che interessano una data specifica
      */
     public function getBlocchiManutenzionePerData($campoId, $data) {
-        $query = "SELECT * FROM blocchi_manutenzione 
-                  WHERE campo_id = ? 
-                    AND data_inizio <= ? 
-                    AND data_fine >= ?
-                  ORDER BY ora_inizio ASC";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('iss', $campoId, $data, $data);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        try {
+            $query = "SELECT * FROM blocchi_manutenzione 
+                      WHERE campo_id = ? 
+                        AND data_inizio <= ? 
+                        AND data_fine >= ?
+                      ORDER BY ora_inizio ASC";
+            
+            $stmt = $this->db->prepare($query);
+            if (!$stmt) {
+                return []; // Tabella non esiste
+            }
+            $stmt->bind_param('iss', $campoId, $data, $data);
+            $stmt->execute();
+            return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        } catch (Exception $e) {
+            return []; // In caso di errore, nessun blocco manutenzione
+        }
     }
     
     /**
@@ -4164,12 +4231,19 @@ class DatabaseHelper {
      * Verifica se una data è un giorno di chiusura
      */
     public function isGiornoChiusura($data) {
-        $query = "SELECT COUNT(*) as cnt FROM giorni_chiusura WHERE data = ?";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('s', $data);
-        $stmt->execute();
-        $result = $stmt->get_result()->fetch_assoc();
-        return $result['cnt'] > 0;
+        try {
+            $query = "SELECT COUNT(*) as cnt FROM giorni_chiusura WHERE data = ?";
+            $stmt = $this->db->prepare($query);
+            if (!$stmt) {
+                return false; // Tabella non esiste, non è un giorno di chiusura
+            }
+            $stmt->bind_param('s', $data);
+            $stmt->execute();
+            $result = $stmt->get_result()->fetch_assoc();
+            return $result['cnt'] > 0;
+        } catch (Exception $e) {
+            return false; // In caso di errore, considera il giorno come aperto
+        }
     }
     
     /**
@@ -4185,6 +4259,344 @@ class DatabaseHelper {
             }
         }
         return $dates;
+    }
+
+    // ============================================================================
+    // FUNZIONI PER AREA UTENTE - PRENOTAZIONI
+    // ============================================================================
+    
+    /**
+     * Ottieni tutti i campi disponibili per l'utente con info complete
+     */
+    public function getCampiPerUtente($filtri = []) {
+        // Query base senza subquery per manutenzione (verranno aggiunte dopo se la tabella esiste)
+        $query = "SELECT c.campo_id, c.nome, c.descrizione, c.location, c.capienza_max,
+                         c.tipo_superficie, c.tipo_campo, c.orario_apertura, c.orario_chiusura,
+                         c.stato, c.rating_medio, c.num_recensioni,
+                         s.sport_id, s.nome as sport_nome, s.icona as sport_icona
+                  FROM campi_sportivi c
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  WHERE c.stato != 'chiuso'";
+        
+        $params = [];
+        $types = '';
+        
+        // Filtro sport
+        if (!empty($filtri['sport'])) {
+            $query .= " AND c.sport_id = ?";
+            $params[] = $filtri['sport'];
+            $types .= 'i';
+        }
+        
+        // Filtro tipo (indoor/outdoor)
+        if (!empty($filtri['tipo'])) {
+            $query .= " AND c.tipo_campo = ?";
+            $params[] = $filtri['tipo'];
+            $types .= 's';
+        }
+        
+        // Filtro ricerca
+        if (!empty($filtri['search'])) {
+            $query .= " AND (c.nome LIKE ? OR s.nome LIKE ?)";
+            $searchTerm = '%' . $filtri['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $types .= 'ss';
+        }
+        
+        // Ordinamento
+        $ordina = $filtri['ordina'] ?? 'nome';
+        switch ($ordina) {
+            case 'rating':
+                $query .= " ORDER BY c.rating_medio DESC, c.nome ASC";
+                break;
+            case 'nome':
+            default:
+                $query .= " ORDER BY c.nome ASC";
+                break;
+        }
+        
+        $stmt = $this->db->prepare($query);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $campi = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Aggiungi info manutenzione per ogni campo (se la tabella esiste)
+        foreach ($campi as &$campo) {
+            $campo['manutenzioni_future'] = 0;
+            $campo['prossima_manutenzione_inizio'] = null;
+            $campo['prossima_manutenzione_fine'] = null;
+            
+            try {
+                $queryManutenzione = "SELECT COUNT(*) as count,
+                                      MIN(CONCAT(data_inizio, ' ', ora_inizio)) as inizio,
+                                      MIN(CONCAT(data_fine, ' ', ora_fine)) as fine
+                                      FROM blocchi_manutenzione 
+                                      WHERE campo_id = ? 
+                                      AND CONCAT(data_fine, ' ', ora_fine) > NOW()";
+                $stmtManutenzione = $this->db->prepare($queryManutenzione);
+                if ($stmtManutenzione) {
+                    $stmtManutenzione->bind_param('i', $campo['campo_id']);
+                    $stmtManutenzione->execute();
+                    $manutenzione = $stmtManutenzione->get_result()->fetch_assoc();
+                    $campo['manutenzioni_future'] = $manutenzione['count'] ?? 0;
+                    $campo['prossima_manutenzione_inizio'] = $manutenzione['inizio'] ?? null;
+                    $campo['prossima_manutenzione_fine'] = $manutenzione['fine'] ?? null;
+                }
+            } catch (Exception $e) {
+                // Tabella non esiste, ignora
+            }
+        }
+        
+        return $campi;
+    }
+    
+    /**
+     * Ottieni dettagli campo per modal prenotazione
+     */
+    public function getCampoDettaglioUtente($campoId) {
+        try {
+            // Query base semplificata
+            $query = "SELECT c.*, s.nome as sport_nome, s.icona as sport_icona
+                      FROM campi_sportivi c
+                      JOIN sport s ON c.sport_id = s.sport_id
+                      WHERE c.campo_id = ? AND c.stato != 'chiuso'";
+            
+            $stmt = $this->db->prepare($query);
+            if (!$stmt) {
+                return null;
+            }
+            $stmt->bind_param('i', $campoId);
+            $stmt->execute();
+            $campo = $stmt->get_result()->fetch_assoc();
+            
+            if (!$campo) {
+                return null;
+            }
+            
+            // Aggiungi servizi se la tabella esiste
+            $campo['servizi'] = null;
+            try {
+                $queryServizi = "SELECT GROUP_CONCAT(servizio SEPARATOR ', ') as servizi 
+                                 FROM campo_servizi WHERE campo_id = ?";
+                $stmtServizi = $this->db->prepare($queryServizi);
+                if ($stmtServizi) {
+                    $stmtServizi->bind_param('i', $campoId);
+                    $stmtServizi->execute();
+                    $servizi = $stmtServizi->get_result()->fetch_assoc();
+                    $campo['servizi'] = $servizi['servizi'] ?? null;
+                }
+            } catch (Exception $e) {
+                // Tabella non esiste, ignora
+            }
+            
+            // Aggiungi info manutenzione se la tabella esiste
+            $campo['manutenzioni_future'] = 0;
+            $campo['prossima_manutenzione_inizio'] = null;
+            $campo['prossima_manutenzione_fine'] = null;
+            try {
+                $queryManutenzione = "SELECT COUNT(*) as count,
+                                      MIN(CONCAT(data_inizio, ' ', ora_inizio)) as inizio,
+                                      MIN(CONCAT(data_fine, ' ', ora_fine)) as fine
+                                      FROM blocchi_manutenzione 
+                                      WHERE campo_id = ? 
+                                      AND CONCAT(data_fine, ' ', ora_fine) > NOW()";
+                $stmtManutenzione = $this->db->prepare($queryManutenzione);
+                if ($stmtManutenzione) {
+                    $stmtManutenzione->bind_param('i', $campoId);
+                    $stmtManutenzione->execute();
+                    $manutenzione = $stmtManutenzione->get_result()->fetch_assoc();
+                    $campo['manutenzioni_future'] = $manutenzione['count'] ?? 0;
+                    $campo['prossima_manutenzione_inizio'] = $manutenzione['inizio'] ?? null;
+                    $campo['prossima_manutenzione_fine'] = $manutenzione['fine'] ?? null;
+                }
+            } catch (Exception $e) {
+                // Tabella non esiste, ignora
+            }
+            
+            return $campo;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+    
+    /**
+     * Ottieni slot disponibili per utente (con controllo giorni anticipo)
+     */
+    public function getSlotDisponibiliUtente($campoId, $data) {
+        // Verifica che la data sia entro i giorni massimi di anticipo (usa la stessa chiave dell'admin)
+        $giorniMaxAnticipo = $this->getConfig('giorni_anticipo_max', 7);
+        $dataMax = date('Y-m-d', strtotime('+' . $giorniMaxAnticipo . ' days'));
+        
+        if ($data > $dataMax) {
+            return []; // Data oltre il limite
+        }
+        
+        if ($data < date('Y-m-d')) {
+            return []; // Data nel passato
+        }
+        
+        // Usa la funzione esistente che già gestisce manutenzioni e prenotazioni
+        return $this->getSlotDisponibili($campoId, $data);
+    }
+    
+    /**
+     * Crea prenotazione da utente
+     * Include tutte le validazioni come nell'admin
+     */
+    public function createPrenotazioneUtente($userId, $campoId, $data, $oraInizio, $oraFine, $numPartecipanti, $note = null) {
+        // ============================================
+        // VALIDAZIONE GIORNI ANTICIPO MAX
+        // ============================================
+        $giorniAnticipoMax = $this->getConfig('giorni_anticipo_max', 7);
+        $dataPrenotazione = new DateTime($data);
+        $oggi = new DateTime('today');
+        $dataMax = (clone $oggi)->modify("+{$giorniAnticipoMax} days");
+        
+        if ($dataPrenotazione < $oggi) {
+            return ['success' => false, 'error' => 'Non puoi prenotare per una data passata'];
+        }
+        
+        if ($dataPrenotazione > $dataMax) {
+            return ['success' => false, 'error' => "Non puoi prenotare oltre {$giorniAnticipoMax} giorni di anticipo"];
+        }
+        
+        // ============================================
+        // VALIDAZIONE GIORNI CHIUSURA
+        // ============================================
+        if ($this->isGiornoChiusura($data)) {
+            return ['success' => false, 'error' => 'La struttura è chiusa in questa data'];
+        }
+        
+        // ============================================
+        // VALIDAZIONE CAMPO CHIUSO
+        // ============================================
+        if ($this->isCampoChiuso($campoId)) {
+            return ['success' => false, 'error' => 'Il campo selezionato è chiuso e non accetta prenotazioni'];
+        }
+        
+        // ============================================
+        // VALIDAZIONE MANUTENZIONE
+        // ============================================
+        if ($this->isSlotInManutenzione($campoId, $data, $oraInizio, $oraFine)) {
+            return ['success' => false, 'error' => 'Il campo è in manutenzione durante l\'orario selezionato'];
+        }
+        
+        // ============================================
+        // VALIDAZIONE SLOT DISPONIBILE
+        // ============================================
+        if (!$this->isSlotDisponibile($campoId, $data, $oraInizio, $oraFine)) {
+            return ['success' => false, 'error' => 'Lo slot selezionato non è più disponibile'];
+        }
+        
+        // ============================================
+        // VALIDAZIONE CAPIENZA
+        // ============================================
+        $campo = $this->getCampoDettaglioUtente($campoId);
+        if ($campo && $numPartecipanti > $campo['capienza_max']) {
+            return ['success' => false, 'error' => 'Il numero di partecipanti supera la capienza massima (' . $campo['capienza_max'] . ')'];
+        }
+        
+        // ============================================
+        // CREA LA PRENOTAZIONE
+        // ============================================
+        $query = "INSERT INTO prenotazioni (user_id, campo_id, data_prenotazione, ora_inizio, ora_fine, num_partecipanti, stato, note, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, 'confermata', ?, NOW())";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('iisssis', $userId, $campoId, $data, $oraInizio, $oraFine, $numPartecipanti, $note);
+        
+        if ($stmt->execute()) {
+            return ['success' => true, 'prenotazione_id' => $this->db->insert_id];
+        }
+        
+        return ['success' => false, 'error' => 'Errore durante la creazione della prenotazione'];
+    }
+    
+    /**
+     * Ottieni prenotazioni utente
+     */
+    public function getPrenotazioniUtente($userId, $tipo = 'future') {
+        $query = "SELECT p.*, c.nome as campo_nome, c.location, c.tipo_campo,
+                         s.nome as sport_nome, s.icona as sport_icona
+                  FROM prenotazioni p
+                  JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  WHERE p.user_id = ?";
+        
+        if ($tipo === 'future') {
+            $query .= " AND (p.data_prenotazione > CURDATE() OR (p.data_prenotazione = CURDATE() AND p.ora_fine > CURTIME()))
+                        AND p.stato = 'confermata'
+                        ORDER BY p.data_prenotazione ASC, p.ora_inizio ASC";
+        } elseif ($tipo === 'passate') {
+            $query .= " AND (p.data_prenotazione < CURDATE() OR (p.data_prenotazione = CURDATE() AND p.ora_fine <= CURTIME()) OR p.stato IN ('completata', 'cancellata', 'no_show'))
+                        ORDER BY p.data_prenotazione DESC, p.ora_inizio DESC";
+        } else {
+            $query .= " ORDER BY p.data_prenotazione DESC, p.ora_inizio DESC";
+        }
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Cancella prenotazione utente
+     * Verifica che l'utente abbia abbastanza ore di anticipo per cancellare
+     */
+    public function cancellaPrenotazioneUtente($prenotazioneId, $userId, $motivo = null) {
+        // Verifica che la prenotazione appartenga all'utente
+        $query = "SELECT * FROM prenotazioni WHERE prenotazione_id = ? AND user_id = ? AND stato = 'confermata'";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $prenotazioneId, $userId);
+        $stmt->execute();
+        $prenotazione = $stmt->get_result()->fetch_assoc();
+        
+        if (!$prenotazione) {
+            return ['success' => false, 'error' => 'Prenotazione non trovata o già cancellata'];
+        }
+        
+        // Ottieni configurazione ore anticipo cancellazione
+        $oreAnticipo = intval($this->getConfig('ore_anticipo_cancellazione', 24));
+        
+        // Calcola la differenza in ore tra ora e inizio prenotazione
+        $dataOraPrenotazione = $prenotazione['data_prenotazione'] . ' ' . $prenotazione['ora_inizio'];
+        $timestampPrenotazione = strtotime($dataOraPrenotazione);
+        $timestampOra = time();
+        $differenzaOre = ($timestampPrenotazione - $timestampOra) / 3600;
+        
+        // Se mancano meno ore di quelle richieste, blocca la cancellazione
+        if ($differenzaOre < $oreAnticipo) {
+            return [
+                'success' => false, 
+                'error' => "Non puoi cancellare questa prenotazione. Devi cancellare con almeno {$oreAnticipo} ore di anticipo.",
+                'ore_mancanti' => round($differenzaOre, 1),
+                'ore_richieste' => $oreAnticipo
+            ];
+        }
+        
+        // Verifica se è cancellazione tardiva (per statistiche - anche se permessa)
+        $cancellazioneTardiva = $differenzaOre < 48 ? 1 : 0;
+        
+        // Cancella la prenotazione
+        $query = "UPDATE prenotazioni 
+                  SET stato = 'cancellata', 
+                      motivo_cancellazione = ?,
+                      cancellazione_tardiva = ?,
+                      cancelled_at = NOW()
+                  WHERE prenotazione_id = ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('sii', $motivo, $cancellazioneTardiva, $prenotazioneId);
+        
+        if ($stmt->execute()) {
+            return ['success' => true, 'tardiva' => $cancellazioneTardiva];
+        }
+        
+        return ['success' => false, 'error' => 'Errore durante la cancellazione'];
     }
 
 

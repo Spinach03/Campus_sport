@@ -1,0 +1,839 @@
+/* ============================================================================
+   LE MIE PRENOTAZIONI - CSS Specifico
+   Campus Sports Arena - Area Utente
+   Design IDENTICO all'Admin Panel (gestione-prenotazioni)
+   ============================================================================ */
+
+/* ============================================================================
+   HEADER SEZIONE - Stile Admin
+   ============================================================================ */
+.gestione-header {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 16px 0;
+}
+
+.gestione-header .header-icon {
+    font-size: 42px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    flex-shrink: 0;
+}
+
+.gestione-header .page-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Bottone Nuova Prenotazione - Stile Admin */
+.btn-add-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    box-shadow: 0 4px 16px var(--accent-blue-glow);
+    transition: all var(--transition-normal);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    white-space: nowrap;
+    margin-left: auto;
+}
+
+.btn-add-new::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-add-new:hover::before {
+    left: 100%;
+}
+
+.btn-add-new:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px var(--accent-blue-glow);
+    color: white;
+}
+
+.btn-add-new span {
+    font-size: 18px;
+    font-weight: 300;
+}
+
+/* ============================================================================
+   KPI CARDS - Stile Admin
+   ============================================================================ */
+.kpi-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+}
+
+.kpi-card[data-color="blue"]::before { background: radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%); }
+.kpi-card[data-color="green"]::before { background: radial-gradient(circle, rgba(16,185,129,0.25) 0%, transparent 70%); }
+.kpi-card[data-color="orange"]::before { background: radial-gradient(circle, rgba(245,158,11,0.25) 0%, transparent 70%); }
+.kpi-card[data-color="red"]::before { background: radial-gradient(circle, rgba(239,68,68,0.25) 0%, transparent 70%); }
+.kpi-card[data-color="purple"]::before { background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%); }
+.kpi-card[data-color="cyan"]::before { background: radial-gradient(circle, rgba(6,182,212,0.25) 0%, transparent 70%); }
+
+.kpi-card:hover::before {
+    opacity: 1;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.kpi-card[data-color="blue"]:hover { border-color: rgba(59,130,246,0.5); }
+.kpi-card[data-color="green"]:hover { border-color: rgba(16,185,129,0.5); }
+.kpi-card[data-color="orange"]:hover { border-color: rgba(245,158,11,0.5); }
+.kpi-card[data-color="red"]:hover { border-color: rgba(239,68,68,0.5); }
+.kpi-card[data-color="purple"]:hover { border-color: rgba(139,92,246,0.5); }
+.kpi-card[data-color="cyan"]:hover { border-color: rgba(6,182,212,0.5); }
+
+.kpi-card .kpi-icon {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 8px;
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.kpi-card:hover .kpi-icon {
+    transform: scale(1.25) rotate(-5deg);
+}
+
+.kpi-card .kpi-value {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    line-height: 1;
+}
+
+.kpi-card[data-color="blue"] .kpi-value { color: #3B82F6; }
+.kpi-card[data-color="green"] .kpi-value { color: #10B981; }
+.kpi-card[data-color="orange"] .kpi-value { color: #F59E0B; }
+.kpi-card[data-color="red"] .kpi-value { color: #EF4444; }
+.kpi-card[data-color="purple"] .kpi-value { color: #8B5CF6; }
+.kpi-card[data-color="cyan"] .kpi-value { color: #06B6D4; }
+
+.kpi-card .kpi-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-card .notification-dot {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    background: #06B6D4;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+/* ============================================================================
+   FILTERS CARD - INFO BANNER
+   ============================================================================ */
+.filters-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 16px 24px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.filter-icon {
+    font-size: 20px;
+}
+
+.filter-info {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.filter-info strong {
+    color: #3B82F6;
+}
+
+/* ============================================================================
+   SECTION HEADER - Stile Admin
+   ============================================================================ */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section-header.collapsible {
+    cursor: pointer;
+    padding: 12px 16px;
+    margin: 0 -16px 20px;
+    border-radius: 12px;
+    transition: background 0.2s ease;
+}
+
+.section-header.collapsible:hover {
+    background: rgba(148, 163, 184, 0.05);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.section-icon {
+    font-size: 22px;
+}
+
+.section-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-oggi {
+    background: rgba(6, 182, 212, 0.15);
+    color: #06B6D4;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.badge-future {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge-passate {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8B5CF6;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.toggle-icon {
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+}
+
+/* ============================================================================
+   GRIGLIA PRENOTAZIONI - Stile Admin
+   ============================================================================ */
+.prenotazioni-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+}
+
+.storico-grid .prenotazione-card {
+    opacity: 0.8;
+}
+
+.storico-grid .prenotazione-card:hover {
+    opacity: 1;
+}
+
+/* ============================================================================
+   CARD PRENOTAZIONE - Design Premium (Stile Admin)
+   ============================================================================ */
+.prenotazione-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: default;
+    position: relative;
+}
+
+.prenotazione-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Card passate */
+.prenotazione-card.past {
+    opacity: 0.85;
+}
+
+.prenotazione-card.past:hover {
+    transform: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+/* Card future cliccabili */
+.prenotazione-card.clickable {
+    cursor: pointer;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.prenotazione-card.clickable::before {
+    opacity: 0.5;
+}
+
+.prenotazione-card.clickable:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    border-color: var(--accent-blue);
+}
+
+.prenotazione-card.clickable:hover::before {
+    opacity: 1;
+}
+
+.prenotazione-card.future {
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.prenotazione-card.future::before {
+    opacity: 0.5;
+}
+
+.prenotazione-card.future:hover::before {
+    opacity: 1;
+}
+
+/* Card In Corso - Stile speciale */
+.prenotazione-card.in-corso {
+    border-color: rgba(6, 182, 212, 0.5);
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), var(--bg-card));
+}
+
+.prenotazione-card.in-corso::before {
+    background: linear-gradient(90deg, #06B6D4, #10B981);
+    opacity: 1;
+}
+
+.badge-in-corso {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #06B6D4, #10B981);
+    color: white;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 10;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse-dot 1s infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* Card Header - Stile Admin */
+.prenotazione-card-header {
+    padding: 16px 16px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08));
+}
+
+.prenotazione-id {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: rgba(148, 163, 184, 0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+/* Stato Badge - Stile Admin */
+.stato-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.stato-badge.stato-blue {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.stato-badge.stato-green {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.stato-badge.stato-red {
+    background: rgba(239, 68, 68, 0.15);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.stato-badge.stato-orange {
+    background: rgba(245, 158, 11, 0.15);
+    color: #F59E0B;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Campo Info - Stile Admin */
+.prenotazione-campo {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(15, 23, 42, 0.3);
+}
+
+.campo-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.campo-info {
+    flex: 1;
+}
+
+.campo-nome {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+}
+
+.campo-sport {
+    font-size: 13px;
+    color: #3B82F6;
+    font-weight: 500;
+}
+
+/* Data e Orario - Stile Admin */
+.prenotazione-datetime {
+    padding: 14px 16px;
+    display: flex;
+    gap: 24px;
+    background: rgba(30, 41, 59, 0.4);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.datetime-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.datetime-label {
+    font-size: 10px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.datetime-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Footer - Stile Admin */
+.prenotazione-footer {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.3));
+    border-top: 1px solid var(--border-color);
+}
+
+.footer-meta {
+    display: flex;
+    gap: 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.footer-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.partecipanti-count {
+    background: rgba(148, 163, 184, 0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.giorni-mancanti {
+    color: #3B82F6;
+    font-weight: 600;
+}
+
+.btn-cancella-card {
+    padding: 6px 14px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: #EF4444;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancella-card:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: translateY(-2px);
+}
+
+.badge-in-corso-small {
+    padding: 5px 12px;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(16, 185, 129, 0.15));
+    color: #06B6D4;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.badge-non-cancellabile {
+    padding: 5px 12px;
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-muted);
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   NO RESULTS - Stile Admin
+   ============================================================================ */
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-muted);
+}
+
+.no-results-icon {
+    font-size: 72px;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.no-results h3 {
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    font-size: 20px;
+}
+
+.no-results p {
+    font-size: 14px;
+}
+
+/* ============================================================================
+   MODAL - Stile Admin
+   ============================================================================ */
+.modal-prenotazione-content {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+}
+
+.modal-header-danger {
+    padding: 24px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    background: rgba(239, 68, 68, 0.05);
+    border-radius: 20px 20px 0 0;
+}
+
+.modal-header-icon {
+    font-size: 32px;
+}
+
+.modal-header-danger .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.modal-header-danger .modal-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.cancella-riepilogo {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.riepilogo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+}
+
+.riepilogo-row:not(:last-child) {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.riepilogo-icon {
+    font-size: 20px;
+}
+
+.riepilogo-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.form-control-dark {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-family: 'Outfit', sans-serif;
+}
+
+.form-control-dark:focus {
+    background: rgba(15, 23, 42, 0.8);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 3px var(--accent-blue-glow);
+    color: var(--text-primary);
+}
+
+.form-control-dark::placeholder {
+    color: var(--text-muted);
+}
+
+.btn-secondary-dark {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.btn-secondary-dark:hover {
+    background: rgba(148, 163, 184, 0.1);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.btn-danger-custom {
+    background: linear-gradient(135deg, #EF4444, #DC2626);
+    border: none;
+    color: white;
+}
+
+.btn-danger-custom:hover {
+    background: linear-gradient(135deg, #DC2626, #B91C1C);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    color: white;
+}
+
+.btn-danger-custom:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Success Modal */
+.success-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.success-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #10B981;
+    margin: 0 0 8px;
+}
+
+.success-text {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (max-width: 992px) {
+    .prenotazioni-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .gestione-header {
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    
+    .gestione-header .page-subtitle {
+        display: none;
+    }
+    
+    .btn-add-new {
+        width: 100%;
+        justify-content: center;
+        margin-left: 0;
+    }
+    
+    .prenotazioni-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .prenotazione-datetime {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .kpi-card .kpi-value {
+        font-size: 24px;
+    }
+    
+    .kpi-card .kpi-icon {
+        font-size: 28px;
+    }
+    
+    .campo-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 22px;
+    }
+    
+    .campo-nome {
+        font-size: 15px;
+    }
+    
+    .section-title {
+        font-size: 16px;
+    }
+}
