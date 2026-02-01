@@ -6,9 +6,9 @@ if(!isUserLoggedIn() || isAdmin()){
     exit;
 }
 
-$templateParams["titolo"] = "Campus Sports - Dashboard";
-$templateParams["titolo_pagina"] = "Dashboard";
-$templateParams["nome"] = "dashboard.php";
+$templateParams["titolo"] = "Campus Sports - Segnalazioni";
+$templateParams["titolo_pagina"] = "Segnalazioni";
+$templateParams["nome"] = "segnalazioni.php";
 
 require 'template/base.php';
 ?>

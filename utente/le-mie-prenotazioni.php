@@ -6,8 +6,8 @@ if(!isUserLoggedIn() || isAdmin()){
     exit;
 }
 
-$templateParams["titolo"] = "Campus Sports - Le Mie Prenotazioni";
-$templateParams["titolo_pagina"] = "Le Mie Prenotazioni";
+$templateParams["titolo"] = "Campus Sports - Le mie prenotazioni";
+$templateParams["titolo_pagina"] = "Le mie prenotazioni";
 $templateParams["nome"] = "le-mie-prenotazioni.php";
 
 require 'template/base.php';
