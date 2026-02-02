@@ -5197,6 +5197,195 @@ class DatabaseHelper {
         return $stmt->get_result()->fetch_assoc();
     }
 
+    // ============================================================================
+    // SEGNALAZIONI UTENTE - Gestione completa
+    // ============================================================================
+    
+    /**
+     * Ottieni tutte le segnalazioni fatte dall'utente
+     */
+    public function getSegnalazioniUtente($userId) {
+        $query = "SELECT s.*, 
+                         CONCAT(us.nome, ' ', us.cognome) as segnalato_nome,
+                         p.data_prenotazione, p.ora_inizio, p.ora_fine,
+                         c.nome as campo_nome,
+                         sp.nome as sport_nome
+                  FROM segnalazioni s
+                  JOIN users us ON s.user_segnalato_id = us.user_id
+                  LEFT JOIN prenotazioni p ON s.prenotazione_id = p.prenotazione_id
+                  LEFT JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  LEFT JOIN sport sp ON c.sport_id = sp.sport_id
+                  WHERE s.user_segnalante_id = ?
+                  ORDER BY s.created_at DESC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Ottieni segnalazioni RICEVUTE dall'utente (dove lui è il segnalato)
+     */
+    public function getSegnalazioniRicevuteUtente($userId) {
+        $query = "SELECT s.*, 
+                         CONCAT(us.nome, ' ', us.cognome) as segnalante_nome,
+                         p.data_prenotazione, p.ora_inizio, p.ora_fine,
+                         c.nome as campo_nome,
+                         sp.nome as sport_nome
+                  FROM segnalazioni s
+                  JOIN users us ON s.user_segnalante_id = us.user_id
+                  LEFT JOIN prenotazioni p ON s.prenotazione_id = p.prenotazione_id
+                  LEFT JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  LEFT JOIN sport sp ON c.sport_id = sp.sport_id
+                  WHERE s.user_segnalato_id = ?
+                  ORDER BY s.created_at DESC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Ottieni prenotazioni completate dove l'utente può segnalare altri partecipanti
+     * (prenotazioni completate negli ultimi 15 giorni)
+     */
+    public function getPrenotazioniPerSegnalazione($userId) {
+        $query = "SELECT p.*, 
+                         c.nome as campo_nome, c.location,
+                         s.nome as sport_nome,
+                         DATEDIFF(CURDATE(), p.data_prenotazione) as giorni_trascorsi
+                  FROM prenotazioni p
+                  JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  WHERE p.user_id = ? 
+                    AND p.stato = 'completata'
+                    AND DATEDIFF(CURDATE(), p.data_prenotazione) <= 15
+                  ORDER BY p.data_prenotazione DESC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Cerca utenti per segnalazione (esclude l'utente corrente)
+     */
+    public function cercaUtentiPerSegnalazione($query, $excludeUserId, $limit = 10) {
+        $searchTerm = '%' . $query . '%';
+        $sql = "SELECT user_id, nome, cognome, email 
+                FROM users 
+                WHERE user_id != ? 
+                  AND ruolo = 'user'
+                  AND stato = 'attivo'
+                  AND (nome LIKE ? OR cognome LIKE ? OR CONCAT(nome, ' ', cognome) LIKE ?)
+                LIMIT ?";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param('isssi', $excludeUserId, $searchTerm, $searchTerm, $searchTerm, $limit);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Crea una nuova segnalazione
+     */
+    public function creaSegnalazioneUtente($segnalante_id, $segnalato_id, $tipo, $descrizione, $prenotazione_id) {
+        // Verifica che non stia segnalando se stesso
+        if ($segnalante_id == $segnalato_id) {
+            return ['success' => false, 'error' => 'Non puoi segnalare te stesso'];
+        }
+        
+        // Verifica che l'utente segnalato esista
+        $queryCheck = "SELECT user_id FROM users WHERE user_id = ? AND ruolo = 'user'";
+        $stmtCheck = $this->db->prepare($queryCheck);
+        $stmtCheck->bind_param('i', $segnalato_id);
+        $stmtCheck->execute();
+        if (!$stmtCheck->get_result()->fetch_assoc()) {
+            return ['success' => false, 'error' => 'Utente da segnalare non trovato'];
+        }
+        
+        // Verifica prenotazione (OBBLIGATORIA)
+        if (!$prenotazione_id || $prenotazione_id <= 0) {
+            return ['success' => false, 'error' => 'Devi selezionare una prenotazione di riferimento'];
+        }
+        
+        $queryPren = "SELECT prenotazione_id, DATEDIFF(CURDATE(), data_prenotazione) as giorni 
+                      FROM prenotazioni 
+                      WHERE prenotazione_id = ? AND user_id = ? AND stato = 'completata'";
+        $stmtPren = $this->db->prepare($queryPren);
+        $stmtPren->bind_param('ii', $prenotazione_id, $segnalante_id);
+        $stmtPren->execute();
+        $prenotazione = $stmtPren->get_result()->fetch_assoc();
+        
+        if (!$prenotazione) {
+            return ['success' => false, 'error' => 'Prenotazione non valida o non completata'];
+        }
+        
+        if ($prenotazione['giorni'] > 15) {
+            return ['success' => false, 'error' => 'Puoi segnalare solo per prenotazioni degli ultimi 15 giorni'];
+        }
+        
+        // Calcola priorità automatica
+        $priorita = $this->calcolaPrioritaSegnalazione($tipo);
+        
+        // Inserisci segnalazione
+        $query = "INSERT INTO segnalazioni (user_segnalante_id, user_segnalato_id, tipo, descrizione, prenotazione_id, priorita, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, NOW())";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('iissis', $segnalante_id, $segnalato_id, $tipo, $descrizione, $prenotazione_id, $priorita);
+        
+        if ($stmt->execute()) {
+            return ['success' => true, 'segnalazione_id' => $this->db->insert_id];
+        }
+        
+        return ['success' => false, 'error' => 'Errore durante l\'invio della segnalazione'];
+    }
+    
+    /**
+     * Ottieni dettaglio segnalazione utente
+     */
+    public function getSegnalazioneUtente($segnalazioneId, $userId) {
+        $query = "SELECT s.*, 
+                         CONCAT(us.nome, ' ', us.cognome) as segnalato_nome,
+                         p.data_prenotazione, p.ora_inizio, p.ora_fine,
+                         c.nome as campo_nome,
+                         sp.nome as sport_nome,
+                         CONCAT(a.nome, ' ', a.cognome) as admin_nome
+                  FROM segnalazioni s
+                  JOIN users us ON s.user_segnalato_id = us.user_id
+                  LEFT JOIN prenotazioni p ON s.prenotazione_id = p.prenotazione_id
+                  LEFT JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  LEFT JOIN sport sp ON c.sport_id = sp.sport_id
+                  LEFT JOIN users a ON s.admin_id = a.user_id
+                  WHERE s.segnalazione_id = ? AND s.user_segnalante_id = ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $segnalazioneId, $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    /**
+     * Conta segnalazioni utente per statistiche
+     */
+    public function contaSegnalazioniUtente($userId) {
+        $query = "SELECT 
+                    COUNT(*) as totali,
+                    SUM(CASE WHEN stato = 'pending' THEN 1 ELSE 0 END) as in_attesa,
+                    SUM(CASE WHEN stato = 'resolved' THEN 1 ELSE 0 END) as risolte,
+                    SUM(CASE WHEN stato = 'rejected' THEN 1 ELSE 0 END) as respinte
+                  FROM segnalazioni 
+                  WHERE user_segnalante_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+
 
 }
 ?>
