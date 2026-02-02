@@ -494,7 +494,7 @@ function aggiornaContatori(decremento = 1) {
     }
     
     // Badge sidebar (se esiste)
-    const sidebarBadge = document.querySelector('.nav-badge.notification-badge');
+    const sidebarBadge = document.querySelector('.sidebar-nav .nav-badge');
     if (sidebarBadge) {
         let val = parseInt(sidebarBadge.textContent) - decremento;
         if (val < 0) val = 0;
@@ -618,7 +618,7 @@ function eseguiSegnaTutteLette() {
                 const chipBadge = document.querySelector('.filter-chip .chip-badge');
                 if (chipBadge) chipBadge.style.display = 'none';
                 
-                const sidebarBadge = document.querySelector('.nav-badge.notification-badge');
+                const sidebarBadge = document.querySelector('.sidebar-nav .nav-badge');
                 if (sidebarBadge) sidebarBadge.style.display = 'none';
             }
         }

@@ -509,7 +509,7 @@ class DatabaseHelper {
     // CAMPI - Cambio stato rapido
     // ============================================================================
     
-    public function updateCampoStato($campoId, $nuovoStato, $adminId) {
+    public function updateCampoStato($campoId, $nuovoStato, $adminId, $motivo = null) {
         $campoOld = $this->getCampoById($campoId);
         
         $query = "UPDATE campi_sportivi SET stato = ? WHERE campo_id = ?";
@@ -518,17 +518,68 @@ class DatabaseHelper {
         
         if ($stmt->execute()) {
             $this->logCampoModifica($campoId, $adminId, $campoOld, ['stato' => $nuovoStato]);
+            
+            // Se il campo viene chiuso, notifica tutti gli utenti con prenotazioni future
+            if ($nuovoStato === 'chiuso') {
+                $campoNome = $campoOld['nome'] ?? 'Campo';
+                $this->notificaUtentiPrenotazioniFuture($campoId, $campoNome, $motivo, 'chiusura');
+            }
+            
             return true;
         }
         return false;
     }
     
-    // Versione semplificata senza admin logging
+    /**
+     * Notifica tutti gli utenti con prenotazioni future per un campo
+     * e cancella le loro prenotazioni
+     */
+    private function notificaUtentiPrenotazioniFuture($campoId, $campoNome, $motivo = null, $tipoEvento = 'chiusura') {
+        // Ottieni tutte le prenotazioni future confermate per questo campo
+        $query = "SELECT p.prenotazione_id, p.user_id, p.data_prenotazione, p.ora_inizio 
+                  FROM prenotazioni p 
+                  WHERE p.campo_id = ? 
+                    AND p.data_prenotazione >= CURDATE() 
+                    AND p.stato = 'confermata'";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $campoId);
+        $stmt->execute();
+        $prenotazioni = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        foreach ($prenotazioni as $pren) {
+            // Notifica l'utente
+            $this->notificaCampoChiuso($pren['user_id'], $campoNome, $pren['data_prenotazione'], $motivo);
+            
+            // Cancella la prenotazione
+            $cancelQuery = "UPDATE prenotazioni SET stato = 'cancellata', 
+                            motivo_cancellazione = ? WHERE prenotazione_id = ?";
+            $cancelStmt = $this->db->prepare($cancelQuery);
+            $motivoCancellazione = $motivo ?: 'Campo chiuso dall\'amministrazione';
+            $cancelStmt->bind_param('si', $motivoCancellazione, $pren['prenotazione_id']);
+            $cancelStmt->execute();
+        }
+        
+        return count($prenotazioni);
+    }
+    
+    // Versione semplificata senza admin logging (ma con notifiche per chiusura)
     public function updateStatoCampo($campoId, $nuovoStato) {
+        // Ottieni info campo prima dell'aggiornamento
+        $campoOld = $this->getCampoById($campoId);
+        
         $query = "UPDATE campi_sportivi SET stato = ? WHERE campo_id = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param('si', $nuovoStato, $campoId);
-        return $stmt->execute();
+        
+        if ($stmt->execute()) {
+            // Se il campo viene chiuso, notifica tutti gli utenti con prenotazioni future
+            if ($nuovoStato === 'chiuso' && $campoOld) {
+                $campoNome = $campoOld['nome'] ?? 'Campo';
+                $this->notificaUtentiPrenotazioniFuture($campoId, $campoNome, null, 'chiusura');
+            }
+            return true;
+        }
+        return false;;
     }
     
     // ============================================================================
@@ -573,10 +624,72 @@ class DatabaseHelper {
         );
         
         if ($stmt->execute()) {
-            $this->updateCampoStato($data['campo_id'], 'manutenzione', $data['created_by']);
-            return $this->db->insert_id;
+            $bloccoId = $this->db->insert_id;
+            
+            // Aggiorna lo stato del campo
+            $this->updateStatoCampo($data['campo_id'], 'manutenzione');
+            
+            // Ottieni nome campo
+            $campo = $this->getCampoById($data['campo_id']);
+            $campoNome = $campo['nome'] ?? 'Campo';
+            
+            // Notifica utenti con prenotazioni durante il periodo di manutenzione
+            $this->notificaUtentiPrenotazioniPeriodo(
+                $data['campo_id'], 
+                $campoNome,
+                $data['data_inizio'], 
+                $data['data_fine'],
+                $data['ora_inizio'],
+                $data['ora_fine'],
+                $data['motivo']
+            );
+            
+            return $bloccoId;
         }
         return false;
+    }
+    
+    /**
+     * Notifica utenti con prenotazioni durante un periodo specifico (manutenzione)
+     * e cancella le loro prenotazioni
+     */
+    private function notificaUtentiPrenotazioniPeriodo($campoId, $campoNome, $dataInizio, $dataFine, $oraInizio = null, $oraFine = null, $motivo = null) {
+        // Query per trovare prenotazioni che si sovrappongono con il periodo di manutenzione
+        $query = "SELECT p.prenotazione_id, p.user_id, p.data_prenotazione, p.ora_inizio, p.ora_fine
+                  FROM prenotazioni p 
+                  WHERE p.campo_id = ? 
+                    AND p.stato = 'confermata'
+                    AND p.data_prenotazione >= ?
+                    AND p.data_prenotazione <= ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('iss', $campoId, $dataInizio, $dataFine);
+        $stmt->execute();
+        $prenotazioni = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        foreach ($prenotazioni as $pren) {
+            // Verifica sovrapposizione oraria se specificata
+            $sovrapposta = true;
+            if ($oraInizio && $oraFine) {
+                // Controlla se c'è sovrapposizione oraria
+                $sovrapposta = !($pren['ora_fine'] <= $oraInizio || $pren['ora_inizio'] >= $oraFine);
+            }
+            
+            if ($sovrapposta) {
+                // Notifica l'utente
+                $this->notificaManutenzioneProgrammata($pren['user_id'], $campoNome, $dataInizio, $dataFine);
+                
+                // Cancella la prenotazione
+                $cancelQuery = "UPDATE prenotazioni SET stato = 'cancellata', 
+                                motivo_cancellazione = ? WHERE prenotazione_id = ?";
+                $cancelStmt = $this->db->prepare($cancelQuery);
+                $motivoCancellazione = $motivo ?: 'Manutenzione programmata';
+                $cancelStmt->bind_param('si', $motivoCancellazione, $pren['prenotazione_id']);
+                $cancelStmt->execute();
+            }
+        }
+        
+        return count($prenotazioni);
     }
     
     // ============================================================================
@@ -934,10 +1047,29 @@ class DatabaseHelper {
             return false;
         }
         
+        // Ottieni info recensione per la notifica
+        $queryInfo = "SELECT r.user_id, c.nome as campo_nome 
+                      FROM recensioni r 
+                      JOIN campi_sportivi c ON r.campo_id = c.campo_id 
+                      WHERE r.recensione_id = ?";
+        $stmtInfo = $this->db->prepare($queryInfo);
+        $stmtInfo->bind_param('i', $recensioneId);
+        $stmtInfo->execute();
+        $recensioneInfo = $stmtInfo->get_result()->fetch_assoc();
+        
         $query = "INSERT INTO recensione_risposte (recensione_id, admin_id, testo) VALUES (?, ?, ?)";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param('iis', $recensioneId, $adminId, $testo);
-        return $stmt->execute();
+        
+        if ($stmt->execute()) {
+            // Invia notifica all'utente che ha scritto la recensione
+            if ($recensioneInfo) {
+                $this->notificaRispostaRecensione($recensioneInfo['user_id'], $recensioneInfo['campo_nome']);
+            }
+            return true;
+        }
+        
+        return false;
     }
     
     // ============================================================================
@@ -2481,13 +2613,16 @@ class DatabaseHelper {
     public function countDestinatariBroadcast($targetType, $targetFilter = null) {
         $query = "";
         
+        // NOTA: Le comunicazioni broadcast arrivano a TUTTI gli utenti,
+        // inclusi quelli sospesi o bannati (potrebbero contenere info importanti)
+        
         switch ($targetType) {
             case 'tutti':
-                $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user'";
                 break;
                 
             case 'attivi':
-                // Utenti che hanno fatto almeno una prenotazione nell'ultimo mese
+                // Solo utenti attivi con prenotazioni recenti
                 $query = "SELECT COUNT(DISTINCT u.user_id) as count 
                           FROM users u 
                           JOIN prenotazioni p ON u.user_id = p.user_id 
@@ -2500,10 +2635,10 @@ class DatabaseHelper {
                     $query = "SELECT COUNT(*) as count 
                               FROM users u 
                               JOIN utenti_standard us ON u.user_id = us.user_id 
-                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              WHERE u.ruolo = 'user' 
                               AND us.corso_laurea_id = " . intval($targetFilter);
                 } else {
-                    $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                    $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user'";
                 }
                 break;
                 
@@ -2512,10 +2647,10 @@ class DatabaseHelper {
                     $query = "SELECT COUNT(DISTINCT u.user_id) as count 
                               FROM users u 
                               JOIN user_sport_preferiti usp ON u.user_id = usp.user_id 
-                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              WHERE u.ruolo = 'user' 
                               AND usp.sport_id = " . intval($targetFilter);
                 } else {
-                    $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                    $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user'";
                 }
                 break;
                 
@@ -2524,10 +2659,10 @@ class DatabaseHelper {
                     $query = "SELECT COUNT(*) as count 
                               FROM users u 
                               JOIN utenti_standard us ON u.user_id = us.user_id 
-                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              WHERE u.ruolo = 'user' 
                               AND us.livello_id = " . intval($targetFilter);
                 } else {
-                    $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                    $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user'";
                 }
                 break;
                 
@@ -2555,7 +2690,7 @@ class DatabaseHelper {
                     }
                     
                     if (!empty($conditions)) {
-                        $query = "SELECT COUNT(*) as count FROM users u WHERE u.stato = 'attivo' AND (" . implode(' OR ', $conditions) . ")";
+                        $query = "SELECT COUNT(*) as count FROM users u WHERE u.ruolo = 'user' AND (" . implode(' OR ', $conditions) . ")";
                     } else {
                         return 0;
                     }
@@ -2565,7 +2700,7 @@ class DatabaseHelper {
                 break;
                 
             default:
-                $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                $query = "SELECT COUNT(*) as count FROM users WHERE ruolo = 'user'";
         }
         
         $result = $this->db->query($query);
@@ -2580,12 +2715,16 @@ class DatabaseHelper {
     public function getDestinatariBroadcast($targetType, $targetFilter = null) {
         $query = "";
         
+        // NOTA: Le comunicazioni broadcast arrivano a TUTTI gli utenti,
+        // inclusi quelli sospesi o bannati (potrebbero contenere info importanti)
+        
         switch ($targetType) {
             case 'tutti':
-                $query = "SELECT user_id, email FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                $query = "SELECT user_id, email FROM users WHERE ruolo = 'user'";
                 break;
                 
             case 'attivi':
+                // Solo utenti attivi con prenotazioni recenti
                 $query = "SELECT DISTINCT u.user_id, u.email 
                           FROM users u 
                           JOIN prenotazioni p ON u.user_id = p.user_id 
@@ -2598,10 +2737,10 @@ class DatabaseHelper {
                     $query = "SELECT u.user_id, u.email 
                               FROM users u 
                               JOIN utenti_standard us ON u.user_id = us.user_id 
-                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              WHERE u.ruolo = 'user' 
                               AND us.corso_laurea_id = " . intval($targetFilter);
                 } else {
-                    $query = "SELECT user_id, email FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                    $query = "SELECT user_id, email FROM users WHERE ruolo = 'user'";
                 }
                 break;
                 
@@ -2610,10 +2749,10 @@ class DatabaseHelper {
                     $query = "SELECT DISTINCT u.user_id, u.email 
                               FROM users u 
                               JOIN user_sport_preferiti usp ON u.user_id = usp.user_id 
-                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              WHERE u.ruolo = 'user' 
                               AND usp.sport_id = " . intval($targetFilter);
                 } else {
-                    $query = "SELECT user_id, email FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                    $query = "SELECT user_id, email FROM users WHERE ruolo = 'user'";
                 }
                 break;
                 
@@ -2622,10 +2761,10 @@ class DatabaseHelper {
                     $query = "SELECT u.user_id, u.email 
                               FROM users u 
                               JOIN utenti_standard us ON u.user_id = us.user_id 
-                              WHERE u.ruolo = 'user' AND u.stato = 'attivo' 
+                              WHERE u.ruolo = 'user' 
                               AND us.livello_id = " . intval($targetFilter);
                 } else {
-                    $query = "SELECT user_id, email FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                    $query = "SELECT user_id, email FROM users WHERE ruolo = 'user'";
                 }
                 break;
                 
@@ -2652,7 +2791,7 @@ class DatabaseHelper {
                     }
                     
                     if (!empty($conditions)) {
-                        $query = "SELECT u.user_id, u.email FROM users u WHERE u.stato = 'attivo' AND (" . implode(' OR ', $conditions) . ")";
+                        $query = "SELECT u.user_id, u.email FROM users u WHERE u.ruolo = 'user' AND (" . implode(' OR ', $conditions) . ")";
                     } else {
                         return [];
                     }
@@ -2662,10 +2801,15 @@ class DatabaseHelper {
                 break;
                 
             default:
-                $query = "SELECT user_id, email FROM users WHERE ruolo = 'user' AND stato = 'attivo'";
+                $query = "SELECT user_id, email FROM users WHERE ruolo = 'user'";
         }
         
         $result = $this->db->query($query);
+        if ($result === false) {
+            // Log errore SQL per debug
+            error_log("Errore SQL in getDestinatariBroadcast: " . $this->db->error . " - Query: " . $query);
+            return [];
+        }
         return $result->fetch_all(MYSQLI_ASSOC);
     }
     
@@ -2680,18 +2824,27 @@ class DatabaseHelper {
             // Determina lo stato
             $stato = !empty($data['scheduled_at']) ? 'programmato' : 'inviato';
             
-            // Conta destinatari
-            $targetFilter = !empty($data['target_filter']) ? json_decode($data['target_filter'], true) : null;
-            if (is_string($targetFilter)) {
-                $targetFilter = $targetFilter; // Mantieni come stringa se non è JSON valido
+            // Conta destinatari - gestisci target_filter correttamente
+            $targetFilterDecoded = null;
+            if (!empty($data['target_filter'])) {
+                $decoded = json_decode($data['target_filter'], true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $targetFilterDecoded = is_array($decoded) ? ($decoded[0] ?? null) : $decoded;
+                } else {
+                    $targetFilterDecoded = $data['target_filter'];
+                }
             }
-            $numDestinatari = $this->countDestinatariBroadcast($data['target_type'], is_array($targetFilter) ? $targetFilter[0] ?? null : $targetFilter);
+            
+            $numDestinatari = $this->countDestinatariBroadcast($data['target_type'], $targetFilterDecoded);
             
             // Inserisci broadcast
             $query = "INSERT INTO broadcast_messages 
                       (admin_id, oggetto, messaggio, target_type, target_filter, canale, scheduled_at, num_destinatari, stato) 
                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $this->db->prepare($query);
+            if (!$stmt) {
+                throw new Exception("Errore prepare: " . $this->db->error);
+            }
             $stmt->bind_param('issssssis', 
                 $data['admin_id'],
                 $data['oggetto'],
@@ -2703,29 +2856,42 @@ class DatabaseHelper {
                 $numDestinatari,
                 $stato
             );
-            $stmt->execute();
+            if (!$stmt->execute()) {
+                throw new Exception("Errore insert broadcast: " . $stmt->error);
+            }
             $broadcastId = $this->db->insert_id;
+            
+            $notificheCreate = 0;
             
             // Se invio immediato, crea le notifiche
             if ($stato === 'inviato') {
-                $destinatari = $this->getDestinatariBroadcast($data['target_type'], is_array($targetFilter) ? $targetFilter[0] ?? null : $targetFilter);
+                $destinatari = $this->getDestinatariBroadcast($data['target_type'], $targetFilterDecoded);
                 
-                // Invia notifiche in-app
-                if ($data['canale'] === 'in_app' || $data['canale'] === 'entrambi') {
+                // Debug: log numero destinatari trovati
+                error_log("Broadcast ID $broadcastId: trovati " . count($destinatari) . " destinatari, canale: " . $data['canale']);
+                
+                // Invia notifiche in-app (controlla TUTTI i valori possibili del canale)
+                $canale = strtolower(trim($data['canale'] ?? 'in_app'));
+                if ($canale === 'in_app' || $canale === 'entrambi' || $canale === 'in-app' || $canale === 'inapp') {
                     foreach ($destinatari as $dest) {
-                        $this->creaNotifica(
+                        if ($this->creaNotifica(
                             $dest['user_id'],
                             'broadcast',
                             $data['oggetto'],
                             $data['messaggio']
-                        );
+                        )) {
+                            $notificheCreate++;
+                        }
                     }
                 }
                 
-                // Aggiorna timestamp invio
-                $updateQuery = "UPDATE broadcast_messages SET sent_at = NOW() WHERE broadcast_id = ?";
+                // Debug: log notifiche create
+                error_log("Broadcast ID $broadcastId: create $notificheCreate notifiche in-app");
+                
+                // Aggiorna timestamp invio e numero effettivo notifiche
+                $updateQuery = "UPDATE broadcast_messages SET sent_at = NOW(), num_destinatari = ? WHERE broadcast_id = ?";
                 $updateStmt = $this->db->prepare($updateQuery);
-                $updateStmt->bind_param('i', $broadcastId);
+                $updateStmt->bind_param('ii', $notificheCreate, $broadcastId);
                 $updateStmt->execute();
             }
             
@@ -2743,11 +2909,13 @@ class DatabaseHelper {
             return [
                 'success' => true,
                 'broadcast_id' => $broadcastId,
-                'destinatari' => $numDestinatari
+                'destinatari' => $notificheCreate > 0 ? $notificheCreate : $numDestinatari,
+                'notifiche_create' => $notificheCreate
             ];
             
         } catch (Exception $e) {
             $this->db->rollback();
+            error_log("Errore createBroadcast: " . $e->getMessage());
             return [
                 'success' => false,
                 'message' => 'Errore: ' . $e->getMessage()
@@ -2911,21 +3079,6 @@ class DatabaseHelper {
     }
     
     // ============================================================================
-    // TEMPLATE NOTIFICHE - Ottieni template per broadcast (esclusi quelli di sistema)
-    // ============================================================================
-    
-    public function getNotificationTemplates() {
-        // Escludi template di sistema (prenotazioni automatiche, reminder, broadcast salvati automaticamente)
-        $query = "SELECT * FROM notification_templates 
-                  WHERE attivo = 1 
-                    AND tipo NOT LIKE 'prenotazione_%' 
-                    AND tipo NOT LIKE 'reminder_%'
-                    AND tipo NOT LIKE 'broadcast_%'
-                  ORDER BY titolo_template ASC";
-        $result = $this->db->query($query);
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
-    
     // ============================================================================
     // TEMPLATE NOTIFICHE - Salva template
     // ============================================================================
@@ -3035,12 +3188,19 @@ class DatabaseHelper {
     // ============================================================================
     
     public function searchUsersForMessage($searchTerm) {
-        $query = "SELECT user_id, email, nome, cognome 
+        // Ricerca TUTTI gli utenti (inclusi bannati e sospesi) per le comunicazioni admin
+        $query = "SELECT user_id, email, nome, cognome, stato 
                   FROM users 
-                  WHERE stato = 'attivo' 
+                  WHERE ruolo = 'user'
                   AND (nome LIKE ? OR cognome LIKE ? OR email LIKE ? OR CONCAT(nome, ' ', cognome) LIKE ?)
-                  ORDER BY cognome, nome
-                  LIMIT 10";
+                  ORDER BY 
+                    CASE stato 
+                        WHEN 'attivo' THEN 1 
+                        WHEN 'sospeso' THEN 2 
+                        WHEN 'bannato' THEN 3 
+                    END,
+                    cognome, nome
+                  LIMIT 20";
         $stmt = $this->db->prepare($query);
         $term = '%' . $searchTerm . '%';
         $stmt->bind_param('ssss', $term, $term, $term, $term);
@@ -4196,76 +4356,6 @@ class DatabaseHelper {
     }
     
     /**
-     * Ottieni solo i template notifiche per prenotazioni (conferma, reminder, cancellazione)
-     */
-    public function getNotificationTemplatesPrenotazioni() {
-        $query = "SELECT * FROM notification_templates 
-                  WHERE tipo IN ('conferma_prenotazione', 'reminder_prenotazione', 'cancellazione_prenotazione')
-                  ORDER BY FIELD(tipo, 'conferma_prenotazione', 'reminder_prenotazione', 'cancellazione_prenotazione')";
-        $result = $this->db->query($query);
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
-    
-    /**
-     * Ottieni un template notifica per ID
-     */
-    public function getNotificationTemplate($templateId) {
-        $query = "SELECT * FROM notification_templates WHERE template_id = ?";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('i', $templateId);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_assoc();
-    }
-    
-    /**
-     * Aggiorna template notifica
-     */
-    public function updateNotificationTemplate($templateId, $titolo, $messaggio, $attivo, $adminId) {
-        $query = "UPDATE notification_templates 
-                  SET titolo_template = ?, messaggio_template = ?, attivo = ?, updated_by = ?
-                  WHERE template_id = ?";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('ssiii', $titolo, $messaggio, $attivo, $adminId, $templateId);
-        
-        return $stmt->execute();
-    }
-    
-    /**
-     * Ottieni tutti i badge
-     */
-    public function getAllBadges() {
-        $query = "SELECT * FROM badges ORDER BY categoria, nome";
-        $result = $this->db->query($query);
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    }
-    
-    /**
-     * Ottieni badge per ID
-     */
-    public function getBadgeById($badgeId) {
-        $query = "SELECT * FROM badges WHERE badge_id = ?";
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('i', $badgeId);
-        $stmt->execute();
-        return $stmt->get_result()->fetch_assoc();
-    }
-    
-    /**
-     * Aggiorna badge
-     */
-    public function updateBadge($badgeId, $nome, $descrizione, $criterioValore, $xpReward, $attivo) {
-        $query = "UPDATE badges 
-                  SET nome = ?, descrizione = ?, criterio_valore = ?, xp_reward = ?, attivo = ?
-                  WHERE badge_id = ?";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->bind_param('ssiiii', $nome, $descrizione, $criterioValore, $xpReward, $attivo, $badgeId);
-        
-        return $stmt->execute();
-    }
-    
-    /**
      * Ottieni giorni di chiusura
      */
     public function getGiorniChiusura() {
@@ -4932,7 +5022,7 @@ class DatabaseHelper {
     }
     
     /**
-     * Notifica: Promemoria prenotazione (per cron job)
+     * Notifica: Promemoria prenotazione (per uso futuro)
      */
     public function notificaPromemoriaPrenotazione($userId, $campoNome, $data, $oraInizio) {
         $dataFormattata = date('d/m/Y', strtotime($data));
@@ -5339,7 +5429,12 @@ class DatabaseHelper {
         $stmt->bind_param('iissis', $segnalante_id, $segnalato_id, $tipo, $descrizione, $prenotazione_id, $priorita);
         
         if ($stmt->execute()) {
-            return ['success' => true, 'segnalazione_id' => $this->db->insert_id];
+            $segnalazioneId = $this->db->insert_id;
+            
+            // Notifica all'utente segnalato
+            $this->notificaSegnalazioneRicevuta($segnalato_id, $tipo);
+            
+            return ['success' => true, 'segnalazione_id' => $segnalazioneId];
         }
         
         return ['success' => false, 'error' => 'Errore durante l\'invio della segnalazione'];
@@ -5384,6 +5479,321 @@ class DatabaseHelper {
         $stmt->bind_param('i', $userId);
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc();
+    }
+
+    // ============================================================================
+    // PROFILO UTENTE - Funzioni complete
+    // ============================================================================
+    
+    /**
+     * Ottieni profilo completo utente con tutte le info
+     */
+    public function getProfiloCompleto($userId) {
+        $query = "SELECT 
+                    u.user_id, u.email, u.nome, u.cognome, u.telefono, u.ruolo, u.stato, 
+                    u.ultimo_accesso, u.created_at,
+                    us.corso_laurea_id, us.anno_iscrizione, us.data_nascita, us.indirizzo,
+                    us.penalty_points, us.xp_points, us.livello_id,
+                    cl.nome as corso_nome, cl.facolta,
+                    l.nome as livello_nome, l.xp_minimo, l.xp_massimo,
+                    l.max_prenotazioni_simultanee, l.max_ore_settimanali, l.giorni_anticipo_prenotazione
+                  FROM users u
+                  LEFT JOIN utenti_standard us ON u.user_id = us.user_id
+                  LEFT JOIN corsi_laurea cl ON us.corso_laurea_id = cl.corso_id
+                  LEFT JOIN livelli l ON us.livello_id = l.livello_id
+                  WHERE u.user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    /**
+     * Ottieni statistiche complete profilo
+     */
+    public function getStatisticheProfilo($userId) {
+        // Statistiche prenotazioni
+        $queryPren = "SELECT 
+                        COUNT(*) as totale_prenotazioni,
+                        SUM(CASE WHEN stato = 'completata' THEN 1 ELSE 0 END) as completate,
+                        SUM(CASE WHEN stato = 'no_show' THEN 1 ELSE 0 END) as no_show,
+                        SUM(CASE WHEN stato = 'cancellata' THEN 1 ELSE 0 END) as cancellate,
+                        SUM(CASE WHEN stato = 'confermata' THEN 1 ELSE 0 END) as attive,
+                        SUM(CASE WHEN stato = 'completata' THEN TIMESTAMPDIFF(HOUR, ora_inizio, ora_fine) ELSE 0 END) as ore_giocate
+                      FROM prenotazioni WHERE user_id = ?";
+        $stmt = $this->db->prepare($queryPren);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stats = $stmt->get_result()->fetch_assoc();
+        
+        // Affidabilità
+        $totaleCompletabili = $stats['completate'] + $stats['no_show'];
+        $stats['affidabilita'] = $totaleCompletabili > 0 
+            ? round(($stats['completate'] / $totaleCompletabili) * 100, 1) 
+            : 100;
+        
+        // Recensioni fatte
+        $queryRec = "SELECT COUNT(*) as totale, ROUND(AVG(rating_generale), 1) as media 
+                     FROM recensioni WHERE user_id = ?";
+        $stmt = $this->db->prepare($queryRec);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $recStats = $stmt->get_result()->fetch_assoc();
+        $stats['recensioni_fatte'] = $recStats['totale'] ?? 0;
+        $stats['media_voti_dati'] = $recStats['media'] ?? 0;
+        
+        // Segnalazioni
+        $querySegnFatte = "SELECT COUNT(*) as totale FROM segnalazioni WHERE user_segnalante_id = ?";
+        $stmt = $this->db->prepare($querySegnFatte);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stats['segnalazioni_fatte'] = $stmt->get_result()->fetch_assoc()['totale'] ?? 0;
+        
+        $querySegnRic = "SELECT COUNT(*) as totale FROM segnalazioni WHERE user_segnalato_id = ?";
+        $stmt = $this->db->prepare($querySegnRic);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stats['segnalazioni_ricevute'] = $stmt->get_result()->fetch_assoc()['totale'] ?? 0;
+        
+        // Badges sbloccati
+        $queryBadges = "SELECT COUNT(*) as totale FROM user_badges WHERE user_id = ?";
+        $stmt = $this->db->prepare($queryBadges);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stats['badges_sbloccati'] = $stmt->get_result()->fetch_assoc()['totale'] ?? 0;
+        
+        // Membro da
+        $queryCreated = "SELECT created_at FROM users WHERE user_id = ?";
+        $stmt = $this->db->prepare($queryCreated);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $created = $stmt->get_result()->fetch_assoc()['created_at'];
+        $stats['membro_da_giorni'] = floor((time() - strtotime($created)) / 86400);
+        
+        return $stats;
+    }
+    
+    /**
+     * Aggiorna profilo utente
+     */
+    public function aggiornaProfilo($userId, $dati) {
+        $this->db->begin_transaction();
+        
+        try {
+            // Aggiorna tabella users (solo telefono)
+            $queryUsers = "UPDATE users SET telefono = ? WHERE user_id = ?";
+            $stmt = $this->db->prepare($queryUsers);
+            $telefono = !empty($dati['telefono']) ? $dati['telefono'] : null;
+            $stmt->bind_param('si', $telefono, $userId);
+            $stmt->execute();
+            
+            // Aggiorna tabella utenti_standard (solo indirizzo)
+            $queryStandard = "UPDATE utenti_standard SET indirizzo = ? WHERE user_id = ?";
+            $stmt = $this->db->prepare($queryStandard);
+            $indirizzo = !empty($dati['indirizzo']) ? $dati['indirizzo'] : null;
+            $stmt->bind_param('si', $indirizzo, $userId);
+            $stmt->execute();
+            
+            $this->db->commit();
+            return ['success' => true];
+        } catch (Exception $e) {
+            $this->db->rollback();
+            return ['success' => false, 'error' => 'Errore durante l\'aggiornamento: ' . $e->getMessage()];
+        }
+    }
+    
+    /**
+     * Ottieni campo e sport preferiti dell'utente basati sulle prenotazioni
+     */
+    public function getPreferiti($userId) {
+        $result = ['campo' => null, 'sport' => null];
+        
+        // Campo preferito (basato su numero prenotazioni e ore totali)
+        $queryCampo = "SELECT c.campo_id, c.nome as campo_nome, c.location,
+                              COUNT(*) as num_prenotazioni,
+                              SUM(TIMESTAMPDIFF(HOUR, p.ora_inizio, p.ora_fine)) as ore_totali
+                       FROM prenotazioni p
+                       JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                       WHERE p.user_id = ? AND p.stato IN ('completata', 'confermata')
+                       GROUP BY c.campo_id
+                       ORDER BY num_prenotazioni DESC, ore_totali DESC
+                       LIMIT 1";
+        $stmt = $this->db->prepare($queryCampo);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $campo = $stmt->get_result()->fetch_assoc();
+        if ($campo) {
+            $result['campo'] = $campo;
+        }
+        
+        // Sport preferito (basato su numero prenotazioni e ore totali)
+        $querySport = "SELECT s.sport_id, s.nome as sport_nome, s.icona,
+                              COUNT(*) as num_prenotazioni,
+                              SUM(TIMESTAMPDIFF(HOUR, p.ora_inizio, p.ora_fine)) as ore_totali
+                       FROM prenotazioni p
+                       JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                       JOIN sport s ON c.sport_id = s.sport_id
+                       WHERE p.user_id = ? AND p.stato IN ('completata', 'confermata')
+                       GROUP BY s.sport_id
+                       ORDER BY num_prenotazioni DESC, ore_totali DESC
+                       LIMIT 1";
+        $stmt = $this->db->prepare($querySport);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $sport = $stmt->get_result()->fetch_assoc();
+        if ($sport) {
+            $result['sport'] = $sport;
+        }
+        
+        return $result;
+    }
+    
+    // ============================================================================
+    // DASHBOARD UTENTE
+    // ============================================================================
+    
+    /**
+     * Ottieni statistiche rapide per dashboard utente
+     */
+    public function getDashboardStats($userId) {
+        $stats = [];
+        
+        // Prenotazioni attive (future confermate)
+        $query = "SELECT COUNT(*) as totale FROM prenotazioni 
+                  WHERE user_id = ? AND stato = 'confermata' AND data_prenotazione >= CURDATE()";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stats['prenotazioni_attive'] = $stmt->get_result()->fetch_assoc()['totale'] ?? 0;
+        
+        // Ore prenotate questo mese
+        $query = "SELECT COALESCE(SUM(TIMESTAMPDIFF(HOUR, ora_inizio, ora_fine)), 0) as ore 
+                  FROM prenotazioni 
+                  WHERE user_id = ? AND MONTH(data_prenotazione) = MONTH(CURDATE()) AND YEAR(data_prenotazione) = YEAR(CURDATE())";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stats['ore_questo_mese'] = $stmt->get_result()->fetch_assoc()['ore'] ?? 0;
+        
+        // Prenotazioni completate totali
+        $query = "SELECT COUNT(*) as totale FROM prenotazioni WHERE user_id = ? AND stato = 'completata'";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stats['completate_totali'] = $stmt->get_result()->fetch_assoc()['totale'] ?? 0;
+        
+        // Notifiche non lette
+        $query = "SELECT COUNT(*) as totale FROM notifiche WHERE user_id = ? AND letta = 0";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stats['notifiche_non_lette'] = $stmt->get_result()->fetch_assoc()['totale'] ?? 0;
+        
+        // Badges sbloccati
+        $query = "SELECT COUNT(*) as totale FROM user_badges WHERE user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stats['badges_sbloccati'] = $stmt->get_result()->fetch_assoc()['totale'] ?? 0;
+        
+        // Recensioni scritte
+        $query = "SELECT COUNT(*) as totale FROM recensioni WHERE user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $stats['recensioni_scritte'] = $stmt->get_result()->fetch_assoc()['totale'] ?? 0;
+        
+        return $stats;
+    }
+    
+    /**
+     * Ottieni prossime prenotazioni per dashboard (limit 5)
+     */
+    public function getProssimePrenotazioni($userId, $limit = 5) {
+        $query = "SELECT p.*, c.nome as campo_nome, c.location, s.nome as sport_nome, s.icona as sport_icona
+                  FROM prenotazioni p
+                  JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  WHERE p.user_id = ? AND p.stato = 'confermata' AND p.data_prenotazione >= CURDATE()
+                  ORDER BY p.data_prenotazione ASC, p.ora_inizio ASC
+                  LIMIT ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $userId, $limit);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Ottieni attività recenti dell'utente
+     */
+    public function getAttivitaUtente($userId, $limit = 8) {
+        $attivita = [];
+        
+        // Prenotazioni recenti
+        $query = "SELECT 'prenotazione' as tipo, p.created_at as data, 
+                         CONCAT('Prenotazione ', c.nome, ' - ', DATE_FORMAT(p.data_prenotazione, '%d/%m')) as descrizione,
+                         p.stato
+                  FROM prenotazioni p
+                  JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  WHERE p.user_id = ?
+                  ORDER BY p.created_at DESC LIMIT 4";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $prenotazioni = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $attivita = array_merge($attivita, $prenotazioni);
+        
+        // Recensioni recenti
+        $query = "SELECT 'recensione' as tipo, r.created_at as data,
+                         CONCAT('Recensione a ', c.nome, ' - ', r.rating_generale, '★') as descrizione,
+                         'completata' as stato
+                  FROM recensioni r
+                  JOIN campi_sportivi c ON r.campo_id = c.campo_id
+                  WHERE r.user_id = ?
+                  ORDER BY r.created_at DESC LIMIT 2";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $recensioni = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $attivita = array_merge($attivita, $recensioni);
+        
+        // Badges sbloccati
+        $query = "SELECT 'badge' as tipo, ub.sbloccato_at as data,
+                         CONCAT('Badge sbloccato: ', b.nome) as descrizione,
+                         'completata' as stato
+                  FROM user_badges ub
+                  JOIN badges b ON ub.badge_id = b.badge_id
+                  WHERE ub.user_id = ?
+                  ORDER BY ub.sbloccato_at DESC LIMIT 2";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $badges = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $attivita = array_merge($attivita, $badges);
+        
+        // Ordina per data e limita
+        usort($attivita, function($a, $b) {
+            return strtotime($b['data']) - strtotime($a['data']);
+        });
+        
+        return array_slice($attivita, 0, $limit);
+    }
+    
+    /**
+     * Ottieni distribuzione sport dell'utente
+     */
+    public function getDistribuzioneSportUtente($userId) {
+        $query = "SELECT s.nome as sport, s.icona, COUNT(*) as prenotazioni
+                  FROM prenotazioni p
+                  JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  WHERE p.user_id = ? AND p.stato IN ('completata', 'confermata')
+                  GROUP BY s.sport_id
+                  ORDER BY prenotazioni DESC";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 
 

@@ -5,37 +5,7 @@
 <?php
 // Estrai variabili
 $regole = $templateParams['regole'] ?? [];
-$templates = $templateParams['templates'] ?? [];
-$oreReminder = $templateParams['ore_reminder'] ?? 48;
 $giorniChiusura = $templateParams['giorni_chiusura'] ?? [];
-
-// Helper per tipo template
-function getTemplateIcon($tipo) {
-    $icons = [
-        'conferma_prenotazione' => '✅',
-        'reminder_prenotazione' => '⏰',
-        'cancellazione_prenotazione' => '❌'
-    ];
-    return $icons[$tipo] ?? '📧';
-}
-
-function getTemplateLabel($tipo) {
-    $labels = [
-        'conferma_prenotazione' => 'Conferma Prenotazione',
-        'reminder_prenotazione' => 'Reminder Prima della Prenotazione',
-        'cancellazione_prenotazione' => 'Cancellazione Prenotazione'
-    ];
-    return $labels[$tipo] ?? ucfirst(str_replace('_', ' ', $tipo));
-}
-
-function getTemplateDescription($tipo) {
-    $descriptions = [
-        'conferma_prenotazione' => 'Inviato automaticamente subito dopo la conferma della prenotazione',
-        'reminder_prenotazione' => 'Inviato automaticamente prima della data della prenotazione',
-        'cancellazione_prenotazione' => 'Inviato automaticamente quando una prenotazione viene cancellata'
-    ];
-    return $descriptions[$tipo] ?? '';
-}
 
 // Helper per nome giorno
 function getNomeGiorno($data) {
@@ -56,9 +26,6 @@ function getNomeGiorno($data) {
 <div class="tabs-container mb-4">
     <button class="tab-btn active" data-tab="regole" onclick="switchTab('regole')">
         📋 Regole Prenotazione
-    </button>
-    <button class="tab-btn" data-tab="templates" onclick="switchTab('templates')">
-        📧 Template Notifiche
     </button>
     <button class="tab-btn" data-tab="chiusure" onclick="switchTab('chiusure')">
         📅 Giorni Chiusura
@@ -126,68 +93,6 @@ function getNomeGiorno($data) {
 </div>
 
 <!-- ============================================================================
-     TAB: TEMPLATE NOTIFICHE
-     ============================================================================ -->
-<div id="tab-templates" class="tab-content">
-    <div class="config-card">
-        <div class="config-card-header">
-            <div class="config-card-icon">📧</div>
-            <div>
-                <h3>Template Notifiche</h3>
-                <p>Personalizza i messaggi automatici inviati agli utenti</p>
-            </div>
-        </div>
-        
-        <!-- Configurazione Ore Reminder -->
-        <div class="reminder-config">
-            <div class="reminder-config-inner">
-                <div class="reminder-icon">⏰</div>
-                <div class="reminder-text">
-                    <label class="config-label">Ore prima per il Reminder</label>
-                    <p class="config-description">Quante ore prima della prenotazione inviare il promemoria all'utente</p>
-                </div>
-                <div class="reminder-input-group">
-                    <input type="number" id="oreReminder" class="config-input" 
-                           value="<?= $oreReminder ?>" min="1" max="168">
-                    <span class="config-unit">ore</span>
-                    <button type="button" class="btn-save-small" onclick="salvaOreReminder()">Salva</button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="templates-grid">
-            <?php if (empty($templates)): ?>
-            <div class="no-results">
-                <div class="no-results-icon">📭</div>
-                <h3>Nessun template configurato</h3>
-                <p>I template verranno creati automaticamente.</p>
-            </div>
-            <?php else: ?>
-            <?php foreach ($templates as $template): ?>
-            <div class="template-card <?= $template['attivo'] ? '' : 'disabled' ?>">
-                <div class="template-header">
-                    <span class="template-icon"><?= getTemplateIcon($template['tipo']) ?></span>
-                    <span class="template-status <?= $template['attivo'] ? 'active' : 'inactive' ?>">
-                        <?= $template['attivo'] ? 'Attivo' : 'Disattivo' ?>
-                    </span>
-                </div>
-                <h4 class="template-tipo-label"><?= getTemplateLabel($template['tipo']) ?></h4>
-                <p class="template-desc"><?= getTemplateDescription($template['tipo']) ?></p>
-                <h5 class="template-title"><?= htmlspecialchars($template['titolo_template']) ?></h5>
-                <p class="template-preview"><?= htmlspecialchars(substr($template['messaggio_template'], 0, 100)) ?>...</p>
-                <div class="template-footer">
-                    <button class="btn-edit-template" onclick="editTemplate(<?= $template['template_id'] ?>)">
-                        ✏️ Modifica Template
-                    </button>
-                </div>
-            </div>
-            <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================================
      TAB: GIORNI CHIUSURA
      ============================================================================ -->
 <div id="tab-chiusure" class="tab-content">
@@ -238,70 +143,9 @@ function getNomeGiorno($data) {
 </div>
 
 <!-- ============================================================================
-     MODAL: MODIFICA TEMPLATE
-     ============================================================================ -->
-<div class="modal fade" id="modalTemplate" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
-    <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1061;">
-        <div class="modal-content config-modal" style="pointer-events: auto;">
-            <div class="modal-header">
-                <h5 class="modal-title">📧 Modifica Template Notifica</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formTemplate">
-                    <input type="hidden" id="templateId" name="template_id">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Tipo Notifica</label>
-                        <input type="text" id="templateTipo" class="form-control" readonly>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Titolo Notifica</label>
-                        <input type="text" id="templateTitolo" name="titolo" class="form-control" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Messaggio</label>
-                        <textarea id="templateMessaggio" name="messaggio" class="form-control" rows="6" required></textarea>
-                        <small class="form-text">
-                            Variabili disponibili: <code>{{user_name}}</code>, <code>{{campo}}</code>, <code>{{data}}</code>, <code>{{ora}}</code>
-                        </small>
-                    </div>
-                    
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="templateAttivo" name="attivo">
-                        <label class="form-check-label" for="templateAttivo">Notifica Attiva</label>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" class="btn btn-primary" onclick="salvaTemplate()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    Salva Template
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ============================================================================
      JAVASCRIPT
      ============================================================================ -->
 <script>
-// ============================================================================
-// FIX MODAL - Sposta nel body per evitare problemi z-index
-// ============================================================================
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('modalTemplate');
-    if (modal && modal.parentElement !== document.body) {
-        document.body.appendChild(modal);
-    }
-});
-
 // ============================================================================
 // TAB NAVIGATION
 // ============================================================================
@@ -334,85 +178,6 @@ function salvaRegole() {
     .then(r => r.json())
     .then(data => {
         showToast(data.message, data.success ? 'success' : 'error');
-    })
-    .catch(() => showToast('Errore di connessione', 'error'));
-}
-
-// ============================================================================
-// ORE REMINDER
-// ============================================================================
-function salvaOreReminder() {
-    const ore = document.getElementById('oreReminder').value;
-    
-    const formData = new FormData();
-    formData.append('ajax', '1');
-    formData.append('action', 'save_ore_reminder');
-    formData.append('ore_reminder', ore);
-    
-    fetch('configurazione.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => {
-        showToast(data.message, data.success ? 'success' : 'error');
-    })
-    .catch(() => showToast('Errore di connessione', 'error'));
-}
-
-// ============================================================================
-// TEMPLATE NOTIFICHE
-// ============================================================================
-function editTemplate(id) {
-    fetch(`configurazione.php?ajax=1&action=get_template&id=${id}`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                const t = data.template;
-                document.getElementById('templateId').value = t.template_id;
-                document.getElementById('templateTipo').value = getTemplateLabel(t.tipo);
-                document.getElementById('templateTitolo').value = t.titolo_template;
-                document.getElementById('templateMessaggio').value = t.messaggio_template;
-                document.getElementById('templateAttivo').checked = t.attivo == 1;
-                
-                new bootstrap.Modal(document.getElementById('modalTemplate')).show();
-            } else {
-                showToast(data.message, 'error');
-            }
-        })
-        .catch(() => showToast('Errore di connessione', 'error'));
-}
-
-function getTemplateLabel(tipo) {
-    const labels = {
-        'conferma_prenotazione': 'Conferma Prenotazione',
-        'reminder_prenotazione': 'Reminder Prima della Prenotazione',
-        'cancellazione_prenotazione': 'Cancellazione Prenotazione'
-    };
-    return labels[tipo] || tipo;
-}
-
-function salvaTemplate() {
-    const form = document.getElementById('formTemplate');
-    const formData = new FormData(form);
-    formData.append('ajax', '1');
-    formData.append('action', 'save_template');
-    
-    if (!document.getElementById('templateAttivo').checked) {
-        formData.delete('attivo');
-    }
-    
-    fetch('configurazione.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => {
-        showToast(data.message, data.success ? 'success' : 'error');
-        if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('modalTemplate')).hide();
-            setTimeout(() => location.reload(), 1000);
-        }
     })
     .catch(() => showToast('Errore di connessione', 'error'));
 }

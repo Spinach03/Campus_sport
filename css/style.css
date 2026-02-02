@@ -274,7 +274,7 @@ body {
     font-family: 'Outfit', sans-serif;
     width: 100%;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     text-decoration: none !important;
 }
 

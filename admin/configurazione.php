@@ -41,56 +41,6 @@ if ($isAjax && $action) {
             exit;
             
         // ============================================
-        // OTTIENI TEMPLATE NOTIFICA
-        // ============================================
-        case 'get_template':
-            $templateId = intval($_GET['id'] ?? 0);
-            $template = $dbh->getNotificationTemplate($templateId);
-            
-            if ($template) {
-                echo json_encode(['success' => true, 'template' => $template]);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Template non trovato']);
-            }
-            exit;
-            
-        // ============================================
-        // SALVA TEMPLATE NOTIFICA
-        // ============================================
-        case 'save_template':
-            $templateId = intval($_POST['template_id'] ?? 0);
-            $titolo = trim($_POST['titolo'] ?? '');
-            $messaggio = trim($_POST['messaggio'] ?? '');
-            $attivo = isset($_POST['attivo']) ? 1 : 0;
-            
-            if (!$titolo || !$messaggio) {
-                echo json_encode(['success' => false, 'message' => 'Titolo e messaggio sono obbligatori']);
-                exit;
-            }
-            
-            $result = $dbh->updateNotificationTemplate($templateId, $titolo, $messaggio, $attivo, $_SESSION['user_id']);
-            
-            echo json_encode([
-                'success' => $result,
-                'message' => $result ? 'Template aggiornato con successo' : 'Errore nel salvataggio'
-            ]);
-            exit;
-            
-        // ============================================
-        // SALVA ORE REMINDER
-        // ============================================
-        case 'save_ore_reminder':
-            $oreReminder = intval($_POST['ore_reminder'] ?? 48);
-            
-            $success = $dbh->saveConfig('ore_reminder_prenotazione', $oreReminder, 'int', $_SESSION['user_id']);
-            
-            echo json_encode([
-                'success' => $success,
-                'message' => $success ? 'Ore reminder salvate con successo' : 'Errore nel salvataggio'
-            ]);
-            exit;
-            
-        // ============================================
         // AGGIUNGI GIORNO CHIUSURA
         // ============================================
         case 'add_chiusura':
@@ -139,12 +89,6 @@ $templateParams['regole'] = [
     'giorni_anticipo_max' => $dbh->getConfig('giorni_anticipo_max', 7),
     'ore_anticipo_cancellazione' => $dbh->getConfig('ore_anticipo_cancellazione', 24)
 ];
-
-// Template notifiche (solo i 3 per le prenotazioni)
-$templateParams['templates'] = $dbh->getNotificationTemplatesPrenotazioni();
-
-// Ore reminder
-$templateParams['ore_reminder'] = $dbh->getConfig('ore_reminder_prenotazione', 48);
 
 // Giorni chiusura
 $templateParams['giorni_chiusura'] = $dbh->getGiorniChiusura();

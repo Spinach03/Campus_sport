@@ -72,7 +72,7 @@
                             $notificheNonLette = $dbh->getNotificheNonLette($_SESSION['user_id']);
                             if ($notificheNonLette > 0): 
                             ?>
-                            <span class="nav-badge notification-badge"><?= $notificheNonLette > 99 ? '99+' : $notificheNonLette ?></span>
+                            <span class="nav-badge"><?= $notificheNonLette > 99 ? '99+' : $notificheNonLette ?></span>
                             <?php endif; ?>
                         </a>
                     </li>

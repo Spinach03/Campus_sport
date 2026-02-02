@@ -896,9 +896,20 @@ if (searchUserInput) {
                         // Controlla se l'utente è già selezionato
                         const isSelected = selectedUsers.some(u => u.id === user.user_id);
                         const selectedClass = isSelected ? 'opacity: 0.5; pointer-events: none;' : '';
+                        
+                        // Badge stato utente
+                        let statoBadge = '';
+                        if (user.stato === 'sospeso') {
+                            statoBadge = '<span style="background: #F59E0B; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 6px;">⏸ Sospeso</span>';
+                        } else if (user.stato === 'bannato') {
+                            statoBadge = '<span style="background: #EF4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 6px;">🚫 Bannato</span>';
+                        }
+                        
                         html += `
                             <div class="template-card" style="padding: 12px; cursor: pointer; ${selectedClass}" onclick="addUser(${user.user_id}, '${user.nome.replace(/'/g, "\\'")} ${user.cognome.replace(/'/g, "\\'")}', '${user.email}')">
-                                <div style="font-weight: 600;">${user.nome} ${user.cognome}</div>
+                                <div style="font-weight: 600; display: flex; align-items: center; flex-wrap: wrap;">
+                                    ${user.nome} ${user.cognome}${statoBadge}
+                                </div>
                                 <div style="font-size: 12px; color: var(--text-muted);">${user.email}</div>
                                 ${isSelected ? '<span style="color: #10B981; font-size: 11px;">✓ Già selezionato</span>' : ''}
                             </div>
