@@ -68,7 +68,12 @@
                         <a href="notifiche.php" class="nav-link <?php if(basename($_SERVER['PHP_SELF']) == 'notifiche.php') echo 'active'; ?>">
                             <span class="nav-icon">🔔</span>
                             <span class="nav-text">Notifiche</span>
-                            <span class="nav-badge">2</span>
+                            <?php 
+                            $notificheNonLette = $dbh->getNotificheNonLette($_SESSION['user_id']);
+                            if ($notificheNonLette > 0): 
+                            ?>
+                            <span class="nav-badge notification-badge"><?= $notificheNonLette > 99 ? '99+' : $notificheNonLette ?></span>
+                            <?php endif; ?>
                         </a>
                     </li>
                     <li class="nav-item">

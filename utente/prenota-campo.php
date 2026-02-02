@@ -100,6 +100,12 @@ if (isset($_POST['action'])) {
 // CARICAMENTO DATI PAGINA
 // ============================================================================
 
+// Controlla stato utente
+$userId = $_SESSION['user_id'];
+$userInfo = $dbh->getUserById($userId);
+$statoUtente = $userInfo['stato'] ?? 'attivo';
+$utenteBloccato = in_array($statoUtente, ['bannato', 'sospeso']);
+
 // Filtri
 $filtri = [
     'sport' => $_GET['sport'] ?? '',
@@ -125,6 +131,8 @@ $templateParams["campi"] = $campi;
 $templateParams["sports"] = $sports;
 $templateParams["filtri"] = $filtri;
 $templateParams["giorni_max_anticipo"] = $giorniMaxAnticipo;
+$templateParams["stato_utente"] = $statoUtente;
+$templateParams["utente_bloccato"] = $utenteBloccato;
 
 require 'template/base.php';
 ?>

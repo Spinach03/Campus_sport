@@ -15,7 +15,8 @@ class DatabaseHelper {
     // ============================================================================
     
     public function checkLogin($email, $password){
-        $query = "SELECT user_id, email, nome, cognome, ruolo, stato FROM users WHERE stato = 'attivo' AND email = ? AND password_hash = ?";
+        // Permette login a utenti attivi, sospesi e bannati (ma NON eliminati)
+        $query = "SELECT user_id, email, nome, cognome, ruolo, stato FROM users WHERE stato IN ('attivo', 'sospeso', 'bannato') AND email = ? AND password_hash = ?";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param('ss', $email, $password);
         $stmt->execute();
@@ -1507,6 +1508,10 @@ class DatabaseHelper {
             $stmt2->bind_param('iissi', $userId, $punti, $motivo, $descrizione, $adminId);
             $stmt2->execute();
             
+            // Invia notifica all'utente
+            $motivoNotifica = $descrizione ?: $motivo;
+            $this->notificaPenaltyAssegnata($userId, $punti, $motivoNotifica);
+            
             $this->db->commit();
             return true;
         } catch (Exception $e) {
@@ -1535,6 +1540,10 @@ class DatabaseHelper {
             $stmt2 = $this->db->prepare($query2);
             $stmt2->bind_param('iissi', $userId, $puntiNeg, $motivo, $descrizione, $adminId);
             $stmt2->execute();
+            
+            // Invia notifica all'utente
+            $motivoNotifica = $descrizione ?: $motivo;
+            $this->notificaPenaltyRimossa($userId, $punti, $motivoNotifica);
             
             $this->db->commit();
             return true;
@@ -1574,6 +1583,9 @@ class DatabaseHelper {
             $stmt3->bind_param('iissi', $userId, $puntiNeg, $motivo, $descrizione, $adminId);
             $stmt3->execute();
             
+            // Invia notifica all'utente
+            $this->notificaPenaltyResettata($userId);
+            
             $this->db->commit();
             return true;
         } catch (Exception $e) {
@@ -1607,6 +1619,10 @@ class DatabaseHelper {
             $stmt2->bind_param('issssi', $userId, $tipo, $motivo, $dataInizio, $dataFine, $adminId);
             $stmt2->execute();
             
+            // Invia notifica all'utente
+            $durata = $giorni == 1 ? '1 giorno' : "{$giorni} giorni";
+            $this->notificaAccountSospeso($userId, $durata, $motivo);
+            
             $this->db->commit();
             return true;
         } catch (Exception $e) {
@@ -1634,6 +1650,9 @@ class DatabaseHelper {
             $stmt2 = $this->db->prepare($query2);
             $stmt2->bind_param('i', $userId);
             $stmt2->execute();
+            
+            // Invia notifica all'utente
+            $this->notificaAccountRiattivato($userId);
             
             $this->db->commit();
             return true;
@@ -1674,6 +1693,9 @@ class DatabaseHelper {
             $stmt3->bind_param('i', $userId);
             $stmt3->execute();
             
+            // Invia notifica all'utente
+            $this->notificaAccountBannato($userId, $motivo);
+            
             $this->db->commit();
             return true;
         } catch (Exception $e) {
@@ -1702,6 +1724,9 @@ class DatabaseHelper {
             $stmt2 = $this->db->prepare($query2);
             $stmt2->bind_param('i', $userId);
             $stmt2->execute();
+            
+            // Invia notifica all'utente
+            $this->notificaBanRimosso($userId);
             
             $this->db->commit();
             return true;
@@ -4035,7 +4060,22 @@ class DatabaseHelper {
         );
         
         if ($stmt->execute()) {
-            return $this->db->insert_id;
+            $prenotazioneId = $this->db->insert_id;
+            
+            // Ottieni nome campo per notifica
+            $campo = $this->getCampoById($data['campo_id']);
+            $campoNome = $campo['nome'] ?? 'Campo';
+            
+            // Invia notifica all'utente
+            $this->notificaPrenotazioneDaAdmin(
+                $data['user_id'],
+                $campoNome,
+                $data['data_prenotazione'],
+                substr($data['ora_inizio'], 0, 5),
+                substr($data['ora_fine'], 0, 5)
+            );
+            
+            return $prenotazioneId;
         }
         return false;
     }
@@ -4044,6 +4084,21 @@ class DatabaseHelper {
      * Cancella prenotazione da admin
      */
     public function cancellaPrenotazioneAdmin($prenotazioneId, $motivo, $adminId) {
+        // Prima ottieni i dettagli per la notifica
+        $queryDetails = "SELECT p.*, c.nome as campo_nome 
+                        FROM prenotazioni p
+                        JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                        WHERE p.prenotazione_id = ? AND p.stato = 'confermata'";
+        $stmtDetails = $this->db->prepare($queryDetails);
+        $stmtDetails->bind_param('i', $prenotazioneId);
+        $stmtDetails->execute();
+        $prenotazione = $stmtDetails->get_result()->fetch_assoc();
+        
+        if (!$prenotazione) {
+            return false;
+        }
+        
+        // Cancella la prenotazione
         $query = "UPDATE prenotazioni 
                   SET stato = 'cancellata', 
                       motivo_cancellazione = ?,
@@ -4053,7 +4108,19 @@ class DatabaseHelper {
         $stmt = $this->db->prepare($query);
         $stmt->bind_param('si', $motivo, $prenotazioneId);
         
-        return $stmt->execute() && $stmt->affected_rows > 0;
+        if ($stmt->execute() && $stmt->affected_rows > 0) {
+            // Invia notifica all'utente
+            $this->notificaPrenotazioneCancellataDaAdmin(
+                $prenotazione['user_id'],
+                $prenotazione['campo_nome'],
+                $prenotazione['data_prenotazione'],
+                substr($prenotazione['ora_inizio'], 0, 5),
+                $motivo
+            );
+            return true;
+        }
+        
+        return false;
     }
     
     /**
@@ -4448,6 +4515,22 @@ class DatabaseHelper {
      */
     public function createPrenotazioneUtente($userId, $campoId, $data, $oraInizio, $oraFine, $numPartecipanti, $note = null) {
         // ============================================
+        // VALIDAZIONE STATO UTENTE
+        // ============================================
+        $user = $this->getUserById($userId);
+        if (!$user) {
+            return ['success' => false, 'error' => 'Utente non trovato'];
+        }
+        
+        if ($user['stato'] === 'bannato') {
+            return ['success' => false, 'error' => 'Il tuo account è stato bannato. Non puoi effettuare prenotazioni.'];
+        }
+        
+        if ($user['stato'] === 'sospeso') {
+            return ['success' => false, 'error' => 'Il tuo account è sospeso. Non puoi effettuare prenotazioni fino al termine della sospensione.'];
+        }
+        
+        // ============================================
         // VALIDAZIONE GIORNI ANTICIPO MAX
         // ============================================
         $giorniAnticipoMax = $this->getConfig('giorni_anticipo_max', 7);
@@ -4509,7 +4592,13 @@ class DatabaseHelper {
         $stmt->bind_param('iisssis', $userId, $campoId, $data, $oraInizio, $oraFine, $numPartecipanti, $note);
         
         if ($stmt->execute()) {
-            return ['success' => true, 'prenotazione_id' => $this->db->insert_id];
+            $prenotazioneId = $this->db->insert_id;
+            
+            // Invia notifica all'utente
+            $campoNome = $campo['nome'] ?? 'Campo';
+            $this->notificaPrenotazioneCreata($userId, $campoNome, $data, substr($oraInizio, 0, 5), substr($oraFine, 0, 5));
+            
+            return ['success' => true, 'prenotazione_id' => $prenotazioneId];
         }
         
         return ['success' => false, 'error' => 'Errore durante la creazione della prenotazione'];
@@ -4548,8 +4637,11 @@ class DatabaseHelper {
      * Verifica che l'utente abbia abbastanza ore di anticipo per cancellare
      */
     public function cancellaPrenotazioneUtente($prenotazioneId, $userId, $motivo = null) {
-        // Verifica che la prenotazione appartenga all'utente
-        $query = "SELECT * FROM prenotazioni WHERE prenotazione_id = ? AND user_id = ? AND stato = 'confermata'";
+        // Verifica che la prenotazione appartenga all'utente e ottieni dettagli campo
+        $query = "SELECT p.*, c.nome as campo_nome 
+                  FROM prenotazioni p
+                  JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  WHERE p.prenotazione_id = ? AND p.user_id = ? AND p.stato = 'confermata'";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param('ii', $prenotazioneId, $userId);
         $stmt->execute();
@@ -4593,10 +4685,516 @@ class DatabaseHelper {
         $stmt->bind_param('sii', $motivo, $cancellazioneTardiva, $prenotazioneId);
         
         if ($stmt->execute()) {
+            // Invia notifica all'utente
+            $this->notificaPrenotazioneCancellataUtente(
+                $userId, 
+                $prenotazione['campo_nome'], 
+                $prenotazione['data_prenotazione'], 
+                substr($prenotazione['ora_inizio'], 0, 5)
+            );
+            
             return ['success' => true, 'tardiva' => $cancellazioneTardiva];
         }
         
         return ['success' => false, 'error' => 'Errore durante la cancellazione'];
+    }
+
+    // ============================================================================
+    // SISTEMA NOTIFICHE UTENTE - Gestione completa
+    // ============================================================================
+    
+    /**
+     * Ottieni tutte le notifiche di un utente
+     */
+    public function getNotificheUtente($userId, $limit = 50, $soloNonLette = false) {
+        $query = "SELECT * FROM notifiche WHERE user_id = ?";
+        
+        if ($soloNonLette) {
+            $query .= " AND letta = 0";
+        }
+        
+        $query .= " ORDER BY created_at DESC LIMIT ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $userId, $limit);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Segna una notifica come letta
+     */
+    public function segnaNotificaLetta($notificaId, $userId) {
+        $query = "UPDATE notifiche SET letta = 1, read_at = NOW() 
+                  WHERE notifica_id = ? AND user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $notificaId, $userId);
+        return $stmt->execute();
+    }
+    
+    /**
+     * Segna tutte le notifiche di un utente come lette
+     */
+    public function segnaTutteNotificheLette($userId) {
+        $query = "UPDATE notifiche SET letta = 1, read_at = NOW() 
+                  WHERE user_id = ? AND letta = 0";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        return $stmt->execute();
+    }
+    
+    /**
+     * Elimina una notifica
+     */
+    public function eliminaNotifica($notificaId, $userId) {
+        $query = "DELETE FROM notifiche WHERE notifica_id = ? AND user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $notificaId, $userId);
+        return $stmt->execute();
+    }
+    
+    /**
+     * Elimina tutte le notifiche lette di un utente
+     */
+    public function eliminaNotificheLette($userId) {
+        $query = "DELETE FROM notifiche WHERE user_id = ? AND letta = 1";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        return $stmt->execute();
+    }
+    
+    /**
+     * Conta notifiche per tipo
+     */
+    public function contaNotifichePerTipo($userId) {
+        $query = "SELECT tipo, COUNT(*) as totale, SUM(CASE WHEN letta = 0 THEN 1 ELSE 0 END) as non_lette
+                  FROM notifiche 
+                  WHERE user_id = ?
+                  GROUP BY tipo";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    // ============================================================================
+    // NOTIFICHE AUTOMATICHE - Helpers per creare notifiche specifiche
+    // ============================================================================
+    
+    /**
+     * Notifica: Prenotazione creata (dall'utente)
+     */
+    public function notificaPrenotazioneCreata($userId, $campoNome, $data, $oraInizio, $oraFine) {
+        $dataFormattata = date('d/m/Y', strtotime($data));
+        $titolo = "✅ Prenotazione Confermata";
+        $messaggio = "La tua prenotazione per {$campoNome} il {$dataFormattata} dalle {$oraInizio} alle {$oraFine} è stata confermata.";
+        return $this->creaNotifica($userId, 'prenotazione_creata', $titolo, $messaggio, 'le-mie-prenotazioni.php');
+    }
+    
+    /**
+     * Notifica: Prenotazione cancellata (dall'utente)
+     */
+    public function notificaPrenotazioneCancellataUtente($userId, $campoNome, $data, $oraInizio) {
+        $dataFormattata = date('d/m/Y', strtotime($data));
+        $titolo = "❌ Prenotazione Cancellata";
+        $messaggio = "Hai cancellato la prenotazione per {$campoNome} del {$dataFormattata} alle {$oraInizio}.";
+        return $this->creaNotifica($userId, 'prenotazione_cancellata', $titolo, $messaggio, 'le-mie-prenotazioni.php');
+    }
+    
+    /**
+     * Notifica: Prenotazione creata dall'admin per l'utente
+     */
+    public function notificaPrenotazioneDaAdmin($userId, $campoNome, $data, $oraInizio, $oraFine) {
+        $dataFormattata = date('d/m/Y', strtotime($data));
+        $titolo = "📅 Nuova Prenotazione";
+        $messaggio = "L'amministratore ha creato una prenotazione per te: {$campoNome} il {$dataFormattata} dalle {$oraInizio} alle {$oraFine}.";
+        return $this->creaNotifica($userId, 'prenotazione_admin', $titolo, $messaggio, 'le-mie-prenotazioni.php');
+    }
+    
+    /**
+     * Notifica: Prenotazione cancellata dall'admin
+     */
+    public function notificaPrenotazioneCancellataDaAdmin($userId, $campoNome, $data, $oraInizio, $motivo = null) {
+        $dataFormattata = date('d/m/Y', strtotime($data));
+        $titolo = "⚠️ Prenotazione Cancellata";
+        $messaggio = "L'amministratore ha cancellato la tua prenotazione per {$campoNome} del {$dataFormattata} alle {$oraInizio}.";
+        if ($motivo) {
+            $messaggio .= " Motivo: {$motivo}";
+        }
+        return $this->creaNotifica($userId, 'prenotazione_cancellata_admin', $titolo, $messaggio, 'le-mie-prenotazioni.php');
+    }
+    
+    /**
+     * Notifica: Sei stato segnalato
+     */
+    public function notificaSegnalazioneRicevuta($userId, $tipoSegnalazione) {
+        $tipiLabel = [
+            'comportamento' => 'comportamento scorretto',
+            'no_show' => 'mancata presentazione',
+            'ritardo' => 'ritardo',
+            'danneggiamento' => 'danneggiamento',
+            'altro' => 'altro'
+        ];
+        $tipoLabel = $tipiLabel[$tipoSegnalazione] ?? $tipoSegnalazione;
+        
+        $titolo = "🚨 Segnalazione Ricevuta";
+        $messaggio = "Hai ricevuto una segnalazione per: {$tipoLabel}. L'amministratore verificherà la situazione.";
+        return $this->creaNotifica($userId, 'segnalazione_ricevuta', $titolo, $messaggio, null);
+    }
+    
+    /**
+     * Notifica: Comunicazione dall'admin
+     */
+    public function notificaComunicazioneAdmin($userId, $oggetto, $anteprima = null) {
+        $titolo = "📢 {$oggetto}";
+        $messaggio = $anteprima ? substr($anteprima, 0, 200) . '...' : "Hai ricevuto una nuova comunicazione dall'amministrazione.";
+        return $this->creaNotifica($userId, 'comunicazione', $titolo, $messaggio, 'comunicazioni.php');
+    }
+    
+    /**
+     * Notifica: Penalty assegnata
+     */
+    public function notificaPenaltyAssegnata($userId, $punti, $motivo) {
+        $titolo = "⚠️ Penalty Assegnata";
+        $messaggio = "Ti sono stati assegnati {$punti} punti penalty. Motivo: {$motivo}";
+        return $this->creaNotifica($userId, 'penalty', $titolo, $messaggio, null);
+    }
+    
+    /**
+     * Notifica: Account sospeso
+     */
+    public function notificaAccountSospeso($userId, $durata, $motivo = null) {
+        $titolo = "🔒 Account Sospeso";
+        $messaggio = "Il tuo account è stato sospeso per {$durata}.";
+        if ($motivo) {
+            $messaggio .= " Motivo: {$motivo}";
+        }
+        return $this->creaNotifica($userId, 'sospensione', $titolo, $messaggio, null);
+    }
+    
+    /**
+     * Notifica: Account bannato
+     */
+    public function notificaAccountBannato($userId, $motivo = null) {
+        $titolo = "⛔ Account Bannato";
+        $messaggio = "Il tuo account è stato bannato permanentemente.";
+        if ($motivo) {
+            $messaggio .= " Motivo: {$motivo}";
+        }
+        return $this->creaNotifica($userId, 'ban', $titolo, $messaggio, null);
+    }
+    
+    /**
+     * Notifica: Campo chiuso
+     */
+    public function notificaCampoChiuso($userId, $campoNome, $dataPrenotazione, $motivo = null) {
+        $dataFormattata = date('d/m/Y', strtotime($dataPrenotazione));
+        $titolo = "🚫 Campo Non Disponibile";
+        $messaggio = "Il campo {$campoNome} non sarà disponibile il {$dataFormattata}.";
+        if ($motivo) {
+            $messaggio .= " Motivo: {$motivo}";
+        }
+        $messaggio .= " La tua prenotazione è stata cancellata.";
+        return $this->creaNotifica($userId, 'campo_chiuso', $titolo, $messaggio, 'le-mie-prenotazioni.php');
+    }
+    
+    /**
+     * Notifica: Manutenzione programmata
+     */
+    public function notificaManutenzioneProgrammata($userId, $campoNome, $dataInizio, $dataFine = null) {
+        $dataInizioFormattata = date('d/m/Y', strtotime($dataInizio));
+        $titolo = "🔧 Manutenzione Programmata";
+        $messaggio = "Il campo {$campoNome} sarà in manutenzione dal {$dataInizioFormattata}";
+        if ($dataFine) {
+            $dataFineFormattata = date('d/m/Y', strtotime($dataFine));
+            $messaggio .= " al {$dataFineFormattata}";
+        }
+        $messaggio .= ". Le prenotazioni in questo periodo potrebbero essere annullate.";
+        return $this->creaNotifica($userId, 'manutenzione', $titolo, $messaggio, 'le-mie-prenotazioni.php');
+    }
+    
+    /**
+     * Notifica: Risposta alla tua recensione
+     */
+    public function notificaRispostaRecensione($userId, $campoNome) {
+        $titolo = "💬 Risposta alla Recensione";
+        $messaggio = "L'amministratore ha risposto alla tua recensione per {$campoNome}.";
+        return $this->creaNotifica($userId, 'risposta_recensione', $titolo, $messaggio, null);
+    }
+    
+    /**
+     * Notifica: Segnalazione risolta
+     */
+    public function notificaSegnalazioneRisolta($userId, $esito) {
+        $titolo = "📋 Segnalazione Esaminata";
+        $messaggio = "La tua segnalazione è stata esaminata. Esito: {$esito}";
+        return $this->creaNotifica($userId, 'segnalazione_esito', $titolo, $messaggio, null);
+    }
+    
+    /**
+     * Notifica: Promemoria prenotazione (per cron job)
+     */
+    public function notificaPromemoriaPrenotazione($userId, $campoNome, $data, $oraInizio) {
+        $dataFormattata = date('d/m/Y', strtotime($data));
+        $titolo = "⏰ Promemoria Prenotazione";
+        $messaggio = "Ricordati della tua prenotazione per {$campoNome} domani ({$dataFormattata}) alle {$oraInizio}.";
+        return $this->creaNotifica($userId, 'promemoria', $titolo, $messaggio, 'le-mie-prenotazioni.php');
+    }
+    
+    /**
+     * Notifica: Penalty rimossa
+     */
+    public function notificaPenaltyRimossa($userId, $punti, $motivo = null) {
+        $titolo = "✅ Punti Penalty Rimossi";
+        $messaggio = "Ti sono stati rimossi {$punti} punti penalty.";
+        if ($motivo) {
+            $messaggio .= " Motivo: {$motivo}";
+        }
+        return $this->creaNotifica($userId, 'penalty_rimossa', $titolo, $messaggio, null);
+    }
+    
+    /**
+     * Notifica: Penalty resettata
+     */
+    public function notificaPenaltyResettata($userId) {
+        $titolo = "🎉 Punti Penalty Azzerati";
+        $messaggio = "I tuoi punti penalty sono stati azzerati. Il tuo account è tornato in regola!";
+        return $this->creaNotifica($userId, 'penalty_reset', $titolo, $messaggio, null);
+    }
+    
+    /**
+     * Notifica: Account riattivato (da sospensione)
+     */
+    public function notificaAccountRiattivato($userId) {
+        $titolo = "🔓 Account Riattivato";
+        $messaggio = "La tua sospensione è terminata. Il tuo account è stato riattivato e puoi tornare a prenotare!";
+        return $this->creaNotifica($userId, 'riattivazione', $titolo, $messaggio, 'prenota-campo.php');
+    }
+    
+    /**
+     * Notifica: Ban rimosso
+     */
+    public function notificaBanRimosso($userId) {
+        $titolo = "🎉 Ban Rimosso";
+        $messaggio = "Il ban sul tuo account è stato rimosso. Bentornato! Puoi tornare a utilizzare tutti i servizi.";
+        return $this->creaNotifica($userId, 'unban', $titolo, $messaggio, 'prenota-campo.php');
+    }
+
+    // ============================================================================
+    // RECENSIONI UTENTE - Gestione completa
+    // ============================================================================
+    
+    /**
+     * Ottieni tutte le recensioni di un utente
+     */
+    public function getRecensioniUtente($userId) {
+        $query = "SELECT r.*, 
+                         c.nome as campo_nome, c.location, c.tipo_campo,
+                         s.nome as sport_nome, s.icona as sport_icona,
+                         p.data_prenotazione, p.ora_inizio, p.ora_fine,
+                         (SELECT COUNT(*) FROM recensione_risposte rr WHERE rr.recensione_id = r.recensione_id) as num_risposte,
+                         DATEDIFF(CURDATE(), r.created_at) as giorni_dalla_creazione,
+                         CASE WHEN DATEDIFF(CURDATE(), r.created_at) <= 15 THEN 1 ELSE 0 END as modificabile
+                  FROM recensioni r
+                  JOIN campi_sportivi c ON r.campo_id = c.campo_id
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  JOIN prenotazioni p ON r.prenotazione_id = p.prenotazione_id
+                  WHERE r.user_id = ?
+                  ORDER BY r.created_at DESC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Ottieni prenotazioni completate senza recensione (solo ultimi 15 giorni)
+     */
+    public function getPrenotazioniDaRecensire($userId) {
+        $query = "SELECT p.*, 
+                         c.nome as campo_nome, c.location, c.tipo_campo,
+                         s.nome as sport_nome, s.icona as sport_icona,
+                         DATEDIFF(CURDATE(), p.data_prenotazione) as giorni_trascorsi
+                  FROM prenotazioni p
+                  JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  LEFT JOIN recensioni r ON p.prenotazione_id = r.prenotazione_id
+                  WHERE p.user_id = ? 
+                    AND p.stato = 'completata'
+                    AND r.recensione_id IS NULL
+                    AND DATEDIFF(CURDATE(), p.data_prenotazione) <= 15
+                  ORDER BY p.data_prenotazione DESC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    
+    /**
+     * Crea una nuova recensione (solo per prenotazioni degli ultimi 15 giorni)
+     */
+    public function creaRecensioneUtente($userId, $prenotazioneId, $ratingGenerale, $ratingCondizioni, $ratingPulizia, $ratingIlluminazione, $commento) {
+        // Verifica che la prenotazione appartenga all'utente e sia completata
+        $queryCheck = "SELECT p.*, c.campo_id, DATEDIFF(CURDATE(), p.data_prenotazione) as giorni_trascorsi 
+                       FROM prenotazioni p 
+                       JOIN campi_sportivi c ON p.campo_id = c.campo_id
+                       WHERE p.prenotazione_id = ? AND p.user_id = ? AND p.stato = 'completata'";
+        $stmtCheck = $this->db->prepare($queryCheck);
+        $stmtCheck->bind_param('ii', $prenotazioneId, $userId);
+        $stmtCheck->execute();
+        $prenotazione = $stmtCheck->get_result()->fetch_assoc();
+        
+        if (!$prenotazione) {
+            return ['success' => false, 'error' => 'Prenotazione non trovata o non recensibile'];
+        }
+        
+        // Verifica limite 15 giorni
+        if ($prenotazione['giorni_trascorsi'] > 15) {
+            return ['success' => false, 'error' => 'Puoi recensire solo prenotazioni degli ultimi 15 giorni'];
+        }
+        
+        // Verifica che non esista già una recensione
+        $queryExists = "SELECT recensione_id FROM recensioni WHERE prenotazione_id = ?";
+        $stmtExists = $this->db->prepare($queryExists);
+        $stmtExists->bind_param('i', $prenotazioneId);
+        $stmtExists->execute();
+        if ($stmtExists->get_result()->fetch_assoc()) {
+            return ['success' => false, 'error' => 'Hai già recensito questa prenotazione'];
+        }
+        
+        // Inserisci recensione
+        $query = "INSERT INTO recensioni (user_id, campo_id, prenotazione_id, rating_generale, rating_condizioni, rating_pulizia, rating_illuminazione, commento, created_at)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('iiiiiiss', $userId, $prenotazione['campo_id'], $prenotazioneId, $ratingGenerale, $ratingCondizioni, $ratingPulizia, $ratingIlluminazione, $commento);
+        
+        if ($stmt->execute()) {
+            return ['success' => true, 'recensione_id' => $this->db->insert_id];
+        }
+        
+        return ['success' => false, 'error' => 'Errore durante il salvataggio della recensione'];
+    }
+    
+    /**
+     * Modifica una recensione esistente (solo se creata negli ultimi 15 giorni)
+     */
+    public function modificaRecensioneUtente($recensioneId, $userId, $ratingGenerale, $ratingCondizioni, $ratingPulizia, $ratingIlluminazione, $commento) {
+        // Verifica che la recensione appartenga all'utente e controlla i giorni trascorsi
+        $queryCheck = "SELECT recensione_id, DATEDIFF(CURDATE(), created_at) as giorni_trascorsi 
+                       FROM recensioni WHERE recensione_id = ? AND user_id = ?";
+        $stmtCheck = $this->db->prepare($queryCheck);
+        $stmtCheck->bind_param('ii', $recensioneId, $userId);
+        $stmtCheck->execute();
+        $recensione = $stmtCheck->get_result()->fetch_assoc();
+        
+        if (!$recensione) {
+            return ['success' => false, 'error' => 'Recensione non trovata'];
+        }
+        
+        // Verifica limite 15 giorni dalla creazione
+        if ($recensione['giorni_trascorsi'] > 15) {
+            return ['success' => false, 'error' => 'Puoi modificare solo recensioni create negli ultimi 15 giorni'];
+        }
+        
+        $query = "UPDATE recensioni 
+                  SET rating_generale = ?, rating_condizioni = ?, rating_pulizia = ?, rating_illuminazione = ?, commento = ?
+                  WHERE recensione_id = ? AND user_id = ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('iiiisii', $ratingGenerale, $ratingCondizioni, $ratingPulizia, $ratingIlluminazione, $commento, $recensioneId, $userId);
+        
+        if ($stmt->execute()) {
+            return ['success' => true];
+        }
+        
+        return ['success' => false, 'error' => 'Errore durante la modifica'];
+    }
+    
+    /**
+     * Elimina una recensione (solo propria)
+     */
+    public function eliminaRecensioneUtente($recensioneId, $userId) {
+        // Verifica che la recensione appartenga all'utente
+        $queryCheck = "SELECT recensione_id FROM recensioni WHERE recensione_id = ? AND user_id = ?";
+        $stmtCheck = $this->db->prepare($queryCheck);
+        $stmtCheck->bind_param('ii', $recensioneId, $userId);
+        $stmtCheck->execute();
+        
+        if (!$stmtCheck->get_result()->fetch_assoc()) {
+            return ['success' => false, 'error' => 'Recensione non trovata'];
+        }
+        
+        // Elimina prima le risposte
+        $queryRisposte = "DELETE FROM recensione_risposte WHERE recensione_id = ?";
+        $stmtRisposte = $this->db->prepare($queryRisposte);
+        $stmtRisposte->bind_param('i', $recensioneId);
+        $stmtRisposte->execute();
+        
+        // Elimina la recensione
+        $query = "DELETE FROM recensioni WHERE recensione_id = ? AND user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $recensioneId, $userId);
+        
+        if ($stmt->execute()) {
+            return ['success' => true];
+        }
+        
+        return ['success' => false, 'error' => 'Errore durante l\'eliminazione'];
+    }
+    
+    /**
+     * Ottieni dettaglio recensione con risposte
+     */
+    public function getRecensioneUtente($recensioneId, $userId) {
+        $query = "SELECT r.*, 
+                         c.nome as campo_nome, c.location, c.tipo_campo,
+                         s.nome as sport_nome,
+                         p.data_prenotazione, p.ora_inizio, p.ora_fine
+                  FROM recensioni r
+                  JOIN campi_sportivi c ON r.campo_id = c.campo_id
+                  JOIN sport s ON c.sport_id = s.sport_id
+                  JOIN prenotazioni p ON r.prenotazione_id = p.prenotazione_id
+                  WHERE r.recensione_id = ? AND r.user_id = ?";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('ii', $recensioneId, $userId);
+        $stmt->execute();
+        $recensione = $stmt->get_result()->fetch_assoc();
+        
+        if ($recensione) {
+            // Ottieni risposte admin
+            $queryRisposte = "SELECT rr.*, u.nome as admin_nome, u.cognome as admin_cognome
+                             FROM recensione_risposte rr
+                             JOIN users u ON rr.admin_id = u.user_id
+                             WHERE rr.recensione_id = ?
+                             ORDER BY rr.created_at ASC";
+            $stmtRisposte = $this->db->prepare($queryRisposte);
+            $stmtRisposte->bind_param('i', $recensioneId);
+            $stmtRisposte->execute();
+            $recensione['risposte'] = $stmtRisposte->get_result()->fetch_all(MYSQLI_ASSOC);
+        }
+        
+        return $recensione;
+    }
+    
+    /**
+     * Conta recensioni utente per statistiche
+     */
+    public function contaRecensioniUtente($userId) {
+        $query = "SELECT 
+                    COUNT(*) as totali,
+                    AVG(rating_generale) as media_rating,
+                    SUM(CASE WHEN rating_generale = 5 THEN 1 ELSE 0 END) as cinque_stelle,
+                    SUM(CASE WHEN rating_generale >= 4 THEN 1 ELSE 0 END) as positive
+                  FROM recensioni 
+                  WHERE user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
     }
 
 

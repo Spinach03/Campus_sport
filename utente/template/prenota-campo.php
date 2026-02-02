@@ -36,6 +36,8 @@ $campi = $templateParams["campi"] ?? [];
 $sports = $templateParams["sports"] ?? [];
 $filtri = $templateParams["filtri"] ?? ['sport' => '', 'tipo' => '', 'search' => '', 'ordina' => 'nome'];
 $giorniMaxAnticipo = $templateParams["giorni_max_anticipo"] ?? 7;
+$statoUtente = $templateParams["stato_utente"] ?? 'attivo';
+$utenteBloccato = $templateParams["utente_bloccato"] ?? false;
 ?>
 
 <!-- Header - Stile Admin -->
@@ -49,6 +51,29 @@ $giorniMaxAnticipo = $templateParams["giorni_max_anticipo"] ?? 7;
         <input type="text" class="search-input" id="searchCampi" placeholder="Cerca campi..." value="<?php echo htmlspecialchars($filtri['search'] ?? ''); ?>">
     </div>
 </div>
+
+<?php if ($utenteBloccato): ?>
+<!-- Alert Utente Bloccato -->
+<div class="alert-bloccato mb-4">
+    <div class="alert-bloccato-icon">
+        <?= $statoUtente === 'bannato' ? '⛔' : '🔒' ?>
+    </div>
+    <div class="alert-bloccato-content">
+        <h4 class="alert-bloccato-title">
+            <?= $statoUtente === 'bannato' ? 'Account Bannato' : 'Account Sospeso' ?>
+        </h4>
+        <p class="alert-bloccato-message">
+            <?php if ($statoUtente === 'bannato'): ?>
+                Il tuo account è stato bannato. Non puoi effettuare nuove prenotazioni.
+                Contatta l'amministrazione per maggiori informazioni.
+            <?php else: ?>
+                Il tuo account è temporaneamente sospeso. Non puoi effettuare nuove prenotazioni
+                fino al termine della sospensione.
+            <?php endif; ?>
+        </p>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- ============================================================================
      FILTRI CARD - Stile Admin Identico
@@ -194,7 +219,7 @@ $giorniMaxAnticipo = $templateParams["giorni_max_anticipo"] ?? 7;
                 </div>
                 
                 <!-- Bottone Prenota -->
-                <button class="btn-prenota" onclick="apriModalPrenota(<?php echo $campo['campo_id']; ?>)">
+                <button class="btn-prenota" onclick="tentaPrenota(<?php echo $campo['campo_id']; ?>)">
                     📅 Prenota Ora
                 </button>
             </div>
@@ -203,6 +228,49 @@ $giorniMaxAnticipo = $templateParams["giorni_max_anticipo"] ?? 7;
     <?php endforeach; ?>
     <?php endif; ?>
 </div>
+
+<!-- ============================================================================
+     MODAL UTENTE BLOCCATO
+     ============================================================================ -->
+<?php if ($utenteBloccato): ?>
+<div class="modal fade" id="modalBloccato" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered modal-sm" style="z-index: 1071;">
+        <div class="modal-content modal-bloccato-content" style="pointer-events: auto;">
+            <div class="modal-header modal-header-bloccato">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-bloccato-icon">
+                        <?= $statoUtente === 'bannato' ? '⛔' : '🔒' ?>
+                    </div>
+                    <div>
+                        <h5 class="modal-title">
+                            <?= $statoUtente === 'bannato' ? 'Account Bannato' : 'Account Sospeso' ?>
+                        </h5>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body">
+                <p class="modal-bloccato-message">
+                    <?php if ($statoUtente === 'bannato'): ?>
+                        Il tuo account è stato <strong>bannato</strong>. Non puoi effettuare prenotazioni.
+                        <br><br>
+                        Per maggiori informazioni, contatta l'amministrazione.
+                    <?php else: ?>
+                        Il tuo account è <strong>temporaneamente sospeso</strong>. Non puoi effettuare prenotazioni fino al termine della sospensione.
+                    <?php endif; ?>
+                </p>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary-modal" data-bs-dismiss="modal">
+                    Ho capito
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- ============================================================================
      MODAL PRENOTAZIONE
@@ -383,6 +451,35 @@ $giorniMaxAnticipo = $templateParams["giorni_max_anticipo"] ?? 7;
 </div>
 
 <!-- ============================================================================
+     MODAL ERRORE GENERICO
+     ============================================================================ -->
+<div class="modal fade" id="modalErrore" tabindex="-1" aria-hidden="true" style="z-index: 1070;">
+    <div class="modal-dialog modal-dialog-centered modal-sm" style="z-index: 1071;">
+        <div class="modal-content modal-errore-content" style="pointer-events: auto;">
+            <div class="modal-header modal-header-errore">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="modal-errore-icon" id="modalErroreIcon">⚠️</div>
+                    <div>
+                        <h5 class="modal-title" id="modalErroreTitolo">Errore</h5>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body">
+                <p class="modal-errore-message" id="modalErroreMessaggio">Si è verificato un errore.</p>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary-modal" data-bs-dismiss="modal">
+                    Chiudi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================
      JAVASCRIPT - Logica identica all'Admin Panel
      ============================================================================ -->
 <script>
@@ -465,7 +562,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // FIX MODAL - Sposta i modal nel body SUBITO per evitare z-index issues
     // Deve essere la PRIMA cosa eseguita!
     // =========================================================================
-    const modalsToMove = ['modalPrenota', 'modalSuccesso'];
+    const modalsToMove = ['modalPrenota', 'modalSuccesso', 'modalErrore', 'modalBloccato'];
     modalsToMove.forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (modal && modal.parentElement !== document.body) {
@@ -538,6 +635,42 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================================
     document.getElementById('numPartecipanti').addEventListener('change', aggiornaRiepilogo);
 });
+
+// ============================================================================
+// VERIFICA UTENTE BLOCCATO PRIMA DI PRENOTARE
+// ============================================================================
+const utenteBloccato = <?= $utenteBloccato ? 'true' : 'false' ?>;
+
+function tentaPrenota(campoId) {
+    if (utenteBloccato) {
+        // Mostra modal bloccato
+        new bootstrap.Modal(document.getElementById('modalBloccato')).show();
+    } else {
+        // Procedi con la prenotazione
+        apriModalPrenota(campoId);
+    }
+}
+
+// ============================================================================
+// MOSTRA ERRORE CON MODAL
+// ============================================================================
+function mostraErrore(messaggio, titolo = 'Errore', icona = '⚠️') {
+    // Controlla se è un errore di ban/sospensione
+    if (messaggio.toLowerCase().includes('bannato') || messaggio.toLowerCase().includes('sospeso')) {
+        // Usa il modal bloccato se esiste
+        const modalBloccato = document.getElementById('modalBloccato');
+        if (modalBloccato) {
+            new bootstrap.Modal(modalBloccato).show();
+            return;
+        }
+    }
+    
+    // Altrimenti usa il modal errore generico
+    document.getElementById('modalErroreIcon').textContent = icona;
+    document.getElementById('modalErroreTitolo').textContent = titolo;
+    document.getElementById('modalErroreMessaggio').textContent = messaggio;
+    new bootstrap.Modal(document.getElementById('modalErrore')).show();
+}
 
 // ============================================================================
 // APRI MODAL PRENOTAZIONE
@@ -630,12 +763,12 @@ function apriModalPrenota(campoId) {
             new bootstrap.Modal(document.getElementById('modalPrenota')).show();
         } else {
             console.error('Errore caricamento campo:', data.error);
-            alert('Errore nel caricamento del campo. Riprova.');
+            mostraErrore('Errore nel caricamento del campo. Riprova.', 'Errore Caricamento', '❌');
         }
     })
     .catch(err => {
         console.error('Errore fetch campo:', err);
-        alert('Errore di connessione. Riprova.');
+        mostraErrore('Errore di connessione. Riprova.', 'Errore Connessione', '🔌');
     });
 }
 
@@ -779,14 +912,14 @@ function confermaPrenota() {
                 new bootstrap.Modal(document.getElementById('modalSuccesso')).show();
             }, 350);
         } else {
-            alert('Errore: ' + result.error);
+            mostraErrore(result.error, 'Prenotazione non riuscita', '⚠️');
             document.getElementById('btnConfermaPrenota').disabled = false;
             document.getElementById('btnConfermaPrenota').textContent = '✅ Conferma Prenotazione';
         }
     })
     .catch(err => {
         console.error('Errore prenotazione:', err);
-        alert('Errore di connessione. Riprova.');
+        mostraErrore('Errore di connessione. Riprova.', 'Errore Connessione', '🔌');
         document.getElementById('btnConfermaPrenota').disabled = false;
         document.getElementById('btnConfermaPrenota').textContent = '✅ Conferma Prenotazione';
     });
