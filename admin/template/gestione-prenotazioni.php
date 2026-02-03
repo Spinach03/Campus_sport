@@ -64,7 +64,7 @@ $filtri = $templateParams['filtri'] ?? [];
     <p class="page-subtitle">Gestisci le prenotazioni degli utenti</p>
     
     <!-- Bottone Nuova Prenotazione -->
-    <button class="btn-add-new" onclick="apriNuovaPrenotazione()">
+    <button type="button" class="btn-add-new" onclick="apriNuovaPrenotazione()">
         <span>+</span> Nuova Prenotazione
     </button>
 </div>
@@ -331,7 +331,7 @@ $filtri = $templateParams['filtri'] ?? [];
                 <form id="formNuovaPrenotazione" novalidate>
                     <!-- Sezione 1: Seleziona Utente -->
                     <div class="np-section mb-4">
-                        <label class="nc-label">👤 Seleziona Utente <span class="text-danger">*</span></label>
+                        <label for="note" class="nc-label">👤 Seleziona Utente <span class="text-danger">*</span></label>
                         <div class="search-user-container">
                             <input type="text" id="searchUserInput" class="nc-input" 
                                    placeholder="Cerca per nome, cognome o email..." autocomplete="off">
@@ -351,7 +351,7 @@ $filtri = $templateParams['filtri'] ?? [];
                     <!-- Sezione 2: Sport e Campo -->
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="nc-label">🏆 Sport <span class="text-danger">*</span></label>
+                            <label for="selectOraFine" class="nc-label">🏆 Sport <span class="text-danger">*</span></label>
                             <select id="selectSport" name="sport_id" class="nc-select" required>
                                 <option value="">Seleziona sport...</option>
                                 <?php foreach ($sport as $s): ?>
@@ -400,7 +400,7 @@ $filtri = $templateParams['filtri'] ?? [];
                         </div>
                         <div class="col-md-6">
                             <label class="nc-label">📝 Note (opzionale)</label>
-                            <input type="text" name="note" class="nc-input" 
+                            <input id="note" type="text" name="note" class="nc-input" 
                                    placeholder="Note aggiuntive...">
                         </div>
                     </div>
@@ -445,7 +445,7 @@ $filtri = $templateParams['filtri'] ?? [];
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Motivo della cancellazione</label>
+                        <label for="inviaNotificaCancella" class="form-label">Motivo della cancellazione</label>
                         <textarea name="motivo" class="form-control form-control-dark" rows="3" 
                                   placeholder="Inserisci il motivo della cancellazione..."></textarea>
                     </div>
@@ -923,7 +923,7 @@ function renderDettaglio(p) {
             
             ${canCancel ? `
             <div class="dettaglio-actions">
-                <button class="btn btn-danger" onclick="apriCancellazione(${p.prenotazione_id}, '${escapeHtmlAttr(p.campo_nome)}', '${formatDataSola(p.data_prenotazione)} ${p.ora_inizio.substring(0, 5)}-${p.ora_fine.substring(0, 5)}', '${escapeHtmlAttr(p.user_nome)} ${escapeHtmlAttr(p.user_cognome)}')">
+                <button type="button" class="btn btn-danger" onclick="apriCancellazione(${p.prenotazione_id}, '${escapeHtmlAttr(p.campo_nome)}', '${formatDataSola(p.data_prenotazione)} ${p.ora_inizio.substring(0, 5)}-${p.ora_fine.substring(0, 5)}', '${escapeHtmlAttr(p.user_nome)} ${escapeHtmlAttr(p.user_cognome)}')">
                     Cancella Prenotazione
                 </button>
             </div>

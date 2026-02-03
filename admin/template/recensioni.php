@@ -289,7 +289,7 @@ function getSportEmoji($sportNome) {
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">La tua risposta <span class="text-danger">*</span></label>
+                        <label for="modificaRispostaTesto" class="form-label">La tua risposta <span class="text-danger">*</span></label>
                         <textarea id="rispostaTesto" name="testo" class="form-control" rows="5" required minlength="10"
                                   placeholder="Scrivi una risposta professionale e cortese..."></textarea>
                         <div class="form-text">Minimo 10 caratteri. La risposta sarà visibile pubblicamente.</div>
@@ -538,10 +538,10 @@ function renderDettaglio(r) {
                 </div>
                 <div class="risposta-testo">${escapeHtml(r.risposta.testo)}</div>
                 <div class="risposta-actions mt-2">
-                    <button class="btn btn-sm btn-outline-warning" onclick="apriModificaRisposta(${r.risposta.risposta_id}, '${escapeHtml(r.risposta.testo).replace(/'/g, "\\'")}')">
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="apriModificaRisposta(${r.risposta.risposta_id}, '${escapeHtml(r.risposta.testo).replace(/'/g, "\\'")}')">
                         ✏️ Modifica
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="eliminaRisposta(${r.risposta.risposta_id})">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminaRisposta(${r.risposta.risposta_id})">
                         🗑️ Elimina
                     </button>
                 </div>
@@ -646,15 +646,15 @@ function renderDettaglio(r) {
             <!-- Azioni -->
             <div class="dettaglio-actions">
                 ${!hasRisposta ? `
-                <button class="btn btn-primary" onclick="apriRisposta(${r.recensione_id}, '${escapeHtml(r.utente_nome)}', ${r.rating_generale})">
+                <button type="button" class="btn btn-primary" onclick="apriRisposta(${r.recensione_id}, '${escapeHtml(r.utente_nome)}', ${r.rating_generale})">
                     💬 Rispondi
                 </button>
                 ` : `
-                <button class="btn btn-warning" onclick="apriModificaRisposta(${r.risposta.risposta_id}, '${escapeHtml(r.risposta.testo).replace(/'/g, "\\'")}')">
+                <button type="button" class="btn btn-warning" onclick="apriModificaRisposta(${r.risposta.risposta_id}, '${escapeHtml(r.risposta.testo).replace(/'/g, "\\'")}')">
                     ✏️ Modifica Risposta
                 </button>
                 `}
-                <button class="btn btn-danger" onclick="apriElimina(${r.recensione_id})">
+                <button type="button" class="btn btn-danger" onclick="apriElimina(${r.recensione_id})">
                     🗑️ Elimina Recensione
                 </button>
             </div>

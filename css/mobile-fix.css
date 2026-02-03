@@ -1,0 +1,483 @@
+/* ============================================================================
+   CAMPUS SPORTS ARENA - MOBILE FIX
+   Fix responsività per sidebar e layout mobile
+   Da includere DOPO style.css
+   ============================================================================ */
+
+/* ============================================================================
+   HAMBURGER MENU BUTTON
+   ============================================================================ */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 200;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(59, 130, 246, 0.5);
+}
+
+.mobile-menu-toggle:active {
+    transform: scale(0.95);
+}
+
+.hamburger-icon {
+    width: 24px;
+    height: 18px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.hamburger-icon span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background: white;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+/* Hamburger animato quando sidebar aperta */
+.sidebar-open .hamburger-icon span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.sidebar-open .hamburger-icon span:nth-child(2) {
+    opacity: 0;
+    transform: translateX(-10px);
+}
+
+.sidebar-open .hamburger-icon span:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* ============================================================================
+   OVERLAY MOBILE
+   ============================================================================ */
+.mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 90;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-open .mobile-overlay {
+    opacity: 1;
+}
+
+/* ============================================================================
+   MOBILE RESPONSIVE - TABLET (768px)
+   ============================================================================ */
+@media (max-width: 768px) {
+    /* Mostra hamburger menu */
+    .mobile-menu-toggle {
+        display: flex;
+    }
+    
+    /* Mostra overlay */
+    .mobile-overlay {
+        display: block;
+        pointer-events: none;
+    }
+    
+    .sidebar-open .mobile-overlay {
+        pointer-events: auto;
+    }
+    
+    /* Sidebar nascosta di default su mobile */
+    .sidebar {
+        transform: translateX(-100%);
+        width: var(--sidebar-width) !important;
+        padding: 24px 20px !important;
+        align-items: flex-start !important;
+    }
+    
+    /* Sidebar visibile quando aperta */
+    .sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+    
+    /* Mostra tutti gli elementi sidebar su mobile */
+    .sidebar .sidebar-brand,
+    .sidebar .nav-text,
+    .sidebar .user-info {
+        display: block !important;
+    }
+    
+    .sidebar .sidebar-header,
+    .sidebar .sidebar-user {
+        justify-content: flex-start !important;
+        gap: 16px !important;
+    }
+    
+    .sidebar .nav-link {
+        padding: 14px 16px !important;
+        justify-content: flex-start !important;
+        gap: 14px !important;
+        width: 100% !important;
+    }
+    
+    /* Main content a larghezza piena */
+    .main-content {
+        margin-left: 0 !important;
+        padding: 80px 20px 20px 20px;
+        width: 100%;
+    }
+    
+    /* Nascondi toggle sidebar desktop */
+    .sidebar-toggle {
+        display: none !important;
+    }
+    
+    /* Header responsive */
+    .content-header {
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+    
+    .content-header h2 {
+        font-size: 24px;
+    }
+}
+
+/* ============================================================================
+   MOBILE RESPONSIVE - MOBILE LARGE (576px)
+   ============================================================================ */
+@media (max-width: 576px) {
+    .mobile-menu-toggle {
+        top: 12px;
+        left: 12px;
+        width: 44px;
+        height: 44px;
+    }
+    
+    .hamburger-icon {
+        width: 22px;
+        height: 16px;
+    }
+    
+    .hamburger-icon span {
+        height: 2.5px;
+    }
+    
+    .main-content {
+        padding: 70px 16px 16px 16px;
+    }
+    
+    .content-header h2 {
+        font-size: 22px;
+    }
+    
+    /* Card e elementi più compatti */
+    .dashboard-welcome-card {
+        padding: 20px;
+        border-radius: 16px;
+    }
+    
+    .welcome-title {
+        font-size: 22px;
+    }
+    
+    .welcome-subtitle {
+        font-size: 14px;
+    }
+    
+    /* KPI cards stack */
+    .kpi-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+    
+    .kpi-card {
+        padding: 16px;
+    }
+    
+    .kpi-value {
+        font-size: 24px;
+    }
+    
+    /* Buttons più grandi per touch */
+    .btn-primary-gradient {
+        padding: 14px 20px;
+        font-size: 14px;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ============================================================================
+   MOBILE RESPONSIVE - MOBILE SMALL (480px)
+   ============================================================================ */
+@media (max-width: 480px) {
+    .mobile-menu-toggle {
+        top: 10px;
+        left: 10px;
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+    }
+    
+    .main-content {
+        padding: 65px 12px 12px 12px;
+    }
+    
+    .content-header h2 {
+        font-size: 20px;
+    }
+    
+    /* Welcome card ultra compact */
+    .dashboard-welcome-card {
+        padding: 16px;
+        border-radius: 14px;
+    }
+    
+    .welcome-title {
+        font-size: 20px;
+    }
+    
+    .welcome-content {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .welcome-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .welcome-info-box {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .info-item {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    /* Sidebar su mobile piccolo */
+    .sidebar {
+        width: 85vw !important;
+        max-width: 280px;
+    }
+}
+
+/* ============================================================================
+   MOBILE RESPONSIVE - MOBILE EXTRA SMALL (375px)
+   ============================================================================ */
+@media (max-width: 375px) {
+    .mobile-menu-toggle {
+        top: 8px;
+        left: 8px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .main-content {
+        padding: 60px 10px 10px 10px;
+    }
+    
+    .content-header h2 {
+        font-size: 18px;
+    }
+    
+    .dashboard-welcome-card {
+        padding: 14px;
+    }
+    
+    .welcome-title {
+        font-size: 18px;
+    }
+    
+    .welcome-subtitle {
+        font-size: 13px;
+    }
+    
+    .kpi-card {
+        padding: 14px;
+    }
+    
+    .kpi-value {
+        font-size: 22px;
+    }
+    
+    .kpi-label {
+        font-size: 12px;
+    }
+}
+
+/* ============================================================================
+   TABELLE RESPONSIVE
+   ============================================================================ */
+.table-responsive-mobile {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+    /* Wrapper per tabelle scrollabili */
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -12px;
+        padding: 0 12px;
+    }
+    
+    .table-wrapper table {
+        min-width: 600px;
+    }
+    
+    /* Indicatore scroll */
+    .table-wrapper::after {
+        content: '← scorri →';
+        display: block;
+        text-align: center;
+        font-size: 11px;
+        color: var(--text-muted);
+        padding: 8px 0;
+        opacity: 0.7;
+    }
+}
+
+/* ============================================================================
+   CARDS GRID RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .prenotazioni-grid,
+    .recensioni-grid,
+    .notifiche-list,
+    .segnalazioni-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ============================================================================
+   MODAL RESPONSIVE
+   ============================================================================ */
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    .modal-content {
+        border-radius: 16px;
+    }
+    
+    .modal-header {
+        padding: 16px;
+    }
+    
+    .modal-body {
+        padding: 16px;
+    }
+    
+    .modal-footer {
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+/* ============================================================================
+   FORM RESPONSIVE
+   ============================================================================ */
+@media (max-width: 576px) {
+    .form-row,
+    .row {
+        flex-direction: column;
+    }
+    
+    .form-row > .col,
+    .row > .col,
+    .form-row > [class*="col-"],
+    .row > [class*="col-"] {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+        margin-bottom: 12px;
+    }
+    
+    .form-control,
+    .form-select {
+        font-size: 16px; /* Previene zoom su iOS */
+    }
+}
+
+/* ============================================================================
+   UTILITY CLASSES MOBILE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .hide-mobile { display: none !important; }
+    .show-mobile { display: block !important; }
+    .show-mobile-flex { display: flex !important; }
+    .show-mobile-inline { display: inline !important; }
+    
+    .text-center-mobile { text-align: center !important; }
+    .w-100-mobile { width: 100% !important; }
+}
+
+@media (max-width: 576px) {
+    .hide-mobile-sm { display: none !important; }
+    .show-mobile-sm { display: block !important; }
+}
+
+/* ============================================================================
+   LANDSCAPE MODE
+   ============================================================================ */
+@media (max-height: 500px) and (orientation: landscape) {
+    .mobile-menu-toggle {
+        top: 8px;
+        left: 8px;
+        width: 36px;
+        height: 36px;
+    }
+    
+    .main-content {
+        padding-top: 50px;
+    }
+    
+    .sidebar {
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+    
+    .sidebar-header {
+        margin-bottom: 16px;
+    }
+    
+    .sidebar-logo {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+    }
+}

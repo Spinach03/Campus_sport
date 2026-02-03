@@ -113,7 +113,7 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
     </div>
     
     <!-- Add New Field Button -->
-    <button class="btn-add-new" data-bs-toggle="modal" data-bs-target="#modalNuovoCampo">
+    <button type="button" class="btn-add-new" data-bs-toggle="modal" data-bs-target="#modalNuovoCampo">
         <span>+</span> Nuovo Campo
     </button>
 </div>
@@ -288,7 +288,7 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
             <span class="empty-icon">🏟️</span>
             <h3>Nessun campo trovato</h3>
             <p>Prova a modificare i filtri o aggiungi un nuovo campo.</p>
-            <button class="btn-add-new" data-bs-toggle="modal" data-bs-target="#modalNuovoCampo">
+            <button type="button" class="btn-add-new" data-bs-toggle="modal" data-bs-target="#modalNuovoCampo">
                 + Aggiungi Campo
             </button>
         </div>
@@ -421,11 +421,11 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                     <!-- Riga 1: Nome Campo + Sport -->
                     <div class="row g-3 mb-3">
                         <div class="col-md-7">
-                            <label class="nc-label">Nome Campo <span class="text-danger">*</span></label>
+                            <label for="mod_larghezza_m" class="nc-label">Nome Campo <span class="text-danger">*</span></label>
                             <input type="text" class="nc-input" name="nome" placeholder="Es. Campo Calcetto Nord" required>
                         </div>
                         <div class="col-md-5">
-                            <label class="nc-label">Sport <span class="text-danger">*</span></label>
+                            <label for="mod_tipo_superficie" class="nc-label">Sport <span class="text-danger">*</span></label>
                             <select class="nc-select" name="sport_id" required>
                                 <?php foreach ($sports as $sport): 
                                     $sportEmoji = getEmojiFromIcona($sport['icona'] ?? '');
@@ -441,7 +441,7 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                     <!-- Riga 2: Tipo + Superficie -->
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="nc-label">Tipo <span class="text-danger">*</span></label>
+                            <label for="mod_tipo_superficie" class="nc-label">Tipo <span class="text-danger">*</span></label>
                             <div class="nc-btn-group">
                                 <input type="radio" class="btn-check" name="tipo_campo" id="ncTipoIndoor" value="indoor">
                                 <label class="nc-btn-option" for="ncTipoIndoor">
@@ -455,7 +455,7 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="nc-label">Superficie <span class="text-danger">*</span></label>
+                            <label for="mod_larghezza_m" class="nc-label">Superficie <span class="text-danger">*</span></label>
                             <select class="nc-select" name="tipo_superficie" required>
                                 <option value="" disabled selected>Seleziona...</option>
                                 <option value="erba_sintetica">Erba sintetica</option>
@@ -470,7 +470,7 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                     <!-- Riga 3: Capienza + Posizione -->
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
-                            <label class="nc-label">Capienza Max <span class="text-danger">*</span></label>
+                            <label for="mod_descrizione" class="nc-label">Capienza Max <span class="text-danger">*</span></label>
                             <input type="number" class="nc-input" name="capienza_max" placeholder="Es. 10" min="1" required>
                         </div>
                         <div class="col-md-8">
@@ -618,27 +618,27 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
             <!-- Tabs -->
             <ul class="nav nav-tabs-custom" id="detailTabs">
                 <li class="nav-item">
-                    <button class="nav-link-custom active" data-bs-toggle="tab" data-bs-target="#tabInfo">
+                    <button type="button" class="nav-link-custom active" data-bs-toggle="tab" data-bs-target="#tabInfo">
                         📋 Informazioni
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link-custom" data-bs-toggle="tab" data-bs-target="#tabCalendario">
+                    <button type="button" class="nav-link-custom" data-bs-toggle="tab" data-bs-target="#tabCalendario">
                         📅 Calendario
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link-custom" data-bs-toggle="tab" data-bs-target="#tabStats">
+                    <button type="button" class="nav-link-custom" data-bs-toggle="tab" data-bs-target="#tabStats">
                         📊 Statistiche
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link-custom" data-bs-toggle="tab" data-bs-target="#tabRecensioni">
+                    <button type="button" class="nav-link-custom" data-bs-toggle="tab" data-bs-target="#tabRecensioni">
                         ⭐ Recensioni
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link-custom" data-bs-toggle="tab" data-bs-target="#tabManutenzione">
+                    <button type="button" class="nav-link-custom" data-bs-toggle="tab" data-bs-target="#tabManutenzione">
                         🔧 Manutenzione
                     </button>
                 </li>
@@ -799,7 +799,7 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                     <div class="tab-pane fade" id="tabManutenzione">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="tab-section-title mb-0">🔧 Gestione Manutenzione</h4>
-                            <button class="btn-add-new btn-sm" id="btnProgrammaManutenzione">
+                            <button type="button" class="btn-add-new btn-sm" id="btnProgrammaManutenzione">
                                 + Programma Manutenzione
                             </button>
                         </div>
@@ -1490,7 +1490,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="manutenzione-status-title">Campo in Manutenzione</div>
                         <div class="manutenzione-status-subtitle">Il campo non è prenotabile al momento</div>
                     </div>
-                    <button class="btn-success-custom btn-sm" onclick="terminaManutenzione(${campo.campo_id})">
+                    <button type="button" class="btn-success-custom btn-sm" onclick="terminaManutenzione(${campo.campo_id})">
                         ✓ Termina Manutenzione
                     </button>
                 </div>
@@ -1522,7 +1522,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="manutenzione-item-date">${dIn} - ${dFi}</div>
                             ${b.motivo ? `<div class="manutenzione-item-motivo">${b.motivo}</div>` : ''}
                         </div>
-                        <button class="btn-delete-blocco" onclick="eliminaBloccoManutenzione(${b.blocco_id})" title="Elimina manutenzione">
+                        <button type="button" class="btn-delete-blocco" onclick="eliminaBloccoManutenzione(${b.blocco_id})" title="Elimina manutenzione">
                             🗑️
                         </button>
                     </div>

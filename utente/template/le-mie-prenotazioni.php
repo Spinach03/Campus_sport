@@ -183,7 +183,7 @@ $tuttePrenotazioni = array_merge($prenotazioniOggi, $prenotazioniFuture);
                 <span class="partecipanti-count">👥 <?= $p['num_partecipanti'] ?> partecipant<?= $p['num_partecipanti'] > 1 ? 'i' : 'e' ?></span>
             </div>
             <?php if ($cancellabile && !$inCorso): ?>
-            <button class="btn-cancella-card" onclick="event.stopPropagation(); apriModalCancella(<?= $p['prenotazione_id'] ?>, '<?= htmlspecialchars(addslashes($p['campo_nome'])) ?>', 'Oggi <?= $oraInizio ?>')">
+            <button type="button" class="btn-cancella-card" onclick="event.stopPropagation(); apriModalCancella(<?= $p['prenotazione_id'] ?>, '<?= htmlspecialchars(addslashes($p['campo_nome'])) ?>', 'Oggi <?= $oraInizio ?>')">
                 ❌ Cancella
             </button>
             <?php elseif ($inCorso): ?>
@@ -284,7 +284,7 @@ $tuttePrenotazioni = array_merge($prenotazioniOggi, $prenotazioniFuture);
                 </span>
             </div>
             <?php if ($cancellabile): ?>
-            <button class="btn-cancella-card" onclick="event.stopPropagation(); apriModalCancella(<?= $p['prenotazione_id'] ?>, '<?= htmlspecialchars(addslashes($p['campo_nome'])) ?>', '<?= $dataFormatted ?> <?= $oraInizio ?>')">
+            <button type="button" class="btn-cancella-card" onclick="event.stopPropagation(); apriModalCancella(<?= $p['prenotazione_id'] ?>, '<?= htmlspecialchars(addslashes($p['campo_nome'])) ?>', '<?= $dataFormatted ?> <?= $oraInizio ?>')">
                 ❌ Cancella
             </button>
             <?php else: ?>

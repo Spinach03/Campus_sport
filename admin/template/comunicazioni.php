@@ -70,14 +70,14 @@ $stats = $templateParams['stats'] ?? ['totale' => 0, 'inviati' => 0, 'programmat
      TABS NAVIGATION
      ============================================================================ -->
 <div class="tabs-container mb-4">
-    <button class="tab-btn active" data-tab="storico" onclick="switchTab('storico')">
+    <button type="button" class="tab-btn active" data-tab="storico" onclick="switchTab('storico')">
         📋 Storico
         <span class="tab-badge"><?= $stats['totale'] ?? 0 ?></span>
     </button>
-    <button class="tab-btn" data-tab="compose" onclick="switchTab('compose')">
+    <button type="button" class="tab-btn" data-tab="compose" onclick="switchTab('compose')">
         ✏️ Componi Broadcast
     </button>
-    <button class="tab-btn" data-tab="messaggio" onclick="switchTab('messaggio')">
+    <button type="button" class="tab-btn" data-tab="messaggio" onclick="switchTab('messaggio')">
         ✉️ Messaggio Diretto
     </button>
 </div>
@@ -92,7 +92,7 @@ $stats = $templateParams['stats'] ?? ['totale' => 0, 'inviati' => 0, 'programmat
             <div class="no-results-icon">📭</div>
             <h3>Nessuna comunicazione trovata</h3>
             <p>Non hai ancora inviato comunicazioni broadcast.</p>
-            <button class="btn-add-new mt-3" onclick="switchTab('compose')">
+            <button type="button" class="btn-add-new mt-3" onclick="switchTab('compose')">
                 <span>+</span> Crea la prima comunicazione
             </button>
         </div>
@@ -290,8 +290,8 @@ $stats = $templateParams['stats'] ?? ['totale' => 0, 'inviati' => 0, 'programmat
             <div class="preview-header">
                 <h4>👁️ Anteprima</h4>
                 <div class="preview-tabs">
-                    <button class="preview-tab active" onclick="switchPreview('inapp')">In-App</button>
-                    <button class="preview-tab" onclick="switchPreview('email')">Email</button>
+                    <button type="button" class="preview-tab active" onclick="switchPreview('inapp')">In-App</button>
+                    <button type="button" class="preview-tab" onclick="switchPreview('email')">Email</button>
                 </div>
             </div>
             <div class="preview-body">
@@ -431,8 +431,8 @@ $stats = $templateParams['stats'] ?? ['totale' => 0, 'inviati' => 0, 'programmat
             <div class="preview-header">
                 <h4>👁️ Anteprima</h4>
                 <div class="preview-tabs">
-                    <button class="preview-tab active" onclick="switchPreviewMsg('inapp')">In-App</button>
-                    <button class="preview-tab" onclick="switchPreviewMsg('email')">Email</button>
+                    <button type="button" class="preview-tab active" onclick="switchPreviewMsg('inapp')">In-App</button>
+                    <button type="button" class="preview-tab" onclick="switchPreviewMsg('email')">Email</button>
                 </div>
             </div>
             <div class="preview-body">
@@ -1192,13 +1192,13 @@ function viewBroadcast(id) {
                     <div class="dettaglio-section mt-4" style="background: rgba(139, 92, 246, 0.1); border-left: 3px solid #8B5CF6; padding: 16px;">
                         <h6 style="margin-bottom: 12px;">⚡ Azioni Bozza</h6>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button onclick="editDraft(${b.broadcast_id})" class="btn-action-primary" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">
+                            <button type="button" onclick="editDraft(${b.broadcast_id})" class="btn-action-primary" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">
                                 ✏️ Modifica
                             </button>
-                            <button onclick="sendDraft(${b.broadcast_id})" class="btn-action-success" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(16, 185, 129, 0.2); color: #10B981;">
+                            <button type="button" onclick="sendDraft(${b.broadcast_id})" class="btn-action-success" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(16, 185, 129, 0.2); color: #10B981;">
                                 📨 Invia Ora
                             </button>
-                            <button onclick="deleteDraft(${b.broadcast_id})" class="btn-action-danger" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(239, 68, 68, 0.2); color: #EF4444;">
+                            <button type="button" onclick="deleteDraft(${b.broadcast_id})" class="btn-action-danger" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(239, 68, 68, 0.2); color: #EF4444;">
                                 🗑️ Elimina
                             </button>
                         </div>
@@ -1209,13 +1209,13 @@ function viewBroadcast(id) {
                     <div class="dettaglio-section mt-4" style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid #F59E0B; padding: 16px;">
                         <h6 style="margin-bottom: 12px;">⚡ Azioni Programmata</h6>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button onclick="editScheduled(${b.broadcast_id})" class="btn-action-primary" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">
+                            <button type="button" onclick="editScheduled(${b.broadcast_id})" class="btn-action-primary" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">
                                 ✏️ Modifica
                             </button>
-                            <button onclick="sendScheduledNow(${b.broadcast_id})" class="btn-action-success" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(16, 185, 129, 0.2); color: #10B981;">
+                            <button type="button" onclick="sendScheduledNow(${b.broadcast_id})" class="btn-action-success" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(16, 185, 129, 0.2); color: #10B981;">
                                 📨 Invia Subito
                             </button>
-                            <button onclick="cancelScheduled(${b.broadcast_id})" class="btn-action-danger" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(239, 68, 68, 0.2); color: #EF4444;">
+                            <button type="button" onclick="cancelScheduled(${b.broadcast_id})" class="btn-action-danger" style="padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: rgba(239, 68, 68, 0.2); color: #EF4444;">
                                 ❌ Annulla
                             </button>
                         </div>

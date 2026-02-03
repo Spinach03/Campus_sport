@@ -9,19 +9,82 @@ class DatabaseHelper {
         }
         $this->db->set_charset("utf8mb4");
     }
+    
+    /**
+     * Restituisce la connessione al database
+     */
+    public function getDb() {
+        return $this->db;
+    }
 
     // ============================================================================
     // AUTH - Login
     // ============================================================================
     
+    /**
+     * Verifica login utente
+     * Supporta sia password hashate (nuovi utenti) che password in chiaro (vecchi utenti)
+     */
     public function checkLogin($email, $password){
-        // Permette login a utenti attivi, sospesi e bannati (ma NON eliminati)
-        $query = "SELECT user_id, email, nome, cognome, ruolo, stato FROM users WHERE stato IN ('attivo', 'sospeso', 'bannato') AND email = ? AND password_hash = ?";
+        $query = "SELECT user_id, email, nome, cognome, ruolo, stato, password_hash 
+                  FROM users 
+                  WHERE stato IN ('attivo', 'sospeso', 'bannato') AND email = ?";
         $stmt = $this->db->prepare($query);
-        $stmt->bind_param('ss', $email, $password);
+        $stmt->bind_param('s', $email);
         $stmt->execute();
         $result = $stmt->get_result();
-        return $result->fetch_all(MYSQLI_ASSOC);
+        $user = $result->fetch_assoc();
+        
+        if (!$user) {
+            return [];
+        }
+        
+        // Verifica password
+        $passwordCorretta = false;
+        
+        // Prima prova con password_verify (per password hashate)
+        if (password_verify($password, $user['password_hash'])) {
+            $passwordCorretta = true;
+        }
+        // Fallback: confronto diretto (per vecchi utenti con password in chiaro)
+        elseif ($password === $user['password_hash']) {
+            $passwordCorretta = true;
+            
+            // Aggiorna la password con hash per sicurezza futura
+            $this->upgradePasswordToHash($user['user_id'], $password);
+        }
+        
+        if ($passwordCorretta) {
+            // Aggiorna ultimo accesso
+            $this->updateUltimoAccesso($user['user_id']);
+            
+            // Rimuovi password_hash dal risultato
+            unset($user['password_hash']);
+            return [$user];
+        }
+        
+        return [];
+    }
+    
+    /**
+     * Aggiorna password da plaintext a hash (migrazione sicura)
+     */
+    private function upgradePasswordToHash($userId, $password) {
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $query = "UPDATE users SET password_hash = ? WHERE user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('si', $hash, $userId);
+        $stmt->execute();
+    }
+    
+    /**
+     * Aggiorna timestamp ultimo accesso
+     */
+    private function updateUltimoAccesso($userId) {
+        $query = "UPDATE users SET ultimo_accesso = NOW() WHERE user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
     }
 
     // ============================================================================
@@ -5794,6 +5857,145 @@ class DatabaseHelper {
         $stmt->bind_param('i', $userId);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // ============================================================================
+    // REGISTRAZIONE UTENTE
+    // ============================================================================
+    
+    /**
+     * Verifica se un'email è già registrata
+     */
+    public function emailExists($email) {
+        $query = "SELECT user_id FROM users WHERE email = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('s', $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->num_rows > 0;
+    }
+    
+    /**
+     * Registra un nuovo utente (studente)
+     * Inserisce in users + utenti_standard
+     */
+    public function registerUser($dati) {
+        // Inizia transazione
+        $this->db->begin_transaction();
+        
+        try {
+            // Hash della password
+            $passwordHash = password_hash($dati['password'], PASSWORD_DEFAULT);
+            
+            // 1. Inserisci in tabella users
+            $queryUsers = "INSERT INTO users (email, nome, cognome, telefono, ruolo, stato, password_hash, created_at) 
+                          VALUES (?, ?, ?, ?, 'standard', 'attivo', ?, NOW())";
+            
+            $stmtUsers = $this->db->prepare($queryUsers);
+            $stmtUsers->bind_param('sssss', 
+                $dati['email'],
+                $dati['nome'],
+                $dati['cognome'],
+                $dati['telefono'],
+                $passwordHash
+            );
+            
+            if (!$stmtUsers->execute()) {
+                throw new Exception('Errore durante la creazione dell\'utente');
+            }
+            
+            $userId = $this->db->insert_id;
+            
+            // 2. Inserisci in tabella utenti_standard
+            $queryStandard = "INSERT INTO utenti_standard 
+                             (user_id, corso_laurea_id, anno_iscrizione, data_nascita, penalty_points, xp_points, livello_id) 
+                             VALUES (?, ?, ?, ?, 0, 0, 1)";
+            
+            $stmtStandard = $this->db->prepare($queryStandard);
+            $stmtStandard->bind_param('iiis',
+                $userId,
+                $dati['corso_laurea_id'],
+                $dati['anno_iscrizione'],
+                $dati['data_nascita']
+            );
+            
+            if (!$stmtStandard->execute()) {
+                throw new Exception('Errore durante la creazione del profilo studente');
+            }
+            
+            // 3. Crea notifica di benvenuto
+            $this->creaNotificaBenvenuto($userId, $dati['nome']);
+            
+            // Commit transazione
+            $this->db->commit();
+            
+            return ['success' => true, 'user_id' => $userId];
+            
+        } catch (Exception $e) {
+            // Rollback in caso di errore
+            $this->db->rollback();
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    /**
+     * Crea notifica di benvenuto per nuovo utente
+     */
+    private function creaNotificaBenvenuto($userId, $nome) {
+        $titolo = "🎉 Benvenuto in Campus Sports!";
+        $messaggio = "Ciao {$nome}! Il tuo account è stato creato con successo. Inizia subito a prenotare i campi sportivi del campus!";
+        $this->creaNotifica($userId, 'sistema', $titolo, $messaggio, 'prenota-campo.php');
+    }
+    
+    /**
+     * Ottieni un corso di laurea per ID
+     */
+    public function getCorsoLaureaById($corsoId) {
+        $query = "SELECT * FROM corsi_laurea WHERE corso_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $corsoId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    /**
+     * Cambia password utente
+     */
+    public function cambiaPassword($userId, $vecchiaPassword, $nuovaPassword) {
+        // Verifica vecchia password
+        $query = "SELECT password_hash FROM users WHERE user_id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $user = $stmt->get_result()->fetch_assoc();
+        
+        if (!$user) {
+            return ['success' => false, 'error' => 'Utente non trovato'];
+        }
+        
+        // Verifica password (supporta sia hash che plaintext)
+        $passwordCorretta = false;
+        if (password_verify($vecchiaPassword, $user['password_hash'])) {
+            $passwordCorretta = true;
+        } elseif ($vecchiaPassword === $user['password_hash']) {
+            $passwordCorretta = true;
+        }
+        
+        if (!$passwordCorretta) {
+            return ['success' => false, 'error' => 'Password attuale non corretta'];
+        }
+        
+        // Hash e salva nuova password
+        $nuovoHash = password_hash($nuovaPassword, PASSWORD_DEFAULT);
+        $queryUpdate = "UPDATE users SET password_hash = ? WHERE user_id = ?";
+        $stmtUpdate = $this->db->prepare($queryUpdate);
+        $stmtUpdate->bind_param('si', $nuovoHash, $userId);
+        
+        if ($stmtUpdate->execute()) {
+            return ['success' => true];
+        }
+        
+        return ['success' => false, 'error' => 'Errore durante l\'aggiornamento'];
     }
 
 

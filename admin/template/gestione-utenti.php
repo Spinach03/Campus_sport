@@ -282,22 +282,22 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
             <!-- Tabs -->
             <ul class="nav nav-tabs modal-utente-tabs" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabInfo" type="button">
+                    <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabInfo" type="button">
                         📋 Informazioni
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAttivita" type="button">
+                    <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAttivita" type="button">
                         📊 Attività
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSegnalazioni" type="button">
+                    <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSegnalazioni" type="button">
                         🚩 Segnalazioni
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAzioni" type="button">
+                    <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAzioni" type="button">
                         ⚡ Azioni
                     </button>
                 </li>
@@ -399,8 +399,8 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
                                     <h6>⚠️ Penalty Points</h6>
                                     <p>Attualmente: <span id="actionPenaltyCount">0</span> punti</p>
                                     <div class="action-btns">
-                                        <button class="btn-action-warning" id="btnResetPenalty">🔄 Reset</button>
-                                        <button class="btn-action-danger" id="btnAddPenalty">+ Aggiungi</button>
+                                        <button type="button" class="btn-action-warning" id="btnResetPenalty">🔄 Reset</button>
+                                        <button type="button" class="btn-action-danger" id="btnAddPenalty">+ Aggiungi</button>
                                     </div>
                                 </div>
                             </div>
@@ -410,8 +410,8 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
                                 <div class="action-box" id="boxSospensione">
                                     <h6 id="sospensioneTitle">⏸️ Sospensione</h6>
                                     <p id="sospensioneDesc">Sospendi temporaneamente l'utente</p>
-                                    <button class="btn-action-warning" id="btnSospendi">⏸️ Sospendi</button>
-                                    <button class="btn-action-success" id="btnRiattiva" style="display:none;">✅ Riattiva Utente</button>
+                                    <button type="button" class="btn-action-warning" id="btnSospendi">⏸️ Sospendi</button>
+                                    <button type="button" class="btn-action-success" id="btnRiattiva" style="display:none;">✅ Riattiva Utente</button>
                                 </div>
                             </div>
                             
@@ -420,8 +420,8 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
                                 <div class="action-box" id="boxBan">
                                     <h6 id="banTitle">🚫 Ban Permanente</h6>
                                     <p id="banDesc">Azione irreversibile - richiede conferma</p>
-                                    <button class="btn-action-danger-outline" id="btnBan">🚫 Banna Utente</button>
-                                    <button class="btn-action-success" id="btnSbanna" style="display:none;">✅ Rimuovi Ban</button>
+                                    <button type="button" class="btn-action-danger-outline" id="btnBan">🚫 Banna Utente</button>
+                                    <button type="button" class="btn-action-success" id="btnSbanna" style="display:none;">✅ Rimuovi Ban</button>
                                 </div>
                             </div>
                             
@@ -462,8 +462,8 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
             <div class="modal-body">
                 <form id="formSospensione">
                     <div class="mb-3">
-                        <label class="form-label">Durata sospensione</label>
-                        <select class="form-select form-select-dark" name="giorni" required>
+                        <label for="giorni" class="form-label">Durata sospensione</label>
+                        <select id="giorni" class="form-select form-select-dark" name="giorni" required>
                             <option value="1">1 giorno</option>
                             <option value="3">3 giorni</option>
                             <option value="7" selected>7 giorni</option>
@@ -472,8 +472,8 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Motivo</label>
-                        <textarea class="form-control form-control-dark" name="motivo" rows="3" placeholder="Inserisci il motivo della sospensione..." required></textarea>
+                        <label for="motivo" class="form-label">Motivo</label>
+                        <textarea id="motivo" class="form-control form-control-dark" name="motivo" rows="3" placeholder="Inserisci il motivo della sospensione..." required></textarea>
                     </div>
                 </form>
             </div>
@@ -501,7 +501,7 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
                 </div>
                 <form id="formBan">
                     <div class="mb-3">
-                        <label class="form-label">Motivo del ban</label>
+                        <label for="confermaBan" class="form-label">Motivo del ban</label>
                         <textarea class="form-control form-control-dark" name="motivo" rows="3" placeholder="Inserisci il motivo del ban..." required></textarea>
                     </div>
                     <div class="form-check">
@@ -538,12 +538,12 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
                 <form id="formPenalty">
                     <input type="hidden" id="penaltyAction" value="add">
                     <div class="mb-3">
-                        <label class="form-label">Numero punti da aggiungere</label>
-                        <input type="number" class="form-control form-control-dark" name="punti" min="1" max="10" value="1" required>
+                        <label for="punti" class="form-label">Numero punti da aggiungere</label>
+                        <input id="punti" type="number" class="form-control form-control-dark" name="punti" min="1" max="10" value="1" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Motivo</label>
-                        <textarea class="form-control form-control-dark" name="descrizione" rows="2" placeholder="Es: No-show alla prenotazione, comportamento scorretto..." required></textarea>
+                        <label for="descrizione" class="form-label">Motivo</label>
+                        <textarea id="descrizione" class="form-control form-control-dark" name="descrizione" rows="2" placeholder="Es: No-show alla prenotazione, comportamento scorretto..." required></textarea>
                     </div>
                 </form>
             </div>
@@ -575,8 +575,8 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
                 </div>
                 <form id="formResetPenalty">
                     <div class="mb-3">
-                        <label class="form-label">Motivo del reset (opzionale)</label>
-                        <textarea class="form-control form-control-dark" name="motivo" rows="2" placeholder="Es: Comportamento migliorato, errore di sistema..."></textarea>
+                        <label for="motivo" class="form-label">Motivo del reset (opzionale)</label>
+                        <textarea id="motivo" class="form-control form-control-dark" name="motivo" rows="2" placeholder="Es: Comportamento migliorato, errore di sistema..."></textarea>
                     </div>
                 </form>
             </div>

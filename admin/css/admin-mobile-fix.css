@@ -1,0 +1,599 @@
+/* ============================================================================
+   CAMPUS SPORTS ARENA - ADMIN MOBILE FIX
+   Fix responsività specifica per area admin
+   Da includere DOPO lo style.css dell'admin
+   ============================================================================ */
+
+/* ============================================================================
+   TABLET (768px)
+   ============================================================================ */
+@media (max-width: 768px) {
+    /* Header gestione */
+    .gestione-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 16px !important;
+    }
+    
+    .gestione-header h2 {
+        font-size: 22px;
+    }
+    
+    .header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .header-actions .btn {
+        flex: 1;
+        min-width: 140px;
+    }
+    
+    /* KPI Grid */
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px;
+    }
+    
+    .kpi-card {
+        padding: 16px;
+    }
+    
+    .kpi-value {
+        font-size: 24px;
+    }
+    
+    /* Filtri */
+    .filters-section,
+    .filter-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+    
+    .filter-group {
+        width: 100%;
+    }
+    
+    .filter-group .form-control,
+    .filter-group .form-select {
+        width: 100%;
+    }
+    
+    .filter-divider {
+        display: none;
+    }
+    
+    .sort-wrapper {
+        margin-left: 0 !important;
+        width: 100%;
+    }
+    
+    /* Grid campi, utenti, etc */
+    .fields-grid,
+    .users-grid,
+    .reviews-grid,
+    .bookings-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+    
+    /* Cards */
+    .field-card,
+    .user-card,
+    .booking-card {
+        padding: 16px;
+    }
+    
+    /* Statistiche e info box */
+    .stat-box,
+    .info-box {
+        padding: 12px;
+    }
+}
+
+/* ============================================================================
+   MOBILE LARGE (576px)
+   ============================================================================ */
+@media (max-width: 576px) {
+    /* Header */
+    .gestione-header h2 {
+        font-size: 20px;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+    }
+    
+    .header-actions .btn {
+        width: 100%;
+    }
+    
+    /* KPI singola colonna */
+    .kpi-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .kpi-card {
+        padding: 14px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .kpi-icon {
+        order: 2;
+        font-size: 24px;
+    }
+    
+    .kpi-content {
+        order: 1;
+    }
+    
+    .kpi-value {
+        font-size: 22px;
+    }
+    
+    .kpi-label {
+        font-size: 12px;
+    }
+    
+    /* Tab navigation */
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 8px;
+    }
+    
+    .nav-tabs .nav-link {
+        white-space: nowrap;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    /* Search box */
+    .search-box,
+    .search-wrapper {
+        width: 100%;
+    }
+    
+    .search-box input {
+        width: 100%;
+    }
+    
+    /* Cards content */
+    .field-card-header,
+    .user-card-header,
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .field-status,
+    .user-status,
+    .badge {
+        align-self: flex-start;
+    }
+    
+    .card-actions,
+    .field-actions,
+    .user-actions {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+    
+    .card-actions .btn,
+    .field-actions .btn,
+    .user-actions .btn {
+        flex: 1;
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    /* Statistiche in card */
+    .field-stats,
+    .user-stats {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .stat-item {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    /* Info grids */
+    .info-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Orari e slot */
+    .time-slots,
+    .slots-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px;
+    }
+    
+    .time-slot {
+        padding: 8px;
+        font-size: 12px;
+    }
+}
+
+/* ============================================================================
+   MOBILE SMALL (480px)
+   ============================================================================ */
+@media (max-width: 480px) {
+    /* Header ultra compact */
+    .gestione-header h2 {
+        font-size: 18px;
+    }
+    
+    /* KPI mini */
+    .kpi-card {
+        padding: 12px;
+    }
+    
+    .kpi-value {
+        font-size: 20px;
+    }
+    
+    .kpi-label {
+        font-size: 11px;
+    }
+    
+    .kpi-trend {
+        font-size: 10px;
+    }
+    
+    /* Cards mini */
+    .field-card,
+    .user-card,
+    .booking-card {
+        padding: 14px;
+        border-radius: 12px;
+    }
+    
+    .field-name,
+    .user-name,
+    .card-title {
+        font-size: 16px;
+    }
+    
+    .field-info,
+    .user-info,
+    .card-subtitle {
+        font-size: 12px;
+    }
+    
+    /* Buttons compatti */
+    .btn {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    
+    .btn-sm {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .btn i,
+    .btn .bi {
+        font-size: 14px;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        padding: 30px 16px;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+    }
+    
+    .empty-state-title {
+        font-size: 18px;
+    }
+    
+    .empty-state-text {
+        font-size: 13px;
+    }
+    
+    /* Filtri compatti */
+    .form-control,
+    .form-select {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+    
+    .form-label {
+        font-size: 12px;
+    }
+    
+    /* Time slots singola colonna su mobile molto piccolo */
+    .time-slots,
+    .slots-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ============================================================================
+   MOBILE EXTRA SMALL (375px)
+   ============================================================================ */
+@media (max-width: 375px) {
+    .gestione-header h2 {
+        font-size: 16px;
+    }
+    
+    .kpi-card {
+        padding: 10px;
+    }
+    
+    .kpi-value {
+        font-size: 18px;
+    }
+    
+    .field-card,
+    .user-card {
+        padding: 12px;
+    }
+    
+    .field-name,
+    .user-name {
+        font-size: 15px;
+    }
+    
+    .btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    /* Nascondi testo bottoni, mostra solo icone */
+    .btn-icon-text .btn-text {
+        display: none;
+    }
+    
+    .btn-icon-text {
+        padding: 10px !important;
+    }
+}
+
+/* ============================================================================
+   TABELLE ADMIN RESPONSIVE
+   ============================================================================ */
+@media (max-width: 992px) {
+    .table-responsive-admin {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .table-responsive-admin table {
+        min-width: 800px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Tabelle con card layout su mobile */
+    .table-to-cards thead {
+        display: none;
+    }
+    
+    .table-to-cards tbody tr {
+        display: block;
+        margin-bottom: 16px;
+        padding: 16px;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .table-to-cards tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-to-cards tbody td:last-child {
+        border-bottom: none;
+    }
+    
+    .table-to-cards tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 12px;
+    }
+}
+
+/* ============================================================================
+   MODAL ADMIN RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .modal-xl,
+    .modal-lg {
+        max-width: calc(100% - 20px);
+        margin: 10px auto;
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 8px;
+        max-width: calc(100% - 16px);
+    }
+    
+    .modal-content {
+        border-radius: 14px;
+    }
+    
+    .modal-header {
+        padding: 14px 16px;
+    }
+    
+    .modal-header .modal-title {
+        font-size: 18px;
+    }
+    
+    .modal-body {
+        padding: 16px;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    .modal-footer {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .modal-footer .btn {
+        flex: 1;
+        min-width: calc(50% - 4px);
+    }
+    
+    /* Form nel modal */
+    .modal-body .form-row,
+    .modal-body .row {
+        flex-direction: column;
+    }
+    
+    .modal-body .col-md-6,
+    .modal-body .col-lg-4 {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* ============================================================================
+   CHARTS RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 250px !important;
+    }
+    
+    .chart-wrapper {
+        padding: 16px;
+    }
+    
+    .chart-title {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chart-container {
+        height: 200px !important;
+    }
+    
+    .chart-wrapper {
+        padding: 12px;
+    }
+}
+
+/* ============================================================================
+   CALENDARIO ADMIN RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .calendar-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .calendar-grid {
+        min-width: 500px;
+    }
+    
+    .calendar-day {
+        min-height: 80px;
+        padding: 8px;
+    }
+    
+    .calendar-event {
+        font-size: 11px;
+        padding: 4px 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .calendar-nav {
+        justify-content: center;
+    }
+    
+    .calendar-title {
+        text-align: center;
+        font-size: 16px;
+    }
+}
+
+/* ============================================================================
+   DASHBOARD ADMIN RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .admin-dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+    
+    .dashboard-card {
+        padding: 16px;
+    }
+    
+    .dashboard-card-title {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-card {
+        padding: 14px;
+        border-radius: 12px;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+    
+    .quick-action-btn {
+        padding: 14px 10px;
+        font-size: 12px;
+    }
+    
+    .quick-action-btn i {
+        font-size: 20px;
+    }
+}
+
+/* ============================================================================
+   PRINT STYLES (nasconde elementi mobile)
+   ============================================================================ */
+@media print {
+    .mobile-menu-toggle,
+    .mobile-overlay {
+        display: none !important;
+    }
+    
+    .sidebar {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+}

@@ -242,7 +242,7 @@ function getInitials($nome) {
                     <input type="hidden" id="resolveId" name="id">
                     
                     <div class="mb-3">
-                        <label class="form-label">Azione da intraprendere</label>
+                        <label for="resolveAzione" class="form-label">Azione da intraprendere</label>
                         <select id="resolveAzione" name="azione" class="form-select" required>
                             <option value="nessuna">Nessuna azione</option>
                             <option value="warning">Invia Warning</option>
@@ -253,12 +253,12 @@ function getInitials($nome) {
                     </div>
                     
                     <div class="mb-3" id="penaltyGroup" style="display: none;">
-                        <label class="form-label">Penalty Points da assegnare</label>
+                        <label for="resolvePenalty" class="form-label">Penalty Points da assegnare</label>
                         <input type="number" id="resolvePenalty" name="penalty_points" class="form-control" min="1" max="100" value="5">
                     </div>
                     
                     <div class="mb-3" id="sospensioneGroup" style="display: none;">
-                        <label class="form-label">Giorni di sospensione</label>
+                        <label for="resolveGiorni" class="form-label">Giorni di sospensione</label>
                         <select id="resolveGiorni" name="giorni_sospensione" class="form-select">
                             <option value="1">1 giorno</option>
                             <option value="3">3 giorni</option>
@@ -269,7 +269,7 @@ function getInitials($nome) {
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Note risoluzione <span class="text-danger">*</span></label>
+                        <label for="rejectMotivo" class="form-label">Note risoluzione <span class="text-danger">*</span></label>
                         <textarea id="resolveNote" name="note" class="form-control" rows="4" required
                                   placeholder="Descrivi il ragionamento e perché questa azione è appropriata..."></textarea>
                     </div>
@@ -468,7 +468,7 @@ function renderDettaglio(s) {
                 return `<div class="storico-item"><span>${tipiSegnalazione[seg.tipo]?.icon || '📝'} ${tipiSegnalazione[seg.tipo]?.label || seg.tipo}</span><span class="stato-badge stato-${segStatoCss}">${getStatoLabel(seg.stato)}</span><span class="text-muted">${formatDate(seg.created_at)}</span></div>`;
             }).join('')}</div></div>` : ''}
             ${s.stato === 'resolved' || s.stato === 'rejected' || s.stato === 'in_review' ? `<div class="dettaglio-section ${(s.stato === 'resolved' || s.stato === 'in_review') ? 'resolved-section' : 'rejected-section'}"><h6>${(s.stato === 'resolved' || s.stato === 'in_review') ? '✅ Risoluzione' : '❌ Rifiuto'}</h6>${s.azione_intrapresa ? `<p><strong>Azione:</strong> ${getAzioneLabel(s.azione_intrapresa)}</p>` : ''}${s.penalty_assegnati ? `<p><strong>Penalty:</strong> ${s.penalty_assegnati}</p>` : ''}<p><strong>Note:</strong> ${escapeHtml(s.note_risoluzione || 'Nessuna nota')}</p><p class="text-muted"><small>Gestita da ${escapeHtml(s.admin_nome || 'N/A')} il ${formatDate(s.resolved_at)}</small></p></div>` : ''}
-            ${s.stato === 'pending' ? `<div class="dettaglio-actions"><button class="btn btn-success" onclick="apriRisoluzione(${s.segnalazione_id})">✅ Risolvi</button><button class="btn btn-danger" onclick="apriRifiuto(${s.segnalazione_id})">❌ Rifiuta</button></div>` : ''}
+            ${s.stato === 'pending' ? `<div class="dettaglio-actions"><button type="button" class="btn btn-success" onclick="apriRisoluzione(${s.segnalazione_id})">✅ Risolvi</button><button type="button" class="btn btn-danger" onclick="apriRifiuto(${s.segnalazione_id})">❌ Rifiuta</button></div>` : ''}
         </div>`;
     document.getElementById('modalContent').innerHTML = html;
 }
