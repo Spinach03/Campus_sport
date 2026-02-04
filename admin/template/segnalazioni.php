@@ -22,7 +22,7 @@ function getInitials($nome) {
     <div class="search-box">
         <span class="search-icon">🔍</span>
         <input type="text" class="search-input" id="searchInput" placeholder="Cerca utente..." 
-               value="<?= htmlspecialchars($templateParams['filtri']['search'] ?? '') ?>">
+               value="<?= htmlspecialchars($templateParams['filtri']['search'] ?? '') ?>" aria-label="Cerca segnalazioni per nome utente">
     </div>
 </div>
 
@@ -101,7 +101,7 @@ function getInitials($nome) {
         </button>
         
         <!-- Priorità -->
-        <select id="filtroPriorita" class="sort-select">
+        <select id="filtroPriorita" class="sort-select" aria-label="Filtra per priorità">
             <option value="" <?= empty($templateParams['filtri']['priorita']) ? 'selected' : '' ?>>Tutte le priorità</option>
             <option value="alta" <?= ($templateParams['filtri']['priorita'] ?? '') === 'alta' ? 'selected' : '' ?>>🔴 Alta</option>
             <option value="media" <?= ($templateParams['filtri']['priorita'] ?? '') === 'media' ? 'selected' : '' ?>>🟡 Media</option>
@@ -109,7 +109,7 @@ function getInitials($nome) {
         </select>
         
         <!-- Ordinamento -->
-        <select id="filtroOrdina" class="sort-select">
+        <select id="filtroOrdina" class="sort-select" aria-label="Ordina segnalazioni per">
             <option value="recenti" <?= ($templateParams['filtri']['ordina'] ?? '') === 'recenti' ? 'selected' : '' ?>>Più recenti</option>
             <option value="vecchie" <?= ($templateParams['filtri']['ordina'] ?? '') === 'vecchie' ? 'selected' : '' ?>>Più vecchie</option>
             <option value="priorita" <?= ($templateParams['filtri']['ordina'] ?? '') === 'priorita' ? 'selected' : '' ?>>Priorità</option>

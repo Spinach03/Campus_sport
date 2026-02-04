@@ -80,7 +80,7 @@ function getSportEmojiDash($icona, $nome) {
                 <span class="status-dot"></span>
                 <?= $dataItaliana ?>
             </p>
-            <h1 class="welcome-title">Ciao, <?= htmlspecialchars($profilo['nome'] ?? 'Utente') ?>! 👋</h1>
+            <h2 class="h1 welcome-title">Ciao, <?= htmlspecialchars($profilo['nome'] ?? 'Utente') ?>! 👋</h2>
             <p class="welcome-subtitle">Benvenuto su <strong>Campus Sports Arena</strong>, la piattaforma per prenotare campi sportivi universitari.</p>
         </div>
         <div class="welcome-actions">

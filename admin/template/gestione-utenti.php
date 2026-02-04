@@ -146,7 +146,7 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
         <!-- Riga 3: Selects -->
         <div class="filter-row">
             <!-- Filtro Corso -->
-            <select name="corso" id="selectCorso" class="sort-select">
+            <select name="corso" id="selectCorso" class="sort-select" aria-label="Filtra per corso di laurea">
                 <option value="">Tutti i corsi</option>
                 <?php foreach ($corsi as $corso): ?>
                 <option value="<?php echo $corso['corso_id']; ?>" <?php echo $filtri['corso'] == $corso['corso_id'] ? 'selected' : ''; ?>>
@@ -156,7 +156,7 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
             </select>
             
             <!-- Ordinamento -->
-            <select name="ordina" id="selectOrdina" class="sort-select">
+            <select name="ordina" id="selectOrdina" class="sort-select" aria-label="Ordina risultati per">
                 <option value="nome" <?php echo $filtri['ordina'] === 'nome' ? 'selected' : ''; ?>>Nome A-Z</option>
                 <option value="recente" <?php echo $filtri['ordina'] === 'recente' ? 'selected' : ''; ?>>Più recenti</option>
                 <option value="attivita" <?php echo $filtri['ordina'] === 'attivita' ? 'selected' : ''; ?>>Più attivi</option>
@@ -178,7 +178,7 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
     <?php if (empty($users)): ?>
     <div class="no-results">
         <div class="no-results-icon">😕</div>
-        <h3>Nessun utente trovato</h3>
+        <h2 class="h5">Nessun utente trovato</h2>
         <p>Prova a modificare i filtri di ricerca</p>
     </div>
     <?php else: ?>
@@ -214,7 +214,7 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
             </div>
             
             <!-- Nome -->
-            <h3 class="user-name"><?php echo htmlspecialchars($user['nome'] . ' ' . $user['cognome']); ?></h3>
+            <h2 class="h5 user-name"><?php echo htmlspecialchars($user['nome'] . ' ' . $user['cognome']); ?></h2>
             
             <!-- Email -->
             <div class="user-email"><?php echo htmlspecialchars($user['email']); ?></div>
@@ -472,8 +472,8 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="motivo" class="form-label">Motivo</label>
-                        <textarea id="motivo" class="form-control form-control-dark" name="motivo" rows="3" placeholder="Inserisci il motivo della sospensione..." required></textarea>
+                        <label for="motivoSospensione" class="form-label">Motivo</label>
+                        <textarea id="motivoSospensione" class="form-control form-control-dark" name="motivo" rows="3" placeholder="Inserisci il motivo della sospensione..." required></textarea>
                     </div>
                 </form>
             </div>
@@ -575,8 +575,8 @@ $filtri = $templateParams["filtri"] ?? ['ruolo' => '', 'stato' => '', 'corso' =>
                 </div>
                 <form id="formResetPenalty">
                     <div class="mb-3">
-                        <label for="motivo" class="form-label">Motivo del reset (opzionale)</label>
-                        <textarea id="motivo" class="form-control form-control-dark" name="motivo" rows="2" placeholder="Es: Comportamento migliorato, errore di sistema..."></textarea>
+                        <label for="motivoReset" class="form-label">Motivo del reset (opzionale)</label>
+                        <textarea id="motivoReset" class="form-control form-control-dark" name="motivo" rows="2" placeholder="Es: Comportamento migliorato, errore di sistema..."></textarea>
                     </div>
                 </form>
             </div>

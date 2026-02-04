@@ -164,11 +164,11 @@ $filtri = $templateParams['filtri'] ?? [];
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <input type="text" id="filtroSearch" class="search-input-filter" placeholder="Cerca utente..." value="<?= htmlspecialchars($filtri['search'] ?? '') ?>">
+            <input type="text" id="filtroSearch" class="search-input-filter" placeholder="Cerca utente..." value="<?= htmlspecialchars($filtri['search'] ?? '') ?>" aria-label="Cerca utente per nome o email">
         </div>
         
         <!-- Campo -->
-        <select id="filtroCampo" class="sort-select">
+        <select id="filtroCampo" class="sort-select" aria-label="Filtra per campo sportivo">
             <option value="">Tutti i campi</option>
             <?php foreach ($campi as $campo): ?>
             <option value="<?= $campo['campo_id'] ?>" <?= ($filtri['campo'] ?? '') == $campo['campo_id'] ? 'selected' : '' ?>>
@@ -178,7 +178,7 @@ $filtri = $templateParams['filtri'] ?? [];
         </select>
         
         <!-- Sport -->
-        <select id="filtroSport" class="sort-select">
+        <select id="filtroSport" class="sort-select" aria-label="Filtra per tipo di sport">
             <option value="">Tutti gli sport</option>
             <?php foreach ($sport as $s): ?>
             <option value="<?= $s['sport_id'] ?>" <?= ($filtri['sport'] ?? '') == $s['sport_id'] ? 'selected' : '' ?>>
@@ -188,10 +188,10 @@ $filtri = $templateParams['filtri'] ?? [];
         </select>
         
         <!-- Data -->
-        <input type="date" id="filtroData" class="sort-select date-input" value="<?= $filtri['data'] ?? '' ?>">
+        <input type="date" id="filtroData" class="sort-select date-input" value="<?= $filtri['data'] ?? '' ?>" aria-label="Filtra per data prenotazione">
         
         <!-- Ordinamento -->
-        <select id="filtroOrdina" class="sort-select">
+        <select id="filtroOrdina" class="sort-select" aria-label="Ordina risultati per">
             <option value="recenti" <?= ($filtri['ordina'] ?? '') === 'recenti' ? 'selected' : '' ?>>Più recenti</option>
             <option value="data_asc" <?= ($filtri['ordina'] ?? '') === 'data_asc' ? 'selected' : '' ?>>Data crescente</option>
             <option value="data_desc" <?= ($filtri['ordina'] ?? '') === 'data_desc' ? 'selected' : '' ?>>Data decrescente</option>
@@ -351,7 +351,7 @@ $filtri = $templateParams['filtri'] ?? [];
                     <!-- Sezione 2: Sport e Campo -->
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label for="selectOraFine" class="nc-label">🏆 Sport <span class="text-danger">*</span></label>
+                            <label for="selectSport" class="nc-label">🏆 Sport <span class="text-danger">*</span></label>
                             <select id="selectSport" name="sport_id" class="nc-select" required>
                                 <option value="">Seleziona sport...</option>
                                 <?php foreach ($sport as $s): ?>
@@ -360,7 +360,7 @@ $filtri = $templateParams['filtri'] ?? [];
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="nc-label">🏟️ Campo <span class="text-danger">*</span></label>
+                            <label for="selectCampo" class="nc-label">🏟️ Campo <span class="text-danger">*</span></label>
                             <select id="selectCampo" name="campo_id" class="nc-select" required disabled>
                                 <option value="">Prima seleziona uno sport...</option>
                             </select>
@@ -370,20 +370,20 @@ $filtri = $templateParams['filtri'] ?? [];
                     <!-- Sezione 3: Data e Orario -->
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label class="nc-label">📆 Data <span class="text-danger">*</span></label>
+                            <label for="inputData" class="nc-label">📆 Data <span class="text-danger">*</span></label>
                             <input type="date" id="inputData" name="data" class="nc-input" 
                                    min="<?= date('Y-m-d') ?>" 
                                    max="<?= $dataMax ?>" required>
                             <small class="nc-hint">Puoi prenotare fino a <?= $giorniAnticipoMax ?> giorni in anticipo</small>
                         </div>
                         <div class="col-md-4">
-                            <label class="nc-label">🕐 Ora Inizio <span class="text-danger">*</span></label>
+                            <label for="selectOraInizio" class="nc-label">🕐 Ora Inizio <span class="text-danger">*</span></label>
                             <select id="selectOraInizio" name="ora_inizio" class="nc-select" required disabled>
                                 <option value="">Seleziona data...</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="nc-label">🕑 Ora Fine <span class="text-danger">*</span></label>
+                            <label for="selectOraFine" class="nc-label">🕑 Ora Fine <span class="text-danger">*</span></label>
                             <select id="selectOraFine" name="ora_fine" class="nc-select" required disabled>
                                 <option value="">Seleziona ora inizio...</option>
                             </select>
@@ -394,13 +394,13 @@ $filtri = $templateParams['filtri'] ?? [];
                     <!-- Sezione 4: Dettagli -->
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="nc-label">👥 Numero Partecipanti <span class="text-danger">*</span></label>
-                            <input type="number" name="num_partecipanti" class="nc-input" 
+                            <label for="inputNumPartecipanti" class="nc-label">👥 Numero Partecipanti <span class="text-danger">*</span></label>
+                            <input type="number" id="inputNumPartecipanti" name="num_partecipanti" class="nc-input" 
                                    min="1" max="30" value="2" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="nc-label">📝 Note (opzionale)</label>
-                            <input id="note" type="text" name="note" class="nc-input" 
+                            <label for="inputNote" class="nc-label">📝 Note (opzionale)</label>
+                            <input id="inputNote" type="text" name="note" class="nc-input" 
                                    placeholder="Note aggiuntive...">
                         </div>
                     </div>
@@ -445,8 +445,8 @@ $filtri = $templateParams['filtri'] ?? [];
                     </div>
                     
                     <div class="mb-3">
-                        <label for="inviaNotificaCancella" class="form-label">Motivo della cancellazione</label>
-                        <textarea name="motivo" class="form-control form-control-dark" rows="3" 
+                        <label for="motivoCancellazione" class="form-label">Motivo della cancellazione</label>
+                        <textarea id="motivoCancellazione" name="motivo" class="form-control form-control-dark" rows="3" 
                                   placeholder="Inserisci il motivo della cancellazione..."></textarea>
                     </div>
                     

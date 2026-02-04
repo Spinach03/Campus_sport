@@ -110,7 +110,7 @@ $utenteBloccato = $templateParams["utente_bloccato"] ?? false;
         </div>
         
         <!-- Ordina -->
-        <select id="selectOrdina" class="sort-select ms-auto">
+        <select id="selectOrdina" class="sort-select ms-auto" aria-label="Ordina campi per">
             <option value="nome" <?php echo ($filtri['ordina'] ?? '') == 'nome' ? 'selected' : ''; ?>>Ordina: Nome</option>
             <option value="rating" <?php echo ($filtri['ordina'] ?? '') == 'rating' ? 'selected' : ''; ?>>Ordina: Rating</option>
         </select>

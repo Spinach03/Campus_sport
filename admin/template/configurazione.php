@@ -40,7 +40,7 @@ function getNomeGiorno($data) {
         <div class="config-card-header">
             <div class="config-card-icon">📋</div>
             <div>
-                <h3>Regole Prenotazione</h3>
+                <h2 class="h5">Regole Prenotazione</h2>
                 <p>Configura i parametri che regolano le prenotazioni degli utenti</p>
             </div>
         </div>
@@ -52,12 +52,12 @@ function getNomeGiorno($data) {
                     <div class="config-item-header">
                         <span class="config-item-icon">📅</span>
                         <div>
-                            <label class="config-label">Giorni Massimi Anticipo</label>
+                            <label for="inputGiorniAnticipo" class="config-label">Giorni Massimi Anticipo</label>
                             <p class="config-description">Con quanti giorni di anticipo gli utenti possono prenotare un campo. Es: se imposti 7, gli utenti potranno prenotare fino a 7 giorni in anticipo.</p>
                         </div>
                     </div>
                     <div class="config-input-group">
-                        <input type="number" name="giorni_anticipo_max" class="config-input" 
+                        <input type="number" id="inputGiorniAnticipo" name="giorni_anticipo_max" class="config-input" 
                                value="<?= $regole['giorni_anticipo_max'] ?? 7 ?>" min="1" max="60">
                         <span class="config-unit">giorni</span>
                     </div>
@@ -68,12 +68,12 @@ function getNomeGiorno($data) {
                     <div class="config-item-header">
                         <span class="config-item-icon">🚫</span>
                         <div>
-                            <label class="config-label">Ore Anticipo Cancellazione</label>
+                            <label for="inputOreCancellazione" class="config-label">Ore Anticipo Cancellazione</label>
                             <p class="config-description">Quante ore prima della prenotazione l'utente può ancora cancellarla. Es: se imposti 24, l'utente non può cancellare se mancano meno di 24 ore.</p>
                         </div>
                     </div>
                     <div class="config-input-group">
-                        <input type="number" name="ore_anticipo_cancellazione" class="config-input" 
+                        <input type="number" id="inputOreCancellazione" name="ore_anticipo_cancellazione" class="config-input" 
                                value="<?= $regole['ore_anticipo_cancellazione'] ?? 24 ?>" min="1" max="72">
                         <span class="config-unit">ore</span>
                     </div>
@@ -100,7 +100,7 @@ function getNomeGiorno($data) {
         <div class="config-card-header">
             <div class="config-card-icon">📅</div>
             <div>
-                <h3>Giorni di Chiusura</h3>
+                <h2 class="h5">Giorni di Chiusura</h2>
                 <p>Festività e giorni in cui la struttura è chiusa e nessuno può prenotare</p>
             </div>
         </div>
@@ -113,8 +113,8 @@ function getNomeGiorno($data) {
         </div>
         
         <div class="add-chiusura-form">
-            <input type="date" id="newChiusuraData" class="config-input">
-            <input type="text" id="newChiusuraMotivo" class="config-input motivo-input" placeholder="Motivo (es. Natale, Capodanno, Manutenzione...)">
+            <input type="date" id="newChiusuraData" class="config-input" aria-label="Data di chiusura">
+            <input type="text" id="newChiusuraMotivo" class="config-input motivo-input" aria-label="Motivo della chiusura" placeholder="Motivo (es. Natale, Capodanno, Manutenzione...)">
             <button type="button" class="btn-add" onclick="aggiungiChiusura()">
                 <span>+</span> Aggiungi Chiusura
             </button>

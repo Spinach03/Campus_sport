@@ -39,11 +39,11 @@ $recensioni = $templateParams["recensioni"] ?? [];
      ============================================================================ -->
 <?php if (!empty($daRecensire)): ?>
 <div class="section-header">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">✍️</span>
         Da Recensire
         <span class="section-badge"><?= count($daRecensire) ?></span>
-    </h3>
+    </h2>
 </div>
 
 <div class="row g-3 mb-4">
@@ -55,7 +55,7 @@ $recensioni = $templateParams["recensioni"] ?? [];
                 <div class="prenotazione-campo">
                     <span class="campo-emoji"><?= getSportEmojiRecensioni($prenotazione['sport_nome']) ?></span>
                     <div>
-                        <h4 class="campo-nome"><?= htmlspecialchars($prenotazione['campo_nome']) ?></h4>
+                        <h3 class="h6 campo-nome"><?= htmlspecialchars($prenotazione['campo_nome']) ?></h3>
                         <span class="campo-sport"><?= htmlspecialchars($prenotazione['sport_nome']) ?> • <?= htmlspecialchars($prenotazione['tipo_campo']) ?></span>
                     </div>
                 </div>
@@ -95,17 +95,17 @@ $recensioni = $templateParams["recensioni"] ?? [];
      SEZIONE: LE MIE RECENSIONI
      ============================================================================ -->
 <div class="section-header">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">⭐</span>
         Le Mie Recensioni
         <span class="section-badge"><?= count($recensioni) ?></span>
-    </h3>
+    </h2>
 </div>
 
 <?php if (empty($recensioni)): ?>
 <div class="empty-state-card">
     <div class="empty-icon">📝</div>
-    <h4>Nessuna recensione</h4>
+    <h3 class="h5">Nessuna recensione</h3>
     <p>Non hai ancora scritto recensioni. Dopo aver completato una prenotazione, potrai recensire il campo!</p>
 </div>
 <?php else: ?>
@@ -118,7 +118,7 @@ $recensioni = $templateParams["recensioni"] ?? [];
                 <div class="prenotazione-campo">
                     <span class="campo-emoji"><?= getSportEmojiRecensioni($recensione['sport_nome']) ?></span>
                     <div>
-                        <h4 class="campo-nome"><?= htmlspecialchars($recensione['campo_nome']) ?></h4>
+                        <h3 class="h6 campo-nome"><?= htmlspecialchars($recensione['campo_nome']) ?></h3>
                         <span class="campo-sport"><?= htmlspecialchars($recensione['sport_nome']) ?> • <?= htmlspecialchars($recensione['tipo_campo']) ?></span>
                     </div>
                 </div>

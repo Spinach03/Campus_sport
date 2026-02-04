@@ -114,7 +114,7 @@ $iniziali = strtoupper(substr($profilo['nome'] ?? 'U', 0, 1) . substr($profilo['
         </div>
         
         <div class="profilo-info-principale">
-            <h1 class="profilo-nome"><?= htmlspecialchars($profilo['nome'] ?? '') ?> <?= htmlspecialchars($profilo['cognome'] ?? '') ?></h1>
+            <h2 class="h1 profilo-nome"><?= htmlspecialchars($profilo['nome'] ?? '') ?> <?= htmlspecialchars($profilo['cognome'] ?? '') ?></h2>
             <p class="profilo-email"><?= htmlspecialchars($profilo['email'] ?? '') ?></p>
             
             <div class="profilo-meta-row">
@@ -141,10 +141,10 @@ $iniziali = strtoupper(substr($profilo['nome'] ?? 'U', 0, 1) . substr($profilo['
 
 <!-- Statistiche -->
 <div class="section-header">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">📊</span>
         Le Mie Statistiche
-    </h3>
+    </h2>
 </div>
 
 <div class="stats-grid">
@@ -192,7 +192,7 @@ $iniziali = strtoupper(substr($profilo['nome'] ?? 'U', 0, 1) . substr($profilo['
         <div class="info-card">
             <div class="info-card-header">
                 <span class="info-icon">👤</span>
-                <h4>Informazioni Personali</h4>
+                <h3 class="h5">Informazioni Personali</h3>
             </div>
             <div class="info-card-body">
                 <div class="info-row">
@@ -228,7 +228,7 @@ $iniziali = strtoupper(substr($profilo['nome'] ?? 'U', 0, 1) . substr($profilo['
         <div class="info-card preferiti-card">
             <div class="info-card-header">
                 <span class="info-icon">❤️</span>
-                <h4>I Miei Preferiti</h4>
+                <h3 class="h5">I Miei Preferiti</h3>
             </div>
             <div class="info-card-body">
                 <?php if ($preferiti['sport']): 
@@ -287,17 +287,17 @@ $iniziali = strtoupper(substr($profilo['nome'] ?? 'U', 0, 1) . substr($profilo['
 
 <!-- Badges -->
 <div class="section-header mt-4">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">🏅</span>
         I Miei Badges
         <span class="section-badge"><?= count($badges) ?></span>
-    </h3>
+    </h2>
 </div>
 
 <?php if (empty($badges)): ?>
 <div class="empty-state-card">
     <div class="empty-icon">🏅</div>
-    <h4>Nessun badge ancora</h4>
+    <h3 class="h5">Nessun badge ancora</h3>
     <p>Completa prenotazioni e attività per sbloccare badges!</p>
 </div>
 <?php else: ?>
@@ -309,7 +309,7 @@ $iniziali = strtoupper(substr($profilo['nome'] ?? 'U', 0, 1) . substr($profilo['
     <div class="badge-card" style="--rarita-color: <?= $raritaConfig['color'] ?>">
         <div class="badge-icon"><?= $badgeEmoji ?></div>
         <div class="badge-info">
-            <h5 class="badge-nome"><?= htmlspecialchars($badge['nome']) ?></h5>
+            <h4 class="h6 badge-nome"><?= htmlspecialchars($badge['nome']) ?></h4>
             <p class="badge-desc"><?= htmlspecialchars($badge['descrizione']) ?></p>
             <div class="badge-meta">
                 <span class="badge-rarita" style="color: <?= $raritaConfig['color'] ?>"><?= $raritaConfig['label'] ?></span>
