@@ -114,10 +114,10 @@ $tuttePrenotazioni = array_merge($prenotazioniOggi, $prenotazioniFuture);
      ============================================================================ -->
 <?php if ($totaleOggi > 0): ?>
 <div class="section-header">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">🎯</span>
         Oggi
-    </h3>
+    </h2>
     <span class="section-badge badge-oggi"><?= $totaleOggi ?></span>
 </div>
 
@@ -199,10 +199,10 @@ $tuttePrenotazioni = array_merge($prenotazioniOggi, $prenotazioniFuture);
      SEZIONE: PRENOTAZIONI FUTURE
      ============================================================================ -->
 <div class="section-header">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">📆</span>
         Prossime Prenotazioni
-    </h3>
+    </h2>
     <span class="section-badge badge-future"><?= $totaleFuture ?></span>
 </div>
 
@@ -210,7 +210,7 @@ $tuttePrenotazioni = array_merge($prenotazioniOggi, $prenotazioniFuture);
     <?php if (empty($prenotazioniFuture) && empty($prenotazioniOggi)): ?>
     <div class="no-results">
         <div class="no-results-icon">📭</div>
-        <h3>Nessuna prenotazione</h3>
+        <h2 class="h5">Nessuna prenotazione</h2>
         <p>Non hai prenotazioni future. Prenota subito un campo!</p>
         <a href="prenota-campo.php" class="btn-add-new" style="margin-top: 20px;">
             <span>+</span> Prenota Campo
@@ -302,10 +302,10 @@ $tuttePrenotazioni = array_merge($prenotazioniOggi, $prenotazioniFuture);
      ============================================================================ -->
 <?php if ($totalePassate > 0): ?>
 <div class="section-header collapsible" onclick="toggleStorico()">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">📋</span>
         Storico Prenotazioni
-    </h3>
+    </h2>
     <div class="section-right">
         <span class="section-badge badge-passate"><?= $totalePassate ?></span>
         <span class="toggle-icon" id="toggleStoricoIcon">▼</span>

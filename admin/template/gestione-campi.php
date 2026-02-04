@@ -250,7 +250,7 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
             <!-- Ordina dropdown -->
             <div class="sort-wrapper ms-auto">
                 <span class="filter-label">Ordina:</span>
-                <select name="ordina" id="sortSelect" class="sort-select">
+                <select name="ordina" id="sortSelect" class="sort-select" aria-label="Ordina campi per">
                     <option value="nome" <?php echo $filtri['ordina'] == 'nome' ? 'selected' : ''; ?>>Nome</option>
                     <option value="rating" <?php echo $filtri['ordina'] == 'rating' ? 'selected' : ''; ?>>Rating</option>
                     <option value="utilizzo" <?php echo $filtri['ordina'] == 'utilizzo' ? 'selected' : ''; ?>>Utilizzo</option>
@@ -425,8 +425,8 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                             <input type="text" class="nc-input" name="nome" placeholder="Es. Campo Calcetto Nord" required>
                         </div>
                         <div class="col-md-5">
-                            <label for="mod_tipo_superficie" class="nc-label">Sport <span class="text-danger">*</span></label>
-                            <select class="nc-select" name="sport_id" required>
+                            <label for="nc_sport_id" class="nc-label">Sport <span class="text-danger">*</span></label>
+                            <select class="nc-select" name="sport_id" id="nc_sport_id" required>
                                 <?php foreach ($sports as $sport): 
                                     $sportEmoji = getEmojiFromIcona($sport['icona'] ?? '');
                                 ?>
@@ -455,8 +455,8 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="mod_larghezza_m" class="nc-label">Superficie <span class="text-danger">*</span></label>
-                            <select class="nc-select" name="tipo_superficie" required>
+                            <label for="nc_tipo_superficie" class="nc-label">Superficie <span class="text-danger">*</span></label>
+                            <select class="nc-select" name="tipo_superficie" id="nc_tipo_superficie" required>
                                 <option value="" disabled selected>Seleziona...</option>
                                 <option value="erba_sintetica">Erba sintetica</option>
                                 <option value="erba_naturale">Erba naturale</option>
@@ -879,8 +879,8 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                     
                     <!-- Riga 2: Tipo Blocco -->
                     <div class="mb-3">
-                        <label class="nc-label">Tipo Blocco</label>
-                        <select class="nc-select" name="tipo_blocco">
+                        <label for="blocco_tipo" class="nc-label">Tipo Blocco</label>
+                        <select class="nc-select" name="tipo_blocco" id="blocco_tipo">
                             <option value="manutenzione_ordinaria">🔧 Manutenzione Ordinaria</option>
                             <option value="manutenzione_straordinaria">⚠️ Manutenzione Straordinaria</option>
                             <option value="evento_speciale">🎉 Evento Speciale</option>
@@ -943,7 +943,7 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                             <input type="text" class="nc-input" name="nome" id="mod_nome" placeholder="Es. Campo Calcetto Nord" required>
                         </div>
                         <div class="col-md-5">
-                            <label class="nc-label">Sport <span class="text-danger">*</span></label>
+                            <label for="mod_sport_id" class="nc-label">Sport <span class="text-danger">*</span></label>
                             <select class="nc-select" name="sport_id" id="mod_sport_id" required>
                                 <?php foreach ($sports as $sport): 
                                     $sportEmoji = getEmojiFromIcona($sport['icona'] ?? '');
@@ -973,7 +973,7 @@ $recensioniRecenti = $templateParams["recensioni_recenti"] ?? [];
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="nc-label">Superficie <span class="text-danger">*</span></label>
+                            <label for="mod_tipo_superficie" class="nc-label">Superficie <span class="text-danger">*</span></label>
                             <select class="nc-select" name="tipo_superficie" id="mod_tipo_superficie" required>
                                 <option value="" disabled>Seleziona...</option>
                                 <option value="erba_sintetica">Erba sintetica</option>

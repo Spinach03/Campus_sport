@@ -142,7 +142,7 @@ $kpi = $templateParams['kpi'] ?? [];
     <div class="col-xl-8 col-lg-7">
         <div class="chart-card">
             <div class="chart-header">
-                <h3 class="chart-title">📈 Trend Prenotazioni</h3>
+                <h2 class="h5 chart-title">📈 Trend Prenotazioni</h2>
                 <div class="chart-legend" id="trendLegend">
                     <span class="legend-item"><span class="legend-dot" style="background:#10B981"></span> Completate</span>
                     <span class="legend-item"><span class="legend-dot" style="background:#F59E0B"></span> Cancellate</span>
@@ -159,7 +159,7 @@ $kpi = $templateParams['kpi'] ?? [];
     <div class="col-xl-4 col-lg-5">
         <div class="chart-card">
             <div class="chart-header">
-                <h3 class="chart-title">🏆 Distribuzione Sport</h3>
+                <h2 class="h5 chart-title">🏆 Distribuzione Sport</h2>
             </div>
             <div class="chart-body chart-body-donut">
                 <canvas id="chartSport" height="280"></canvas>
@@ -176,7 +176,7 @@ $kpi = $templateParams['kpi'] ?? [];
     <div class="col-xl-6">
         <div class="chart-card">
             <div class="chart-header">
-                <h3 class="chart-title">🗓️ Heatmap Settimanale</h3>
+                <h2 class="h5 chart-title">🗓️ Heatmap Settimanale</h2>
                 <p class="chart-subtitle">Distribuzione prenotazioni per giorno e ora</p>
             </div>
             <div class="chart-body">
@@ -195,7 +195,7 @@ $kpi = $templateParams['kpi'] ?? [];
     <div class="col-xl-6">
         <div class="chart-card">
             <div class="chart-header">
-                <h3 class="chart-title">🏟️ Utilizzo Campi</h3>
+                <h2 class="h5 chart-title">🏟️ Utilizzo Campi</h2>
                 <button class="btn-export-small" onclick="exportCampiCSV()">
                     📥 CSV
                 </button>

@@ -144,10 +144,10 @@ $filtro = $templateParams['filtro'] ?? 'tutte';
      ============================================================================ -->
 <?php if (!empty($notificheOggi)): ?>
 <div class="section-header">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">📅</span>
         Oggi
-    </h3>
+    </h2>
     <span class="section-badge badge-oggi"><?= count($notificheOggi) ?></span>
 </div>
 
@@ -197,10 +197,10 @@ $filtro = $templateParams['filtro'] ?? 'tutte';
      ============================================================================ -->
 <?php if (!empty($notificheIeri)): ?>
 <div class="section-header">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">📆</span>
         Ieri
-    </h3>
+    </h2>
     <span class="section-badge badge-ieri"><?= count($notificheIeri) ?></span>
 </div>
 
@@ -250,10 +250,10 @@ $filtro = $templateParams['filtro'] ?? 'tutte';
      ============================================================================ -->
 <?php if (!empty($notificheSettimana)): ?>
 <div class="section-header">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">📋</span>
         Questa Settimana
-    </h3>
+    </h2>
     <span class="section-badge badge-settimana"><?= count($notificheSettimana) ?></span>
 </div>
 
@@ -303,10 +303,10 @@ $filtro = $templateParams['filtro'] ?? 'tutte';
      ============================================================================ -->
 <?php if (!empty($notifichePrecedenti)): ?>
 <div class="section-header collapsible" onclick="togglePrecedenti()">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">📁</span>
         Precedenti
-    </h3>
+    </h2>
     <div class="section-right">
         <span class="section-badge badge-precedenti"><?= count($notifichePrecedenti) ?></span>
         <span class="toggle-icon" id="togglePrecedentiIcon">▼</span>
@@ -352,7 +352,7 @@ $filtro = $templateParams['filtro'] ?? 'tutte';
 <?php if ($totaleNotifiche === 0): ?>
 <div class="no-results">
     <div class="no-results-icon">🔔</div>
-    <h3>Nessuna notifica</h3>
+    <h2 class="h5">Nessuna notifica</h2>
     <p>
         <?php if ($filtro === 'non_lette'): ?>
             Non hai notifiche non lette.

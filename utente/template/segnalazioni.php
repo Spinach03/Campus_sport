@@ -57,17 +57,17 @@ $tipiSegnalazione = $templateParams["tipi_segnalazione"] ?? [];
      SEZIONE: LE MIE SEGNALAZIONI
      ============================================================================ -->
 <div class="section-header">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">📋</span>
         Le Mie Segnalazioni
         <span class="section-badge"><?= count($segnalazioni) ?></span>
-    </h3>
+    </h2>
 </div>
 
 <?php if (empty($segnalazioni)): ?>
 <div class="empty-state-card">
     <div class="empty-icon">📋</div>
-    <h4>Nessuna segnalazione</h4>
+    <h3 class="h5">Nessuna segnalazione</h3>
     <p>Non hai ancora inviato segnalazioni. Puoi segnalare comportamenti scorretti di altri utenti.</p>
 </div>
 <?php else: ?>
@@ -83,7 +83,7 @@ $tipiSegnalazione = $templateParams["tipi_segnalazione"] ?? [];
                 <div class="prenotazione-campo">
                     <span class="campo-emoji"><?= $tipoConfig['icon'] ?></span>
                     <div>
-                        <h4 class="campo-nome"><?= $tipoConfig['label'] ?></h4>
+                        <h3 class="h6 campo-nome"><?= $tipoConfig['label'] ?></h3>
                         <span class="campo-sport">Utente segnalato: <strong><?= htmlspecialchars($segnalazione['segnalato_nome']) ?></strong></span>
                     </div>
                 </div>
@@ -166,17 +166,17 @@ $tipiSegnalazione = $templateParams["tipi_segnalazione"] ?? [];
      SEZIONE: SEGNALAZIONI RICEVUTE
      ============================================================================ -->
 <div class="section-header" style="margin-top: 40px;">
-    <h3 class="section-title">
+    <h2 class="h5 section-title">
         <span class="section-icon">⚠️</span>
         Segnalazioni Ricevute
         <span class="section-badge badge-ricevute"><?= count($segnalazioniRicevute) ?></span>
-    </h3>
+    </h2>
 </div>
 
 <?php if (empty($segnalazioniRicevute)): ?>
 <div class="empty-state-card empty-ricevute">
     <div class="empty-icon">✅</div>
-    <h4>Nessuna segnalazione ricevuta</h4>
+    <h3 class="h5">Nessuna segnalazione ricevuta</h3>
     <p>Non hai ricevuto segnalazioni da altri utenti. Continua così!</p>
 </div>
 <?php else: ?>
@@ -192,7 +192,7 @@ $tipiSegnalazione = $templateParams["tipi_segnalazione"] ?? [];
                 <div class="prenotazione-campo">
                     <span class="campo-emoji"><?= $tipoConfig['icon'] ?></span>
                     <div>
-                        <h4 class="campo-nome"><?= $tipoConfig['label'] ?></h4>
+                        <h3 class="h6 campo-nome"><?= $tipoConfig['label'] ?></h3>
                         <span class="campo-sport">Segnalato da: <strong><?= htmlspecialchars($segnalazione['segnalante_nome']) ?></strong></span>
                     </div>
                 </div>

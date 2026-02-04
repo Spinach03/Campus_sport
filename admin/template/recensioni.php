@@ -139,7 +139,7 @@ function getSportEmoji($sportNome) {
         </button>
         
         <!-- Sport -->
-        <select id="filtroSport" class="sort-select">
+        <select id="filtroSport" class="sort-select" aria-label="Filtra per sport">
             <option value="" <?= empty($templateParams['filtri']['sport_id']) ? 'selected' : '' ?>>Tutti gli sport</option>
             <?php foreach ($templateParams['sport'] as $sport): ?>
                 <option value="<?= $sport['sport_id'] ?>" <?= ($templateParams['filtri']['sport_id'] ?? '') == $sport['sport_id'] ? 'selected' : '' ?>>
@@ -149,7 +149,7 @@ function getSportEmoji($sportNome) {
         </select>
         
         <!-- Campo -->
-        <select id="filtroCampo" class="sort-select">
+        <select id="filtroCampo" class="sort-select" aria-label="Filtra per campo">
             <option value="" <?= empty($templateParams['filtri']['campo_id']) ? 'selected' : '' ?>>Tutti i campi</option>
             <?php foreach ($templateParams['campi'] as $campo): ?>
                 <option value="<?= $campo['campo_id'] ?>" <?= ($templateParams['filtri']['campo_id'] ?? '') == $campo['campo_id'] ? 'selected' : '' ?>>
@@ -159,7 +159,7 @@ function getSportEmoji($sportNome) {
         </select>
         
         <!-- Ordinamento -->
-        <select id="filtroOrdina" class="sort-select">
+        <select id="filtroOrdina" class="sort-select" aria-label="Ordina recensioni per">
             <option value="recenti" <?= ($templateParams['filtri']['ordina'] ?? '') === 'recenti' ? 'selected' : '' ?>>Più recenti</option>
             <option value="vecchie" <?= ($templateParams['filtri']['ordina'] ?? '') === 'vecchie' ? 'selected' : '' ?>>Più vecchie</option>
             <option value="rating_alto" <?= ($templateParams['filtri']['ordina'] ?? '') === 'rating_alto' ? 'selected' : '' ?>>Rating più alto</option>
